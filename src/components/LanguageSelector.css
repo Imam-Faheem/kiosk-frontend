@@ -1,0 +1,27 @@
+.language-grid {
+  display: flex;
+  flex-wrap: wrap;           /* allow multiple rows */
+  justify-content: center;   /* center horizontally */
+  gap: 2rem 2rem;            /* vertical and horizontal gap */
+}
+
+.language-item {
+  cursor: pointer;
+  text-align: center;
+  flex: 0 0 45%;             /* two items per row */
+  max-width: 250px;          /* increase max width for larger images */
+}
+
+.language-item img {
+  width: 200px;   /* increased width */
+  height: 200px;  /* increased height */
+  object-fit: cover;
+  border-radius: 15px; /* optional rounded edges */
+}
+
+.language-item p {
+  margin-top: 0.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #333;
+}

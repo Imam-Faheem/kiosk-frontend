@@ -1,24 +1,26 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router } from 'react-router-dom';
+import Layout from './components/Layout';
+import AppRoutes from './AppRoutes';
+import { AppContextProvider } from './contexts/AppContext';
 
 function App() {
+  const [showWelcome, setShowWelcome] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowWelcome(false), 3000); // Hide after 3 seconds
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <AppContextProvider>
+        {showWelcome && <div className="welcome-anim">Welcome to UNO HOTELS</div>}
+        <Layout>
+          <AppRoutes />
+        </Layout>
+      </AppContextProvider>
+    </Router>     
   );
 }
 
