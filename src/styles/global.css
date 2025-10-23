@@ -97,3 +97,11 @@ body {
     padding: 1.6rem 3.2rem !important;
   }
 }
+
+.signature-canvas {
+  width: 100%;
+  max-width: 500px;
+  height: 200px;
+  background-color: #f8f9fa;
+  touch-action: none; /* Improves touch interaction on mobile */
+}
