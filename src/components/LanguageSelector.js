@@ -1,5 +1,5 @@
 import React from "react";
-import { Card } from "react-bootstrap";
+import { Card, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../contexts/AppContext";
 import "./LanguageSelector.css";
@@ -23,16 +23,37 @@ const LanguageSelector = () => {
   };
 
   return (
-    <div className="language-container d-flex justify-content-center align-items-center min-vh-100">
+    <div className="language-container d-flex justify-content-center align-items-center min-vh-100 position-relative">
       <Card
         className="p-4 text-center"
         style={{
           border: "none",
           boxShadow: "none",
           backgroundColor: "transparent",
+          position: "relative",
         }}
       >
-        <h2 className="mb-4">Select Language</h2>
+        {/* 🩶 Back Button - near Select Language title */}
+        <div className="d-flex align-items-center justify-content-start mb-3" style={{ marginLeft: "10px" }}>
+          <Button
+            variant="light"
+            onClick={() => navigate(-1)}
+            style={{
+              backgroundColor: "#d3d3d3",
+              color: "#000",
+              border: "none",
+              borderRadius: "20px",
+              padding: "6px 16px",
+              fontWeight: "500",
+              boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            ← Back
+          </Button>
+        </div>
+
+        <h2 className="mb-4 mt-2">Select Language</h2>
+
         <div className="language-grid">
           {languages.map((lang) => (
             <div
