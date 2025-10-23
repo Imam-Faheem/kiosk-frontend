@@ -1,27 +1,30 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState } from 'react';
 
 const AppContext = createContext();
 
 export function AppContextProvider({ children }) {
   const [state, setState] = useState({
-    language: localStorage.getItem("language") || null,
+    language: localStorage.getItem('language') || 'en', // load saved language
     guestInfo: {},
     reservationId: null,
     currentStep: 0,
     hardwareStatus: { cashDispenser: true },
   });
 
+  // ✅ Update language and persist to localStorage
   const updateLanguage = (lang) => {
-    localStorage.setItem("language", lang);
+    localStorage.setItem('language', lang);
     setState((prev) => ({ ...prev, language: lang }));
   };
 
-  const updateGuestInfo = (info) => setState((prev) => ({ ...prev, guestInfo: info }));
+  const updateGuestInfo = (info) => {
+    setState((prev) => ({ ...prev, guestInfo: info }));
+  };
 
   const resetState = () => {
-    localStorage.removeItem("language");
+    localStorage.removeItem('language');
     setState({
-      language: null,
+      language: 'en',
       guestInfo: {},
       reservationId: null,
       currentStep: 0,
@@ -31,7 +34,13 @@ export function AppContextProvider({ children }) {
 
   return (
     <AppContext.Provider
-      value={{ state, setState, updateLanguage, updateGuestInfo, resetState }}
+      value={{
+        state,
+        setState,
+        updateLanguage,
+        updateGuestInfo,
+        resetState,
+      }}
     >
       {children}
     </AppContext.Provider>
@@ -40,6 +49,8 @@ export function AppContextProvider({ children }) {
 
 export function useAppContext() {
   const context = useContext(AppContext);
-  if (!context) throw new Error("useAppContext must be used within AppContextProvider");
+  if (!context) {
+    throw new Error('useAppContext must be used within AppContextProvider');
+  }
   return context;
 }

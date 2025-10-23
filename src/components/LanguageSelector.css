@@ -14,19 +14,24 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 8px;
-  transition: background-color 0.2s;
+  padding: 16px 24px; /* increased padding for more width */
+  border-radius: 12px; 
+  border: 2px solid #4a90e2; /* bluish border */
+  min-width: 180px; /* minimum width for each item */
+  transition: all 0.3s ease;
+  background-color: #ffffff; 
+  justify-content: center; /* center content horizontally */
 }
 
 .language-item:hover {
-  background-color: #e9ecef;
+  background-color: #e6f0ff; /* light bluish hover */
+  transform: scale(1.05);
 }
 
 .language-item img {
-  width: 40px; /* slightly bigger */
+  width: 40px; 
   height: 40px;
-  margin-right: 10px;
+  margin-right: 12px; /* slightly more spacing */
 }
 
 .language-item p {
@@ -44,5 +49,10 @@
 
   .language-grid {
     gap: 25px;
+  }
+
+  .language-item {
+    min-width: 200px; /* slightly larger on mobile */
+    padding: 18px 28px;
   }
 }
