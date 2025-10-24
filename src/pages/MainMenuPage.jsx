@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Paper,
@@ -61,57 +61,41 @@ const MainMenuPage = () => {
         clearTimeout(screenSaverTimeoutId);
       }
     };
-  }, [navigate, idleTimeoutId, screenSaverTimeoutId]);
+  }, [navigate]);
 
-  const handleExit = () => {
+  const clearTimeouts = useCallback(() => {
     if (idleTimeoutId) {
       clearTimeout(idleTimeoutId);
     }
     if (screenSaverTimeoutId) {
       clearTimeout(screenSaverTimeoutId);
     }
+  }, [idleTimeoutId, screenSaverTimeoutId]);
+
+  const handleExit = useCallback(() => {
+    clearTimeouts();
     navigate('/');
-  };
+  }, [clearTimeouts, navigate]);
 
-  const handleBack = () => {
-    if (idleTimeoutId) {
-      clearTimeout(idleTimeoutId);
-    }
-    if (screenSaverTimeoutId) {
-      clearTimeout(screenSaverTimeoutId);
-    }
+  const handleBack = useCallback(() => {
+    clearTimeouts();
     navigate('/');
-  };
+  }, [clearTimeouts, navigate]);
 
-  const handleCheckIn = () => {
-    if (idleTimeoutId) {
-      clearTimeout(idleTimeoutId);
-    }
-    if (screenSaverTimeoutId) {
-      clearTimeout(screenSaverTimeoutId);
-    }
+  const handleCheckIn = useCallback(() => {
+    clearTimeouts();
     navigate('/checkin');
-  };
+  }, [clearTimeouts, navigate]);
 
-  const handleNewReservation = () => {
-    if (idleTimeoutId) {
-      clearTimeout(idleTimeoutId);
-    }
-    if (screenSaverTimeoutId) {
-      clearTimeout(screenSaverTimeoutId);
-    }
+  const handleNewReservation = useCallback(() => {
+    clearTimeouts();
     navigate('/reservation/search');
-  };
+  }, [clearTimeouts, navigate]);
 
-  const handleLostCard = () => {
-    if (idleTimeoutId) {
-      clearTimeout(idleTimeoutId);
-    }
-    if (screenSaverTimeoutId) {
-      clearTimeout(screenSaverTimeoutId);
-    }
+  const handleLostCard = useCallback(() => {
+    clearTimeouts();
     navigate('/lost-card');
-  };
+  }, [clearTimeouts, navigate]);
 
   const buttonStyle = {
     width: '100%',

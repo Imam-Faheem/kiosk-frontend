@@ -130,8 +130,8 @@ export const mockCardOperations = [
   }
 ];
 
-// Mock API delay simulation
-export const simulateApiDelay = (min = 500, max = 2000) => {
+// Mock API delay simulation - minimal delay for better UX
+export const simulateApiDelay = (min = 50, max = 150) => {
   const delay = Math.random() * (max - min) + min;
   return new Promise(resolve => setTimeout(resolve, delay));
 };

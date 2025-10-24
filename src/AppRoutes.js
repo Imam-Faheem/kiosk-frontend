@@ -1,7 +1,7 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MantineProvider } from '@mantine/core';
+import { MantineProvider, Loader } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { theme } from './config/theme';
 import './config/i18n';
@@ -31,22 +31,38 @@ import LostCardPage from "./pages/lostcard/LostCardPage";
 import RegenerateCardPage from "./pages/lostcard/RegenerateCardPage";
 import CardIssuedPage from "./pages/lostcard/CardIssuedPage";
 
-// Create a client
+// Create a client with optimized settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
     },
   },
 });
+
+// Loading component for Suspense
+const LoadingFallback = () => (
+  <div style={{ 
+    display: 'flex', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    height: '100vh',
+    backgroundColor: '#FFFFFF'
+  }}>
+    <Loader size="lg" color="#C8653D" />
+  </div>
+);
 
 const AppRoutes = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <MantineProvider theme={theme}>
         <Notifications />
-        <Routes>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
           {/* Main kiosk flow */}
           <Route path="/" element={<WelcomePage />} />
           <Route path="/home" element={<MainMenuPage />} />
@@ -76,7 +92,8 @@ const AppRoutes = () => {
           
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </MantineProvider>
     </QueryClientProvider>
   );
