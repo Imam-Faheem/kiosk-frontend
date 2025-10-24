@@ -1,58 +1,75 @@
 .language-container {
   background-color: #f8f9fa;
+  padding: 30px 20px;
 }
 
 .language-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr); /* 2 items per row */
-  gap: 20px; /* space between items */
-  justify-items: center; /* center items horizontally */
+  gap: 20px;
+  justify-items: stretch;
   align-items: center;
 }
 
 .language-item {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   cursor: pointer;
-  padding: 16px 24px; /* increased padding for more width */
-  border-radius: 12px; 
-  border: 2px solid #4a90e2; /* bluish border */
-  min-width: 180px; /* minimum width for each item */
+  padding: 12px 36px; /* reduced vertical padding, keep horizontal padding */
+  border-radius: 16px; 
+  border: 2px solid #4a90e2;
+  min-width: 300px;
   transition: all 0.3s ease;
-  background-color: #ffffff; 
-  justify-content: center; /* center content horizontally */
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  height: 100px; /* optional fixed height to make it shorter */
 }
 
 .language-item:hover {
-  background-color: #e6f0ff; /* light bluish hover */
+  background-color: #e6f0ff;
   transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .language-item img {
-  width: 40px; 
-  height: 40px;
-  margin-right: 12px; /* slightly more spacing */
+  width: 60px; /* slightly smaller to fit reduced height */
+  height: 60px;
+  margin-right: 24px;
+  flex-shrink: 0;
 }
 
 .language-item p {
   margin: 0;
-  font-weight: 500;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 18px; /* slightly smaller for compact look */
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
 }
 
-/* Responsive */
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .language-item img {
-    width: 140px;
-    height: 140px;
-  }
-
   .language-grid {
+    grid-template-columns: 1fr;
     gap: 25px;
   }
 
   .language-item {
-    min-width: 200px; /* slightly larger on mobile */
-    padding: 18px 28px;
+    min-width: 100%;
+    padding: 14px 28px;
+    height: auto; /* let it adjust naturally on mobile */
+  }
+
+  .language-item img {
+    width: 60px;
+    height: 60px;
+    margin-right: 16px;
+  }
+
+  .language-item p {
+    font-size: 18px;
   }
 }
