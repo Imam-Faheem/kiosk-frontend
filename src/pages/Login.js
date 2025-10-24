@@ -1,83 +1,126 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import {
+  Container,
+  Paper,
+  Title,
+  TextInput,
+  PasswordInput,
+  Button,
+  Stack,
+  Alert,
+  Center,
+  Box,
+  Group,
+  Text,
+  Anchor,
+} from "@mantine/core";
+import { useForm, yupResolver } from "@mantine/form";
+import { notifications } from "@mantine/notifications";
+import { IconAlertCircle, IconLogin } from "@tabler/icons-react";
+import { loginSchema, defaultValues } from "../types/auth";
+import useAuthStore from "../stores/authStore";
 
 const Login = () => {
-  const [username, setUsername] = useState("testadmin@example.com");
-  const [password, setPassword] = useState("admin123");
-  const [error, setError] = useState("");
   const navigate = useNavigate();
-  const baseUrl = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+  const { login, isAuthenticated, isLoading, error, clearError } = useAuthStore();
 
   // Redirect if already logged in
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    console.log("Login: Token exists?", !!token); // Debug log
-    if (token) {
+    if (isAuthenticated) {
       navigate("/", { replace: true });
     }
-  }, [navigate]);
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setError("");
+  }, [isAuthenticated, navigate]);
 
-  try {
-    const response = await axios.post(`${baseUrl}/login`, {
-      username,
-      password,
-    });
+  const form = useForm({
+    initialValues: defaultValues.login,
+    validate: yupResolver(loginSchema),
+  });
 
-    // 👇 Fix: Use ref_tok from backend response
-    const access_token = response.data.user?.ref_tok;
-
-    if (!access_token) {
-      throw new Error("No access token received from backend");
+  const handleSubmit = async (values) => {
+    try {
+      clearError();
+      await login(values);
+      notifications.show({
+        title: "Success",
+        message: "Login successful!",
+        color: "green",
+      });
+      navigate("/", { replace: true });
+    } catch (err) {
+      notifications.show({
+        title: "Error",
+        message: err.message || "Login failed. Please try again.",
+        color: "red",
+      });
     }
-
-    localStorage.setItem("access_token", access_token);
-    console.log("Login successful — Token stored:", access_token);
-
-    navigate("/", { replace: true });
-  } catch (err) {
-    console.error("Login error:", err);
-    setError(
-      err.response?.status === 401
-        ? "Invalid username or password."
-        : "Login failed. Try again later."
-    );
-  }
-};
+  };
 
   return (
-    <div className="container d-flex justify-content-center align-items-center vh-100">
-      <div className="card p-4 shadow" style={{ maxWidth: "400px", width: "100%" }}>
-        <h2 className="text-center mb-4">Login</h2>
-        {error && <div className="alert alert-danger">{error}</div>}
-        <form onSubmit={handleLogin}>
-          <div className="mb-3">
-            <label className="form-label">Username or Email</label>
-            <input
-              type="text"
-              className="form-control"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-control"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="btn btn-primary w-100">Login</button>
-        </form>
-      </div>
-    </div>
+    <Center h="100vh" bg="gray.0">
+      <Container size={420} my={40}>
+        <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+          <Stack>
+            <Box ta="center">
+              <Title order={2} c="blue" fw={700}>
+                Welcome Back
+              </Title>
+              <Text c="dimmed" size="sm" mt={5}>
+                Sign in to your account to continue
+              </Text>
+            </Box>
+
+            {error && (
+              <Alert
+                icon={<IconAlertCircle size={16} />}
+                title="Login Error"
+                color="red"
+                variant="light"
+              >
+                {error}
+              </Alert>
+            )}
+
+            <form onSubmit={form.onSubmit(handleSubmit)}>
+              <Stack>
+                <TextInput
+                  label="Username or Email"
+                  placeholder="Enter your username or email"
+                  required
+                  {...form.getInputProps("username")}
+                />
+
+                <PasswordInput
+                  label="Password"
+                  placeholder="Enter your password"
+                  required
+                  {...form.getInputProps("password")}
+                />
+
+                <Button
+                  type="submit"
+                  fullWidth
+                  loading={isLoading}
+                  leftSection={<IconLogin size={16} />}
+                  size="md"
+                >
+                  Sign In
+                </Button>
+              </Stack>
+            </form>
+
+            <Group justify="center" mt="md">
+              <Text size="sm" c="dimmed">
+                Don't have an account?{" "}
+                <Anchor href="#" size="sm">
+                  Contact administrator
+                </Anchor>
+              </Text>
+            </Group>
+          </Stack>
+        </Paper>
+      </Container>
+    </Center>
   );
 };
 

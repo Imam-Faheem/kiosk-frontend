@@ -1,70 +1,192 @@
-# Getting Started with Create React App
+# Hotel Frontend - Modern React Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, responsive hotel management frontend built with React, Mantine UI, and optimized architecture.
 
-## Available Scripts
+## 🚀 Features
 
-In the project directory, you can run:
+- **Modern UI**: Built with Mantine UI components for a professional look
+- **State Management**: Zustand for lightweight, efficient state management
+- **Form Validation**: Yup schema validation with Mantine forms
+- **API Integration**: Centralized API client with interceptors
+- **Responsive Design**: Mobile-first approach with Mantine's responsive system
+- **Type Safety**: Comprehensive validation schemas
+- **Performance**: Optimized with React hooks and efficient re-renders
 
-### `npm start`
+## 📁 Project Structure
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```
+src/
+├── components/          # Reusable UI components
+├── contexts/           # React contexts for global state
+├── hooks/              # Custom React hooks
+│   ├── useNewReservation.js
+│   └── useReservationQuery.js
+├── pages/              # Page components
+├── schema/             # Yup validation schemas
+│   └── auth.js
+├── services/           # API and external services
+│   └── api/
+│       └── apiClient.js
+├── stores/             # Zustand state stores
+│   ├── authStore.js
+│   └── reservationStore.js
+├── styles/             # Global styles
+├── theme.js            # Mantine theme configuration
+└── utils/              # Utility functions
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🛠️ Technologies Used
 
-### `npm test`
+- **React 19** - Latest React with concurrent features
+- **Mantine UI** - Modern React components library
+- **Zustand** - Lightweight state management
+- **Yup** - Schema validation
+- **Axios** - HTTP client
+- **React Router** - Client-side routing
+- **React Query** - Server state management
+- **Day.js** - Date manipulation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🚀 Getting Started
 
-### `npm run build`
+### Prerequisites
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- Node.js 16+ 
+- npm or yarn
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Installation
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-### `npm run eject`
+3. Start the development server:
+   ```bash
+   npm start
+   ```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+4. Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 📦 Key Dependencies
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```json
+{
+  "@mantine/core": "^8.3.5",
+  "@mantine/hooks": "^8.3.5",
+  "@mantine/form": "^8.3.5",
+  "@mantine/notifications": "^8.3.5",
+  "@mantine/modals": "^8.3.5",
+  "@mantine/dates": "^8.3.5",
+  "zustand": "^5.0.0",
+  "yup": "^1.4.0",
+  "@hookform/resolvers": "^3.3.0",
+  "@tanstack/react-query": "^5.0.0",
+  "@tabler/icons-react": "^2.0.0",
+  "dayjs": "^1.11.0"
+}
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## 🏗️ Architecture
 
-## Learn More
+### State Management
+- **Zustand Stores**: Lightweight, type-safe state management
+- **React Context**: For component tree state sharing
+- **React Query**: Server state caching and synchronization
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### API Layer
+- **Centralized Client**: Single axios instance with interceptors
+- **Error Handling**: Global error handling with notifications
+- **Authentication**: Automatic token management
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Form Handling
+- **Mantine Forms**: Built-in form state management
+- **Yup Validation**: Comprehensive schema validation
+- **Real-time Feedback**: Instant validation feedback
 
-### Code Splitting
+## 🎨 UI/UX Features
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- **Responsive Design**: Mobile-first approach
+- **Dark/Light Theme**: Theme switching capability
+- **Accessibility**: WCAG compliant components
+- **Loading States**: Skeleton loaders and progress indicators
+- **Notifications**: Toast notifications for user feedback
+- **Modals**: Confirmation dialogs and forms
 
-### Analyzing the Bundle Size
+## 🔧 Development
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Code Structure
+- **Hooks**: Custom hooks for reusable logic
+- **Services**: API calls and external integrations
+- **Schemas**: Validation schemas for forms
+- **Stores**: Global state management
+- **Components**: Reusable UI components
 
-### Making a Progressive Web App
+### Best Practices
+- **Component Composition**: Small, focused components
+- **Custom Hooks**: Logic separation and reusability
+- **Error Boundaries**: Graceful error handling
+- **Performance**: Memoization and optimization
+- **Type Safety**: Comprehensive validation
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 🚀 Deployment
 
-### Advanced Configuration
+The app is ready for production deployment:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```bash
+npm run build
+```
 
-### Deployment
+This creates an optimized production build in the `build` folder.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 📱 Features
 
-### `npm run build` fails to minify
+### Authentication
+- Secure login with JWT tokens
+- Automatic token refresh
+- Protected routes
+- Session management
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Reservations
+- Create new reservations
+- View reservation details
+- Update reservation status
+- Search and filter reservations
+
+### Guest Management
+- Guest information management
+- Check-in/Check-out process
+- Digital key generation
+- Feedback collection
+
+## 🔒 Security
+
+- JWT token authentication
+- Automatic token refresh
+- Secure API communication
+- Input validation and sanitization
+- XSS protection
+
+## 📊 Performance
+
+- **Code Splitting**: Lazy loading of components
+- **Memoization**: React.memo and useMemo for optimization
+- **Bundle Optimization**: Tree shaking and minification
+- **Caching**: React Query for server state caching
+- **Lazy Loading**: Route-based code splitting
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🆘 Support
+
+For support and questions, please contact the development team or create an issue in the repository.

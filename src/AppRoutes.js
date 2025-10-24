@@ -1,7 +1,7 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import LanguageSelector from "./components/LanguageSelector"; 
-import Home from "./pages/Home";
+import UNOLanguageSelector from "./components/UNOLanguageSelector";
+import UNOHome from "./components/UNOHome";
 import Login from "./pages/Login";
 import NewReservation from "./pages/NewReservation";
 import CheckIn from "./pages/CheckIn";
@@ -21,9 +21,9 @@ const ProtectedRoute = ({ children }) => {
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<LanguageSelector />} />
+      <Route path="/" element={<UNOLanguageSelector />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+      <Route path="/home" element={<ProtectedRoute><UNOHome /></ProtectedRoute>} />
       <Route path="/new-reservation" element={<ProtectedRoute><NewReservation /></ProtectedRoute>} />
       <Route path="/check-in" element={<ProtectedRoute><CheckIn /></ProtectedRoute>} />
       <Route path="/signature-consent" element={<ProtectedRoute><SignatureConsent /></ProtectedRoute>} />

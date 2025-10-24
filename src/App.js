@@ -1,7 +1,26 @@
 import React, { useState, useEffect } from "react";
+import { BrowserRouter } from "react-router-dom";
+import { MantineProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
+import { ModalsProvider } from "@mantine/modals";
+import { DatesProvider } from "@mantine/dates";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// Contexts removed - using Zustand stores instead
 import AppRoutes from "./AppRoutes";
-import { AppContextProvider } from "./contexts/AppContext";
-import { ReservationProvider } from "./contexts/ReservationContext";
+import { theme } from "./config/theme";
+import "dayjs/locale/en";
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   const [showWelcome, setShowWelcome] = useState(true);
@@ -12,19 +31,26 @@ function App() {
   }, []);
 
   return (
-    <AppContextProvider>
-      <ReservationProvider>
-        {showWelcome ? (
-          <div className="welcome-screen d-flex justify-content-center align-items-center vh-100">
-            <h1 className="welcome-text">
-              Welcome to <span>UNO HOTELS</span>
-            </h1>
-          </div>
-        ) : (
-          <AppRoutes />
-        )}
-      </ReservationProvider>
-    </AppContextProvider>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <MantineProvider theme={theme} defaultColorScheme="light">
+          <DatesProvider settings={{ firstDayOfWeek: 0, locale: "en" }}>
+            <Notifications position="top-right" />
+            <ModalsProvider>
+            {showWelcome ? (
+              <div className="welcome-screen d-flex justify-content-center align-items-center vh-100">
+                <h1 className="welcome-text">
+                  Welcome to <span>UNO HOTELS</span>
+                </h1>
+              </div>
+            ) : (
+              <AppRoutes />
+            )}
+            </ModalsProvider>
+          </DatesProvider>
+        </MantineProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   );
 }
 

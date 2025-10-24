@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Form, Button, Row, Col, Card, Alert } from 'react-bootstrap';
-import { useAppContext } from '../contexts/AppContext';
+import useReservationStore from '../stores/reservationStore';
 import { useNavigate } from 'react-router-dom';
-import { submitForm } from '../api/api';
+import { api } from '../services/api/apiClient';
 
 const OnlineCheckinForm = ({ reservationId, propertyId }) => {
-  const { setState } = useAppContext();
+  const { setCurrentReservation } = useReservationStore();
   const navigate = useNavigate();
   const [details, setDetails] = useState({
     name: '',
@@ -28,12 +28,12 @@ const OnlineCheckinForm = ({ reservationId, propertyId }) => {
     e.preventDefault();
     setError(null);
     try {
-      await submitForm({
+      await api.post('/forms', {
         ...details,
         reservation_id: reservationId,
         property_id: propertyId,
       });
-      setState(prev => ({ ...prev, guestInfo: details }));
+      setCurrentReservation({ guestInfo: details });
       navigate('/payment');
     } catch (error) {
       setError('Sorry, there was an issue submitting your form. Please try again later or contact support.');

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
-import { submitFeedback } from '../api/api';
+import { api } from '../services/api/apiClient';
 
 const FeedbackForm = ({ reservationId }) => {
   const [feedback, setFeedback] = useState({
@@ -15,7 +15,7 @@ const FeedbackForm = ({ reservationId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await submitFeedback(feedback);
+      await api.post('/feedback', feedback);
       setSubmitted(true);
     } catch (error) {
       console.error('Feedback submission failed:', error);
