@@ -22,16 +22,18 @@ export const useRoomMutation = (action, { onSuccess, onError } = {}) => {
   const mutationFn = actionMap[action];
 
   // Always call useMutation hook, but handle special cases
-  const mutation = useMutation({
-    mutationFn: mutationFn || (() => {
+  const mutation = useMutation(
+    mutationFn || (() => {
       throw new Error(`Invalid room action: ${action}`);
     }),
-    onSuccess,
-    onError: (error) => {
-      console.error(`Room ${action} failed:`, error);
-      if (onError) onError(error);
-    },
-  });
+    {
+      onSuccess,
+      onError: (error) => {
+        console.error(`Room ${action} failed:`, error);
+        if (onError) onError(error);
+      },
+    }
+  );
 
   // Special case for non-mutation function
   if (action === 'calculatePricing') {
