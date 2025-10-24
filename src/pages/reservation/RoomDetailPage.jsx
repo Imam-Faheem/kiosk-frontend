@@ -15,7 +15,7 @@ import {
   Badge,
   SimpleGrid,
 } from '@mantine/core';
-import { IconArrowLeft, IconWifi, IconSnowflake, IconTv, IconShield, IconCoffee } from '@tabler/icons-react';
+import { IconArrowLeft, IconWifi, IconSnowflake, IconShield, IconCoffee, IconDeviceTv } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -32,7 +32,7 @@ const RoomDetailPage = () => {
   const amenityIcons = {
     'WiFi': <IconWifi size={16} />,
     'Air Conditioning': <IconSnowflake size={16} />,
-    'TV': <IconTv size={16} />,
+    'TV': <IconDeviceTv size={16} />,
     'Safe': <IconShield size={16} />,
     'Mini Bar': <IconCoffee size={16} />,
   };
