@@ -32,19 +32,19 @@ const WelcomePage = () => {
   const { language, setLanguage } = useLanguageStore();
   const [timeoutId, setTimeoutId] = useState(null);
 
-  // Auto-timeout to MainMenu after 30s
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      navigate('/home');
-    }, 30000);
-    setTimeoutId(timeout);
+  // // Auto-timeout to MainMenu after 30s
+  // useEffect(() => {
+  //   const timeout = setTimeout(() => {
+  //     navigate('/home');
+  //   }, 30000);
+  //   setTimeoutId(timeout);
 
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [navigate]);
+  //   return () => {
+  //     if (timeoutId) {
+  //       clearTimeout(timeoutId);
+  //     }
+  //   };
+  // }, [navigate]);
 
   const handleLanguageChange = (value) => {
     setLanguage(value);
