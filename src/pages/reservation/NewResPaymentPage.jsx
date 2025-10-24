@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Paper,
@@ -13,50 +13,16 @@ import {
 import { IconArrowLeft, IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useReservationMutation } from '../../hooks/useReservationMutation';
-import { usePaymentMutation } from '../../hooks/usePaymentMutation';
 
 const NewResPaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
   const [paymentStatus, setPaymentStatus] = useState('idle');
-  const [reservation, setReservation] = useState(null);
   const [error, setError] = useState(null);
+  const hasProcessed = useRef(false);
 
   const { room, searchCriteria, guestDetails } = location.state || {};
-
-  const createReservation = useReservationMutation('create', {
-    onSuccess: (result) => {
-      if (result.success) {
-        setReservation(result.data);
-        // Automatically initiate payment after reservation creation
-        initiatePayment.mutate({
-          reservationId: result.data.reservationId,
-          amount: result.data.totalAmount,
-          currency: 'USD'
-        });
-      }
-    },
-    onError: (err) => {
-      console.error('Reservation creation error:', err);
-      setError(err.message || t('error.reservationFailed'));
-    }
-  });
-  
-  const initiatePayment = usePaymentMutation('initiate', {
-    onSuccess: (result) => {
-      if (result.success) {
-        navigate('/reservation/card', {
-          state: { reservation, room, paymentData: result.data }
-        });
-      }
-    },
-    onError: (err) => {
-      console.error('Payment initiation error:', err);
-      setError(err.message || t('error.paymentFailed'));
-    }
-  });
 
   useEffect(() => {
     if (!room || !guestDetails) {
@@ -64,46 +30,57 @@ const NewResPaymentPage = () => {
       return;
     }
 
+    // Prevent multiple executions
+    if (hasProcessed.current) {
+      return;
+    }
+
     const processPayment = async () => {
       try {
+        hasProcessed.current = true;
         setPaymentStatus('processing');
         
-        // Create reservation first
-        const resResult = await createReservation.mutateAsync({
-          ...guestDetails,
-          roomTypeId: room.roomTypeId,
-          checkIn: searchCriteria.checkIn,
-          checkOut: searchCriteria.checkOut,
-          guests: searchCriteria.guests,
-        });
-
-        if (resResult.success) {
-          // Initiate payment
-          const payResult = await initiatePayment.mutateAsync({
-            reservationId: resResult.data.reservationId,
-            amount: room.totalPrice,
+        // Mock success after 3 seconds
+        setTimeout(() => {
+          setPaymentStatus('success');
+          
+          // Mock reservation data
+          const mockReservation = {
+            reservationId: `RES-${Date.now()}`,
+            guestDetails,
+            roomTypeId: room.roomTypeId,
+            checkIn: searchCriteria.checkIn,
+            checkOut: searchCriteria.checkOut,
+            guests: searchCriteria.guests,
+            totalAmount: room.totalPrice,
             currency: room.currency,
-          });
+            status: 'confirmed'
+          };
 
-          if (payResult.success) {
-            setTimeout(() => {
-              navigate('/reservation/card', {
-                state: {
-                  reservation: resResult.data,
-                  room,
-                },
-              });
-            }, 2000);
-          }
-        }
+          // Navigate to card page after success
+          navigate('/reservation/card', {
+            state: {
+              reservation: mockReservation,
+              room,
+              paymentData: {
+                paymentId: `PAY-${Date.now()}`,
+                amount: room.totalPrice,
+                currency: room.currency,
+                status: 'initiated'
+              }
+            },
+          });
+        }, 3000);
+        
       } catch (err) {
         console.error('Payment error:', err);
         setPaymentStatus('failed');
+        setError(err.message || t('error.paymentFailed'));
       }
     };
 
     processPayment();
-  }, [room, guestDetails, searchCriteria, navigate, createReservation, initiatePayment]);
+  }, [room, guestDetails, searchCriteria, navigate, t]);
 
   const handleBack = () => {
     navigate('/reservation/room-details', {
@@ -164,8 +141,13 @@ const NewResPaymentPage = () => {
 
         <Stack gap="lg" mb="xl" align="center">
           <IconCreditCard size={64} color="#C8653D" />
-          <Loader size="lg" color="#C8653D" />
-          <Text size="lg">{t('newResPayment.processing')}</Text>
+          {paymentStatus === 'processing' && <Loader size="lg" color="#C8653D" />}
+          <Text size="lg">
+            {paymentStatus === 'processing' && t('newResPayment.processing')}
+            {paymentStatus === 'success' && t('newResPayment.success')}
+            {paymentStatus === 'failed' && t('newResPayment.failed')}
+            {error && error}
+          </Text>
         </Stack>
 
         <Button
