@@ -21,8 +21,20 @@ import { checkinValidationSchema, checkinInitialValues } from '../../schemas/che
 const CheckInPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { validateReservation } = useReservationMutation();
   const [error, setError] = useState(null);
+  
+  const validateReservation = useReservationMutation('validate', {
+    onSuccess: (result) => {
+      if (result.success) {
+        navigate('/checkin/payment-check', {
+          state: { reservation: result.data },
+        });
+      }
+    },
+    onError: (err) => {
+      setError(err.message || t('error.reservationNotFound'));
+    },
+  });
 
   const form = useForm({
     initialValues: checkinInitialValues,
@@ -42,24 +54,7 @@ const CheckInPage = () => {
 
   const handleSubmit = async (values) => {
     setError(null);
-    
-    try {
-      const result = await validateReservation.mutateAsync(values);
-      
-      if (result.success) {
-        // Navigate to payment check page with reservation data
-        navigate('/checkin/payment-check', {
-          state: {
-            reservation: result.data,
-          },
-        });
-      } else {
-        setError(t('error.reservationNotFound'));
-      }
-    } catch (err) {
-      console.error('Reservation validation error:', err);
-      setError(err.message || t('error.reservationNotFound'));
-    }
+    validateReservation.mutate(values);
   };
 
   const handleBack = () => {

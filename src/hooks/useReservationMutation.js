@@ -7,47 +7,33 @@ import {
   cancelReservation 
 } from '../services/reservationService';
 
-export const useReservationMutation = () => {
-  const validateReservationMutation = useMutation({
-    mutationFn: validateReservation,
-    onError: (error) => {
-      console.error('Reservation validation failed:', error);
-    }
-  });
-
-  const createReservationMutation = useMutation({
-    mutationFn: createReservation,
-    onError: (error) => {
-      console.error('Reservation creation failed:', error);
-    }
-  });
-
-  const getReservationMutation = useMutation({
-    mutationFn: getReservationById,
-    onError: (error) => {
-      console.error('Reservation retrieval failed:', error);
-    }
-  });
-
-  const updateReservationMutation = useMutation({
-    mutationFn: ({ reservationId, data }) => updateReservation(reservationId, data),
-    onError: (error) => {
-      console.error('Reservation update failed:', error);
-    }
-  });
-
-  const cancelReservationMutation = useMutation({
-    mutationFn: cancelReservation,
-    onError: (error) => {
-      console.error('Reservation cancellation failed:', error);
-    }
-  });
-
-  return {
-    validateReservation: validateReservationMutation,
-    createReservation: createReservationMutation,
-    getReservation: getReservationMutation,
-    updateReservation: updateReservationMutation,
-    cancelReservation: cancelReservationMutation
+/**
+ * Unified reservation mutation hook
+ * @param {string} action - The action to perform: 'validate', 'create', 'get', 'update', 'cancel'
+ * @param {Object} callbacks - Optional onSuccess and onError callbacks
+ * @returns {Object} - React Query mutation object
+ */
+export const useReservationMutation = (action, { onSuccess, onError } = {}) => {
+  const actionMap = {
+    validate: validateReservation,
+    create: createReservation,
+    get: getReservationById,
+    update: ({ reservationId, data }) => updateReservation(reservationId, data),
+    cancel: cancelReservation,
   };
+
+  const mutationFn = actionMap[action];
+
+  if (!mutationFn) {
+    throw new Error(`Invalid reservation action: ${action}`);
+  }
+
+  return useMutation({
+    mutationFn,
+    onSuccess,
+    onError: (error) => {
+      console.error(`Reservation ${action} failed:`, error);
+      if (onError) onError(error);
+    },
+  });
 };

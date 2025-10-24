@@ -15,6 +15,7 @@ import {
 import { IconX } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import useLanguageStore from '../stores/languageStore';
 
 const languages = [
   { value: 'en', label: 'English', flag: '/flags/gb.png' },
@@ -24,8 +25,8 @@ const languages = [
 
 const WelcomePage = () => {
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLanguageStore();
   const [timeoutId, setTimeoutId] = useState(null);
 
   // Auto-timeout to MainMenu after 30s
@@ -43,8 +44,7 @@ const WelcomePage = () => {
   }, [navigate]);
 
   const handleLanguageChange = (value) => {
-    setSelectedLanguage(value);
-    i18n.changeLanguage(value);
+    setLanguage(value);
   };
 
   const handleContinue = () => {
@@ -162,22 +162,8 @@ const WelcomePage = () => {
           <Select
             label="Select Language"
             placeholder="Choose your language"
-            data={languages.map(lang => ({
-              value: lang.value,
-              label: (
-                <Group gap="sm">
-                  <Image
-                    src={lang.flag}
-                    alt={`${lang.label} flag`}
-                    width={24}
-                    height={16}
-                    style={{ borderRadius: '4px' }}
-                  />
-                  <Text>{lang.label}</Text>
-                </Group>
-              )
-            }))}
-            value={selectedLanguage}
+            data={languages}
+            value={language}
             onChange={handleLanguageChange}
             size="lg"
             styles={{

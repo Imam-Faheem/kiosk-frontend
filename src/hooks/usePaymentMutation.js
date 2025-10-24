@@ -6,39 +6,32 @@ import {
   processPayment 
 } from '../services/paymentService';
 
-export const usePaymentMutation = () => {
-  const checkPaymentStatusMutation = useMutation({
-    mutationFn: checkPaymentStatus,
-    onError: (error) => {
-      console.error('Payment status check failed:', error);
-    }
-  });
-
-  const initiatePaymentMutation = useMutation({
-    mutationFn: initiatePayment,
-    onError: (error) => {
-      console.error('Payment initiation failed:', error);
-    }
-  });
-
-  const pollPaymentStatusMutation = useMutation({
-    mutationFn: pollPaymentStatus,
-    onError: (error) => {
-      console.error('Payment status polling failed:', error);
-    }
-  });
-
-  const processPaymentMutation = useMutation({
-    mutationFn: processPayment,
-    onError: (error) => {
-      console.error('Payment processing failed:', error);
-    }
-  });
-
-  return {
-    checkPaymentStatus: checkPaymentStatusMutation,
-    initiatePayment: initiatePaymentMutation,
-    pollPaymentStatus: pollPaymentStatusMutation,
-    processPayment: processPaymentMutation
+/**
+ * Unified payment mutation hook
+ * @param {string} action - The action to perform: 'checkStatus', 'initiate', 'poll', 'process'
+ * @param {Object} callbacks - Optional onSuccess and onError callbacks
+ * @returns {Object} - React Query mutation object
+ */
+export const usePaymentMutation = (action, { onSuccess, onError } = {}) => {
+  const actionMap = {
+    checkStatus: checkPaymentStatus,
+    initiate: initiatePayment,
+    poll: pollPaymentStatus,
+    process: processPayment,
   };
+
+  const mutationFn = actionMap[action];
+
+  if (!mutationFn) {
+    throw new Error(`Invalid payment action: ${action}`);
+  }
+
+  return useMutation({
+    mutationFn,
+    onSuccess,
+    onError: (error) => {
+      console.error(`Payment ${action} failed:`, error);
+      if (onError) onError(error);
+    },
+  });
 };

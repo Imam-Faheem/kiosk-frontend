@@ -9,7 +9,6 @@ import {
   Stack,
   Box,
   Alert,
-  QRCode,
 } from '@mantine/core';
 import { IconAlertCircle, IconHome, IconRefresh } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -168,20 +167,13 @@ const ErrorPage = () => {
             {t('error.contactSupport')}
           </Text>
 
-          {/* Support QR Code */}
+          {/* Support Info */}
           <Box ta="center">
-            <QRCode
-              value="https://support.unohotels.com"
-              size={120}
-              style={{
-                border: '2px solid #E0E0E0',
-                borderRadius: '8px',
-                padding: '8px',
-                backgroundColor: 'white',
-              }}
-            />
-            <Text size="sm" c="#666666" mt="sm">
-              Scan for support
+            <Text size="sm" c="#666666" fw={500}>
+              Support: +1-800-UNO-HELP
+            </Text>
+            <Text size="sm" c="#666666">
+              support@unohotels.com
             </Text>
           </Box>
         </Stack>

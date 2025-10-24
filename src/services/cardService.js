@@ -1,5 +1,5 @@
 import { apiClient } from './api/apiClient';
-import { simulateHardwareDelay, mockSuccessResponses, mockErrors } from './mockData';
+import { simulateHardwareDelay, simulateApiDelay, mockSuccessResponses, mockErrors } from './mockData';
 
 // Issue new card
 export const issueCard = async (data) => {

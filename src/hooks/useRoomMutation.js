@@ -6,32 +6,36 @@ import {
   calculateRoomPricing 
 } from '../services/roomService';
 
-export const useRoomMutation = () => {
-  const searchAvailabilityMutation = useMutation({
-    mutationFn: searchRoomAvailability,
-    onError: (error) => {
-      console.error('Room availability search failed:', error);
-    }
-  });
+/**
+ * Unified room mutation hook
+ * @param {string} action - The action to perform: 'searchAvailability', 'getDetails', 'getAll'
+ * @param {Object} callbacks - Optional onSuccess and onError callbacks
+ * @returns {Object} - React Query mutation object or function
+ */
+export const useRoomMutation = (action, { onSuccess, onError } = {}) => {
+  // Special case for non-mutation function
+  if (action === 'calculatePricing') {
+    return calculateRoomPricing;
+  }
 
-  const getRoomDetailsMutation = useMutation({
-    mutationFn: getRoomDetails,
-    onError: (error) => {
-      console.error('Room details retrieval failed:', error);
-    }
-  });
-
-  const getAllRoomTypesMutation = useMutation({
-    mutationFn: getAllRoomTypes,
-    onError: (error) => {
-      console.error('Room types retrieval failed:', error);
-    }
-  });
-
-  return {
-    searchAvailability: searchAvailabilityMutation,
-    getRoomDetails: getRoomDetailsMutation,
-    getAllRoomTypes: getAllRoomTypesMutation,
-    calculatePricing: calculateRoomPricing
+  const actionMap = {
+    searchAvailability: searchRoomAvailability,
+    getDetails: getRoomDetails,
+    getAll: getAllRoomTypes,
   };
+
+  const mutationFn = actionMap[action];
+
+  if (!mutationFn) {
+    throw new Error(`Invalid room action: ${action}`);
+  }
+
+  return useMutation({
+    mutationFn,
+    onSuccess,
+    onError: (error) => {
+      console.error(`Room ${action} failed:`, error);
+      if (onError) onError(error);
+    },
+  });
 };
