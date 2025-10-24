@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { useAppContext } from "../contexts/AppContext";
+import useAuthStore from "../stores/authStore";
 // CSS import removed - using Mantine styles instead
 
 const languages = [
@@ -15,7 +15,7 @@ const languages = [
 
 const LanguageSelector = () => {
   const navigate = useNavigate();
-  const { updateLanguage } = useAppContext();
+  const { updateLanguage } = useAuthStore();
 
   const handleLanguageClick = (lang) => {
     updateLanguage(lang);

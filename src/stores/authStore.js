@@ -10,6 +10,7 @@ const useAuthStore = create(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      language: 'en',
 
       // Actions
       login: async (credentials) => {
@@ -83,13 +84,21 @@ const useAuthStore = create(
         set({ isLoading });
       },
 
+      // Language management
+      updateLanguage: (language) => {
+        localStorage.setItem('language', language);
+        set({ language });
+      },
+
       // Initialize auth state from localStorage
       initializeAuth: () => {
         const token = localStorage.getItem('access_token');
+        const language = localStorage.getItem('language') || 'en';
         if (token) {
           set({
             token,
             isAuthenticated: true,
+            language,
           });
         }
       },

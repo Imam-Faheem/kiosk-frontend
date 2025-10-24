@@ -5,8 +5,7 @@ import { Notifications } from "@mantine/notifications";
 import { ModalsProvider } from "@mantine/modals";
 import { DatesProvider } from "@mantine/dates";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AppContextProvider } from "./contexts/AppContext";
-import { ReservationProvider } from "./contexts/ReservationContext";
+// Contexts removed - using Zustand stores instead
 import AppRoutes from "./AppRoutes";
 import { theme } from "./config/theme";
 import "dayjs/locale/en";
@@ -38,19 +37,15 @@ function App() {
           <DatesProvider settings={{ firstDayOfWeek: 0, locale: "en" }}>
             <Notifications position="top-right" />
             <ModalsProvider>
-              <AppContextProvider>
-                <ReservationProvider>
-                  {showWelcome ? (
-                    <div className="welcome-screen d-flex justify-content-center align-items-center vh-100">
-                      <h1 className="welcome-text">
-                        Welcome to <span>UNO HOTELS</span>
-                      </h1>
-                    </div>
-                  ) : (
-                    <AppRoutes />
-                  )}
-                </ReservationProvider>
-              </AppContextProvider>
+            {showWelcome ? (
+              <div className="welcome-screen d-flex justify-content-center align-items-center vh-100">
+                <h1 className="welcome-text">
+                  Welcome to <span>UNO HOTELS</span>
+                </h1>
+              </div>
+            ) : (
+              <AppRoutes />
+            )}
             </ModalsProvider>
           </DatesProvider>
         </MantineProvider>
