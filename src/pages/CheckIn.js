@@ -1,16 +1,18 @@
 import React, { useContext, useEffect, useState } from "react";
 import { Container, Card, Button, Spinner, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { ReservationContext } from "../contexts/ReservationContext";
 import { ArrowLeft } from "react-bootstrap-icons";
 import axios from "axios";
 
 const CheckIn = () => {
   const navigate = useNavigate();
-  const { reservationData } = useContext(ReservationContext);
   const [apiData, setApiData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const reservationData = {
+    reservationId: "HDKLRXEQ-1",
+    propertyId: "STERN",
+  };
 
   useEffect(() => {
     const fetchReservation = async () => {

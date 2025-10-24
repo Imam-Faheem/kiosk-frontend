@@ -1,0 +1,174 @@
+{
+  "welcome": {
+    "title": "Welcome",
+    "subtitle": "Please select your language",
+    "continue": "Continue"
+  },
+  "mainMenu": {
+    "title": "Uno Hotels",
+    "checkIn": "Check In",
+    "newReservation": "New Reservation",
+    "lostCard": "I Lost My Card",
+    "back": "Back"
+  },
+  "checkIn": {
+    "title": "Check In",
+    "reservationId": "Reservation ID",
+    "lastName": "Last Name",
+    "submit": "Submit",
+    "back": "Back",
+    "loading": "Validating reservation..."
+  },
+  "paymentCheck": {
+    "title": "Payment Status",
+    "reservationSummary": "Reservation Summary",
+    "guestName": "Guest Name",
+    "roomType": "Room Type",
+    "checkIn": "Check In",
+    "checkOut": "Check Out",
+    "paymentStatus": "Payment Status",
+    "paid": "Paid",
+    "pending": "Pending",
+    "loading": "Checking payment status..."
+  },
+  "paymentTerminal": {
+    "title": "Payment Terminal",
+    "amount": "Amount to Pay",
+    "swipeCard": "Please swipe your card",
+    "processing": "Processing payment...",
+    "cancel": "Cancel",
+    "timeout": "Payment timeout. Please try again."
+  },
+  "cardDispensing": {
+    "title": "Preparing Your Card",
+    "steps": {
+      "preparing": "Preparing card",
+      "encoding": "Encoding card",
+      "sending": "Sending details"
+    },
+    "takeCard": "Please take your card",
+    "loading": "Please wait..."
+  },
+  "checkInComplete": {
+    "title": "Check-In Complete",
+    "success": "Welcome to Uno Hotels!",
+    "roomNumber": "Room Number",
+    "checkOut": "Check Out",
+    "keySent": "Digital key sent to your email",
+    "enjoyStay": "Enjoy your stay!",
+    "returnHome": "Return to Home"
+  },
+  "searchRooms": {
+    "title": "Search Rooms",
+    "checkIn": "Check In Date",
+    "checkOut": "Check Out Date",
+    "guests": "Number of Guests",
+    "search": "Search Rooms",
+    "back": "Back",
+    "loading": "Searching available rooms...",
+    "noRooms": "No rooms available for selected dates"
+  },
+  "guestDetails": {
+    "title": "Guest Details",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phone": "Phone Number",
+    "country": "Country (Optional)",
+    "address": "Address (Optional)",
+    "continue": "Continue",
+    "back": "Back"
+  },
+  "roomDetail": {
+    "title": "Room Details",
+    "amenities": "Amenities",
+    "bookingSummary": "Booking Summary",
+    "nights": "nights",
+    "pricePerNight": "Price per night",
+    "taxes": "Taxes",
+    "total": "Total",
+    "terms": "I accept the terms and conditions",
+    "confirmBooking": "Confirm Booking",
+    "editDetails": "Edit Details",
+    "cancel": "Cancel"
+  },
+  "newResPayment": {
+    "title": "Payment",
+    "bookingSummary": "Booking Summary",
+    "totalAmount": "Total Amount",
+    "swipeCard": "Please swipe your card",
+    "processing": "Processing payment...",
+    "cancelBooking": "Cancel Booking"
+  },
+  "newResCard": {
+    "title": "Preparing Your Card",
+    "steps": {
+      "preparing": "Preparing card",
+      "encoding": "Encoding card",
+      "sending": "Sending details"
+    },
+    "takeCard": "Please take your card"
+  },
+  "reservationComplete": {
+    "title": "Reservation Complete",
+    "success": "Reservation Confirmed!",
+    "reservationNumber": "Reservation Number",
+    "roomNumber": "Room Number",
+    "checkIn": "Check In",
+    "checkOut": "Check Out",
+    "confirmationSent": "Confirmation sent to your email",
+    "printReceipt": "Print Receipt",
+    "returnHome": "Return to Home"
+  },
+  "lostCard": {
+    "title": "Lost Card",
+    "roomNumber": "Room Number",
+    "reservationNumber": "Reservation Number",
+    "lastName": "Last Name",
+    "submit": "Submit",
+    "back": "Back",
+    "helpText": "Please provide your room number, reservation number, and last name to regenerate your card."
+  },
+  "regenerateCard": {
+    "title": "Regenerating Your Card",
+    "steps": {
+      "deactivating": "Deactivating old card",
+      "generating": "Generating new credentials",
+      "programming": "Programming new card"
+    },
+    "pleaseWait": "Please wait..."
+  },
+  "cardIssued": {
+    "title": "New Card Issued",
+    "success": "New card issued successfully",
+    "takeCard": "Please take your card",
+    "oldCardDeactivated": "Old card has been deactivated",
+    "roomNumber": "Room Number",
+    "keySent": "New key sent to your email",
+    "returnHome": "Return to Home"
+  },
+  "error": {
+    "title": "Error",
+    "tryAgain": "Try Again",
+    "backToHome": "Back to Home",
+    "contactSupport": "Contact Support",
+    "generic": "Something went wrong. Please try again.",
+    "reservationNotFound": "Reservation not found. Please check your details.",
+    "paymentFailed": "Payment failed. Please try again.",
+    "cardDispenserError": "Card dispenser error. Please contact support.",
+    "roomNotAvailable": "No rooms available for selected dates.",
+    "guestValidationFailed": "Guest validation failed. Please check your details."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "back": "Back",
+    "continue": "Continue",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  }
+}

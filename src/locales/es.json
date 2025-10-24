@@ -1,0 +1,173 @@
+{
+  "welcome": {
+    "title": "Bienvenido",
+    "subtitle": "Por favor seleccione su idioma",
+    "continue": "Continuar"
+  },
+  "mainMenu": {
+    "title": "Uno Hotels",
+    "checkIn": "Check In",
+    "newReservation": "Nueva Reserva",
+    "lostCard": "Perdí Mi Tarjeta",
+    "back": "Atrás"
+  },
+  "checkIn": {
+    "title": "Check In",
+    "reservationId": "ID de Reserva",
+    "lastName": "Apellido",
+    "submit": "Enviar",
+    "back": "Atrás",
+    "loading": "Validando reserva..."
+  },
+  "paymentCheck": {
+    "title": "Estado de Pago",
+    "reservationSummary": "Resumen de Reserva",
+    "guestName": "Nombre del Huésped",
+    "roomType": "Tipo de Habitación",
+    "checkIn": "Check In",
+    "checkOut": "Check Out",
+    "paymentStatus": "Estado de Pago",
+    "paid": "Pagado",
+    "pending": "Pendiente",
+    "loading": "Verificando estado de pago..."
+  },
+  "paymentTerminal": {
+    "title": "Terminal de Pago",
+    "amount": "Cantidad a Pagar",
+    "swipeCard": "Por favor deslice su tarjeta",
+    "processing": "Procesando pago...",
+    "cancel": "Cancelar",
+    "timeout": "Tiempo de espera agotado. Por favor intente de nuevo."
+  },
+  "cardDispensing": {
+    "title": "Preparando Su Tarjeta",
+    "steps": {
+      "preparing": "Preparando tarjeta",
+      "encoding": "Codificando tarjeta",
+      "sending": "Enviando detalles"
+    },
+    "takeCard": "Por favor tome su tarjeta",
+    "loading": "Por favor espere..."
+  },
+  "checkInComplete": {
+    "title": "Check In Completado",
+    "success": "¡Bienvenido a Uno Hotels!",
+    "roomNumber": "Número de Habitación",
+    "checkOut": "Check Out",
+    "keySent": "Clave digital enviada a su email",
+    "enjoyStay": "¡Disfrute su estadía!",
+    "returnHome": "Volver al Inicio"
+  },
+  "searchRooms": {
+    "title": "Buscar Habitaciones",
+    "checkIn": "Fecha de Check In",
+    "checkOut": "Fecha de Check Out",
+    "guests": "Número de Huéspedes",
+    "search": "Buscar Habitaciones",
+    "back": "Atrás",
+    "loading": "Buscando habitaciones disponibles...",
+    "noRooms": "No hay habitaciones disponibles para las fechas seleccionadas"
+  },
+  "guestDetails": {
+    "title": "Detalles del Huésped",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "email": "Email",
+    "phone": "Número de Teléfono",
+    "country": "País (Opcional)",
+    "address": "Dirección (Opcional)",
+    "continue": "Continuar",
+    "back": "Atrás"
+  },
+  "roomDetail": {
+    "title": "Detalles de la Habitación",
+    "amenities": "Comodidades",
+    "bookingSummary": "Resumen de Reserva",
+    "nights": "noches",
+    "pricePerNight": "Precio por noche",
+    "taxes": "Impuestos",
+    "total": "Total",
+    "terms": "Acepto los términos y condiciones",
+    "confirmBooking": "Confirmar Reserva",
+    "editDetails": "Editar Detalles",
+    "cancel": "Cancelar"
+  },
+  "newResPayment": {
+    "title": "Pago",
+    "bookingSummary": "Resumen de Reserva",
+    "totalAmount": "Cantidad Total",
+    "swipeCard": "Por favor deslice su tarjeta",
+    "processing": "Procesando pago..."
+  },
+  "newResCard": {
+    "title": "Preparando Su Tarjeta",
+    "steps": {
+      "preparing": "Preparando tarjeta",
+      "encoding": "Codificando tarjeta",
+      "sending": "Enviando detalles"
+    },
+    "takeCard": "Por favor tome su tarjeta"
+  },
+  "reservationComplete": {
+    "title": "Reserva Completada",
+    "success": "¡Reserva Confirmada!",
+    "reservationNumber": "Número de Reserva",
+    "roomNumber": "Número de Habitación",
+    "checkIn": "Check In",
+    "checkOut": "Check Out",
+    "confirmationSent": "Confirmación enviada a su email",
+    "printReceipt": "Imprimir Recibo",
+    "returnHome": "Volver al Inicio"
+  },
+  "lostCard": {
+    "title": "Tarjeta Perdida",
+    "roomNumber": "Número de Habitación",
+    "reservationNumber": "Número de Reserva",
+    "lastName": "Apellido",
+    "submit": "Enviar",
+    "back": "Atrás",
+    "helpText": "Por favor proporcione su número de habitación, número de reserva y apellido para regenerar su tarjeta."
+  },
+  "regenerateCard": {
+    "title": "Regenerando Su Tarjeta",
+    "steps": {
+      "deactivating": "Desactivando tarjeta anterior",
+      "generating": "Generando nuevas credenciales",
+      "programming": "Programando nueva tarjeta"
+    },
+    "pleaseWait": "Por favor espere..."
+  },
+  "cardIssued": {
+    "title": "Nueva Tarjeta Emitida",
+    "success": "Nueva tarjeta emitida exitosamente",
+    "takeCard": "Por favor tome su tarjeta",
+    "oldCardDeactivated": "La tarjeta anterior ha sido desactivada",
+    "roomNumber": "Número de Habitación",
+    "keySent": "Nueva clave enviada a su email",
+    "returnHome": "Volver al Inicio"
+  },
+  "error": {
+    "title": "Error",
+    "tryAgain": "Intentar de Nuevo",
+    "backToHome": "Volver al Inicio",
+    "contactSupport": "Contactar Soporte",
+    "generic": "Algo salió mal. Por favor intente de nuevo.",
+    "reservationNotFound": "Reserva no encontrada. Por favor verifique sus detalles.",
+    "paymentFailed": "Pago falló. Por favor intente de nuevo.",
+    "cardDispenserError": "Error del dispensador de tarjetas. Por favor contacte soporte.",
+    "roomNotAvailable": "No hay habitaciones disponibles para las fechas seleccionadas.",
+    "guestValidationFailed": "Validación de huésped falló. Por favor verifique sus detalles."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "back": "Atrás",
+    "continue": "Continuar",
+    "submit": "Enviar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No"
+  }
+}

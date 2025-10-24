@@ -1,0 +1,375 @@
+import React, { useState } from 'react';
+import {
+  Container,
+  Paper,
+  Group,
+  Button,
+  Text,
+  Title,
+  Stack,
+  Box,
+  TextInput,
+  Select,
+  Grid,
+  Card,
+  Image,
+  Badge,
+  Alert,
+  Loader,
+} from '@mantine/core';
+import { IconArrowLeft, IconSearch, IconCalendar, IconUsers } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useForm } from '@mantine/form';
+import { useRoomMutation } from '../../hooks/useRoomMutation';
+import { roomSearchValidationSchema, roomSearchInitialValues } from '../../schemas/reservation.schema';
+
+const SearchRoomsPage = () => {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { searchAvailability } = useRoomMutation();
+  const [searchResults, setSearchResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const form = useForm({
+    initialValues: roomSearchInitialValues,
+    validate: (values) => {
+      try {
+        roomSearchValidationSchema.validateSync(values, { abortEarly: false });
+        return {};
+      } catch (err) {
+        const errors = {};
+        err.inner.forEach((error) => {
+          errors[error.path] = error.message;
+        });
+        return errors;
+      }
+    },
+  });
+
+  const handleSearch = async (values) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await searchAvailability.mutateAsync(values);
+      
+      if (result.success) {
+        setSearchResults(result.data);
+      } else {
+        setError(t('searchRooms.noRooms'));
+      }
+    } catch (err) {
+      console.error('Room search error:', err);
+      setError(err.message || t('searchRooms.noRooms'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectRoom = (room) => {
+    navigate('/reservation/guest-details', {
+      state: {
+        room,
+        searchCriteria: form.values,
+      },
+    });
+  };
+
+  const handleBack = () => {
+    navigate('/home');
+  };
+
+  const guestOptions = Array.from({ length: 8 }, (_, i) => ({
+    value: (i + 1).toString(),
+    label: `${i + 1} ${i === 0 ? 'Guest' : 'Guests'}`,
+  }));
+
+  return (
+    <Container
+      size="lg"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px',
+        backgroundColor: '#FFFFFF',
+      }}
+    >
+      <Paper
+        withBorder
+        shadow="md"
+        p={40}
+        radius="xl"
+        style={{
+          width: '100%',
+          maxWidth: '1000px',
+          backgroundColor: '#ffffff',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          borderRadius: '20px',
+        }}
+      >
+        {/* Header */}
+        <Group justify="space-between" mb="xl">
+          <Group>
+            <Box
+              style={{
+                width: '50px',
+                height: '50px',
+                backgroundColor: '#C8653D',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                marginRight: '15px',
+              }}
+            >
+              UNO
+            </Box>
+            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
+              {t('searchRooms.title')}
+            </Title>
+          </Group>
+        </Group>
+
+        {/* Search Form */}
+        <form onSubmit={form.onSubmit(handleSearch)}>
+          <Stack gap="lg" mb="xl">
+            <Grid>
+              <Grid.Col span={4}>
+                <TextInput
+                  label={t('searchRooms.checkIn')}
+                  type="date"
+                  required
+                  size="lg"
+                  {...form.getInputProps('checkIn')}
+                  min={new Date().toISOString().split('T')[0]}
+                  styles={{
+                    input: {
+                      borderRadius: '12px',
+                      border: '2px solid #E0E0E0',
+                      '&:focus': {
+                        borderColor: '#C8653D',
+                      }
+                    }
+                  }}
+                />
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <TextInput
+                  label={t('searchRooms.checkOut')}
+                  type="date"
+                  required
+                  size="lg"
+                  {...form.getInputProps('checkOut')}
+                  min={form.values.checkIn || new Date().toISOString().split('T')[0]}
+                  styles={{
+                    input: {
+                      borderRadius: '12px',
+                      border: '2px solid #E0E0E0',
+                      '&:focus': {
+                        borderColor: '#C8653D',
+                      }
+                    }
+                  }}
+                />
+              </Grid.Col>
+              <Grid.Col span={4}>
+                <Select
+                  label={t('searchRooms.guests')}
+                  data={guestOptions}
+                  required
+                  size="lg"
+                  {...form.getInputProps('guests')}
+                  styles={{
+                    input: {
+                      borderRadius: '12px',
+                      border: '2px solid #E0E0E0',
+                      '&:focus': {
+                        borderColor: '#C8653D',
+                      }
+                    }
+                  }}
+                />
+              </Grid.Col>
+            </Grid>
+
+            <Button
+              type="submit"
+              size="lg"
+              leftSection={<IconSearch size={20} />}
+              loading={loading}
+              style={{
+                backgroundColor: '#C8653D',
+                color: '#FFFFFF',
+                borderRadius: '12px',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#B8552F';
+                e.currentTarget.style.transform = 'scale(1.02)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#C8653D';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              {loading ? t('searchRooms.loading') : t('searchRooms.search')}
+            </Button>
+          </Stack>
+        </form>
+
+        {/* Search Results */}
+        {loading && (
+          <Stack align="center" gap="md">
+            <Loader size="lg" color="#C8653D" />
+            <Text size="lg" c="#666666">
+              {t('searchRooms.loading')}
+            </Text>
+          </Stack>
+        )}
+
+        {error && (
+          <Alert
+            icon={<IconSearch size={16} />}
+            title="No Rooms Available"
+            color="orange"
+            variant="light"
+            style={{ borderRadius: '8px' }}
+          >
+            <Text size="lg" fw={500}>
+              {error}
+            </Text>
+          </Alert>
+        )}
+
+        {searchResults && searchResults.availableRooms && (
+          <Stack gap="lg" mb="xl">
+            <Text size="xl" fw={600} c="#0B152A">
+              Available Rooms ({searchResults.totalAvailable})
+            </Text>
+            
+            <Grid>
+              {searchResults.availableRooms.map((room) => (
+                <Grid.Col span={6} key={room.roomTypeId}>
+                  <Card
+                    withBorder
+                    p="lg"
+                    radius="md"
+                    style={{
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'scale(1.02)',
+                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                      }
+                    }}
+                    onClick={() => handleSelectRoom(room)}
+                  >
+                    <Stack gap="md">
+                      <Image
+                        src={room.images[0] || '/images/rooms/default.jpg'}
+                        alt={room.name}
+                        height={200}
+                        radius="md"
+                        style={{ objectFit: 'cover' }}
+                      />
+                      
+                      <Stack gap="sm">
+                        <Group justify="space-between">
+                          <Text size="lg" fw={600} c="#0B152A">
+                            {room.name}
+                          </Text>
+                          <Badge color="green" size="lg">
+                            Available
+                          </Badge>
+                        </Group>
+                        
+                        <Text size="sm" c="#666666">
+                          {room.description}
+                        </Text>
+                        
+                        <Group gap="xs">
+                          <IconUsers size={16} color="#666666" />
+                          <Text size="sm" c="#666666">
+                            {room.capacity} guests
+                          </Text>
+                        </Group>
+                        
+                        <Group gap="xs" wrap="wrap">
+                          {room.amenities.slice(0, 3).map((amenity, index) => (
+                            <Badge key={index} size="sm" variant="light">
+                              {amenity}
+                            </Badge>
+                          ))}
+                        </Group>
+                        
+                        <Group justify="space-between" align="center">
+                          <Stack gap="xs">
+                            <Text size="sm" c="#666666">
+                              {room.currency} {room.pricePerNight} per night
+                            </Text>
+                            <Text size="xl" fw={700} c="#0B152A">
+                              {room.currency} {room.totalPrice} total
+                            </Text>
+                          </Stack>
+                          
+                          <Button
+                            size="md"
+                            style={{
+                              backgroundColor: '#C8653D',
+                              color: '#FFFFFF',
+                              borderRadius: '8px',
+                            }}
+                          >
+                            Select
+                          </Button>
+                        </Group>
+                      </Stack>
+                    </Stack>
+                  </Card>
+                </Grid.Col>
+              ))}
+            </Grid>
+          </Stack>
+        )}
+
+        {/* Back Button */}
+        <Group justify="flex-start">
+          <Button
+            variant="outline"
+            leftSection={<IconArrowLeft size={16} />}
+            onClick={handleBack}
+            style={{
+              borderColor: '#C8653D',
+              color: '#C8653D',
+              borderRadius: '12px',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#C8653D';
+              e.currentTarget.style.color = '#FFFFFF';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#C8653D';
+            }}
+          >
+            {t('searchRooms.back')}
+          </Button>
+        </Group>
+      </Paper>
+    </Container>
+  );
+};
+
+export default SearchRoomsPage;
