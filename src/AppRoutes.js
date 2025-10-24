@@ -1,39 +1,101 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import UNOLanguageSelector from "./components/UNOLanguageSelector";
-import UNOHome from "./components/UNOHome";
-import Login from "./pages/Login";
-import NewReservation from "./pages/NewReservation";
-import CheckIn from "./pages/CheckIn";
-import SignatureConsent from "./pages/SignatureConsent";
-import Payment from "./pages/Payment";
-import DigitalKey from "./pages/DigitalKey";
-import Checkout from "./pages/Checkout";
-import Confirmation from "./pages/Confirmation";
-import Feedback from "./pages/Feedback";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MantineProvider, Loader } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
+import { theme } from './config/theme';
+import './config/i18n';
 
-const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("access_token");
-  if (!token) return <Navigate to="/login" replace />;
-  return children;
-};
+// Import new kiosk pages
+import WelcomePage from "./pages/WelcomePage";
+import MainMenuPage from "./pages/MainMenuPage";
+import ErrorPage from "./pages/ErrorPage";
+
+// Check-in flow pages
+import CheckInPage from "./pages/checkin/CheckInPage";
+import PaymentCheckPage from "./pages/checkin/PaymentCheckPage";
+import PaymentTerminalPage from "./pages/checkin/PaymentTerminalPage";
+import CardDispensingPage from "./pages/checkin/CardDispensingPage";
+import CheckInCompletePage from "./pages/checkin/CheckInCompletePage";
+
+// Reservation flow pages
+import SearchRoomsPage from "./pages/reservation/SearchRoomsPage";
+import GuestDetailsPage from "./pages/reservation/GuestDetailsPage";
+import RoomDetailPage from "./pages/reservation/RoomDetailPage";
+import NewResPaymentPage from "./pages/reservation/NewResPaymentPage";
+import NewResCardPage from "./pages/reservation/NewResCardPage";
+import ReservationCompletePage from "./pages/reservation/ReservationCompletePage";
+
+// Lost card flow pages
+import LostCardPage from "./pages/lostcard/LostCardPage";
+import RegenerateCardPage from "./pages/lostcard/RegenerateCardPage";
+import CardIssuedPage from "./pages/lostcard/CardIssuedPage";
+
+// Create a client with optimized settings
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+    },
+  },
+});
+
+// Loading component for Suspense
+const LoadingFallback = () => (
+  <div style={{ 
+    display: 'flex', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    height: '100vh',
+    backgroundColor: '#FFFFFF'
+  }}>
+    <Loader size="lg" color="#C8653D" />
+  </div>
+);
 
 const AppRoutes = () => {
   return (
-    <Routes>
-      <Route path="/" element={<UNOLanguageSelector />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/home" element={<ProtectedRoute><UNOHome /></ProtectedRoute>} />
-      <Route path="/new-reservation" element={<ProtectedRoute><NewReservation /></ProtectedRoute>} />
-      <Route path="/check-in" element={<ProtectedRoute><CheckIn /></ProtectedRoute>} />
-      <Route path="/signature-consent" element={<ProtectedRoute><SignatureConsent /></ProtectedRoute>} />
-      <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
-      <Route path="/digital-key" element={<ProtectedRoute><DigitalKey /></ProtectedRoute>} />
-      <Route path="/checkout" element={<Checkout />} />
-      <Route path="/confirmation" element={<Confirmation />} />
-      <Route path="/feedback" element={<Feedback />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <QueryClientProvider client={queryClient}>
+      <MantineProvider theme={theme}>
+        <Notifications />
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+          {/* Main kiosk flow */}
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/home" element={<MainMenuPage />} />
+          
+          {/* Check-in flow */}
+          <Route path="/checkin" element={<CheckInPage />} />
+          <Route path="/checkin/payment-check" element={<PaymentCheckPage />} />
+          <Route path="/checkin/payment" element={<PaymentTerminalPage />} />
+          <Route path="/checkin/card-dispensing" element={<CardDispensingPage />} />
+          <Route path="/checkin/complete" element={<CheckInCompletePage />} />
+          
+          {/* New reservation flow */}
+          <Route path="/reservation/search" element={<SearchRoomsPage />} />
+          <Route path="/reservation/guest-details" element={<GuestDetailsPage />} />
+          <Route path="/reservation/room-details" element={<RoomDetailPage />} />
+          <Route path="/reservation/payment" element={<NewResPaymentPage />} />
+          <Route path="/reservation/card" element={<NewResCardPage />} />
+          <Route path="/reservation/complete" element={<ReservationCompletePage />} />
+          
+          {/* Lost card flow */}
+          <Route path="/lost-card" element={<LostCardPage />} />
+          <Route path="/lost-card/regenerate" element={<RegenerateCardPage />} />
+          <Route path="/lost-card/issued" element={<CardIssuedPage />} />
+          
+          {/* Error page */}
+          <Route path="/error" element={<ErrorPage />} />
+          
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </MantineProvider>
+    </QueryClientProvider>
   );
 };
 

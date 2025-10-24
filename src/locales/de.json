@@ -1,0 +1,26 @@
+{
+  "welcome": {
+    "title": "Willkommen",
+    "subtitle": "Bitte wählen Sie Ihre Sprache",
+    "continue": "Weiter"
+  },
+  "mainMenu": {
+    "title": "Uno Hotels",
+    "checkIn": "Check-In",
+    "newReservation": "Neue Reservierung",
+    "lostCard": "Ich habe meine Karte verloren",
+    "back": "Zurück"
+  },
+  "common": {
+    "loading": "Lädt...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "cancel": "Abbrechen",
+    "back": "Zurück",
+    "continue": "Weiter",
+    "submit": "Absenden",
+    "confirm": "Bestätigen",
+    "yes": "Ja",
+    "no": "Nein"
+  }
+}
