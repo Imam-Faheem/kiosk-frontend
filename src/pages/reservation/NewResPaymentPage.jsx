@@ -21,11 +21,42 @@ const NewResPaymentPage = () => {
   const location = useLocation();
   const { t } = useTranslation();
   const [paymentStatus, setPaymentStatus] = useState('idle');
+  const [reservation, setReservation] = useState(null);
+  const [error, setError] = useState(null);
 
   const { room, searchCriteria, guestDetails } = location.state || {};
 
-  const createReservation = useReservationMutation('create');
-  const initiatePayment = usePaymentMutation('initiate');
+  const createReservation = useReservationMutation('create', {
+    onSuccess: (result) => {
+      if (result.success) {
+        setReservation(result.data);
+        // Automatically initiate payment after reservation creation
+        initiatePayment.mutate({
+          reservationId: result.data.reservationId,
+          amount: result.data.totalAmount,
+          currency: 'USD'
+        });
+      }
+    },
+    onError: (err) => {
+      console.error('Reservation creation error:', err);
+      setError(err.message || t('error.reservationFailed'));
+    }
+  });
+  
+  const initiatePayment = usePaymentMutation('initiate', {
+    onSuccess: (result) => {
+      if (result.success) {
+        navigate('/reservation/card', {
+          state: { reservation, room, paymentData: result.data }
+        });
+      }
+    },
+    onError: (err) => {
+      console.error('Payment initiation error:', err);
+      setError(err.message || t('error.paymentFailed'));
+    }
+  });
 
   useEffect(() => {
     if (!room || !guestDetails) {

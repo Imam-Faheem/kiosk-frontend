@@ -22,7 +22,36 @@ const PaymentCheckPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
-  const { checkPaymentStatus } = usePaymentMutation();
+  const checkPaymentStatus = usePaymentMutation('checkStatus', {
+    onSuccess: (result) => {
+      if (result.success) {
+        setPaymentStatus(result.data);
+        
+        // Navigate based on payment status
+        if (result.data.status === 'completed' || result.data.status === 'paid') {
+          // Already paid, go to card dispensing
+          setTimeout(() => {
+            navigate('/checkin/card-dispensing', {
+              state: { reservation, paymentStatus: result.data }
+            });
+          }, 2000);
+        } else {
+          // Not paid, go to payment terminal
+          setTimeout(() => {
+            navigate('/checkin/payment', {
+              state: { reservation, paymentStatus: result.data }
+            });
+          }, 2000);
+        }
+      } else {
+        setError(t('error.paymentFailed'));
+      }
+    },
+    onError: (err) => {
+      console.error('Payment status check error:', err);
+      setError(err.message || t('error.paymentFailed'));
+    }
+  });
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,30 +67,7 @@ const PaymentCheckPage = () => {
     const checkStatus = async () => {
       try {
         setLoading(true);
-        const result = await checkPaymentStatus.mutateAsync(reservation.reservationId);
-        
-        if (result.success) {
-          setPaymentStatus(result.data);
-          
-          // Navigate based on payment status
-          if (result.data.status === 'completed' || result.data.status === 'paid') {
-            // Already paid, go to card dispensing
-            setTimeout(() => {
-              navigate('/checkin/card-dispensing', {
-                state: { reservation, paymentStatus: result.data }
-              });
-            }, 2000);
-          } else {
-            // Not paid, go to payment terminal
-            setTimeout(() => {
-              navigate('/checkin/payment', {
-                state: { reservation, paymentStatus: result.data }
-              });
-            }, 2000);
-          }
-        } else {
-          setError(t('error.paymentFailed'));
-        }
+        await checkPaymentStatus.mutateAsync(reservation.reservationId);
       } catch (err) {
         console.error('Payment status check error:', err);
         setError(err.message || t('error.paymentFailed'));

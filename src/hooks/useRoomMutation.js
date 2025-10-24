@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation } from './useMutation';
 import { 
   searchRoomAvailability, 
   getRoomDetails,
@@ -13,11 +13,6 @@ import {
  * @returns {Object} - React Query mutation object or function
  */
 export const useRoomMutation = (action, { onSuccess, onError } = {}) => {
-  // Special case for non-mutation function
-  if (action === 'calculatePricing') {
-    return calculateRoomPricing;
-  }
-
   const actionMap = {
     searchAvailability: searchRoomAvailability,
     getDetails: getRoomDetails,
@@ -26,16 +21,22 @@ export const useRoomMutation = (action, { onSuccess, onError } = {}) => {
 
   const mutationFn = actionMap[action];
 
-  if (!mutationFn) {
-    throw new Error(`Invalid room action: ${action}`);
-  }
-
-  return useMutation({
-    mutationFn,
+  // Always call useMutation hook, but handle special cases
+  const mutation = useMutation({
+    mutationFn: mutationFn || (() => {
+      throw new Error(`Invalid room action: ${action}`);
+    }),
     onSuccess,
     onError: (error) => {
       console.error(`Room ${action} failed:`, error);
       if (onError) onError(error);
     },
   });
+
+  // Special case for non-mutation function
+  if (action === 'calculatePricing') {
+    return calculateRoomPricing;
+  }
+
+  return mutation;
 };

@@ -27,7 +27,19 @@ import { roomSearchValidationSchema, roomSearchInitialValues } from '../../schem
 const SearchRoomsPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { searchAvailability } = useRoomMutation();
+  const searchAvailability = useRoomMutation('searchAvailability', {
+    onSuccess: (result) => {
+      if (result.success) {
+        setSearchResults(result.data);
+      } else {
+        setError(t('searchRooms.noRooms'));
+      }
+    },
+    onError: (err) => {
+      console.error('Room search error:', err);
+      setError(err.message || t('searchRooms.noRooms'));
+    }
+  });
   const [searchResults, setSearchResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -53,13 +65,7 @@ const SearchRoomsPage = () => {
     setError(null);
     
     try {
-      const result = await searchAvailability.mutateAsync(values);
-      
-      if (result.success) {
-        setSearchResults(result.data);
-      } else {
-        setError(t('searchRooms.noRooms'));
-      }
+      await searchAvailability.mutateAsync(values);
     } catch (err) {
       console.error('Room search error:', err);
       setError(err.message || t('searchRooms.noRooms'));

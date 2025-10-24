@@ -21,7 +21,20 @@ const CardDispensingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
-  const { issueCard } = useCardMutation();
+  const issueCard = useCardMutation('issue', {
+    onSuccess: (result) => {
+      if (result.success) {
+        setCardData(result.data);
+        setCardStatus('completed');
+        setCurrentStep(3);
+      }
+    },
+    onError: (err) => {
+      console.error('Card issuance error:', err);
+      setError(err.message || t('error.cardIssuanceFailed'));
+      setCardStatus('error');
+    }
+  });
   const [currentStep, setCurrentStep] = useState(0);
   const [cardStatus, setCardStatus] = useState('preparing');
   const [cardData, setCardData] = useState(null);

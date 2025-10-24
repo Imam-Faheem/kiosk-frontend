@@ -21,7 +21,20 @@ const RegenerateCardPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
-  const { regenerateCard } = useCardMutation();
+  const regenerateCard = useCardMutation('regenerate', {
+    onSuccess: (result) => {
+      if (result.success) {
+        setCardData(result.data);
+        setCardStatus('completed');
+        setCurrentStep(3);
+      }
+    },
+    onError: (err) => {
+      console.error('Card regeneration error:', err);
+      setError(err.message || t('error.cardRegenerationFailed'));
+      setCardStatus('error');
+    }
+  });
   const [currentStep, setCurrentStep] = useState(0);
   const [cardStatus, setCardStatus] = useState('deactivating');
   const [cardData, setCardData] = useState(null);

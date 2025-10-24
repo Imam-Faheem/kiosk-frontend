@@ -10,9 +10,9 @@ import {
   Box,
   Grid,
   Image,
-  Select,
+  Card,
 } from '@mantine/core';
-import { IconX } from '@tabler/icons-react';
+import { IconX, IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import useLanguageStore from '../stores/languageStore';
@@ -21,6 +21,9 @@ const languages = [
   { value: 'en', label: 'English', flag: '/flags/gb.png' },
   { value: 'es', label: 'Español', flag: '/flags/es.png' },
   { value: 'fr', label: 'Français', flag: '/flags/fr.png' },
+  { value: 'de', label: 'Deutsch', flag: '/flags/de.png' },
+  { value: 'it', label: 'Italiano', flag: '/flags/it.png' },
+  { value: 'pt', label: 'Português', flag: '/flags/pt.png' },
 ];
 
 const WelcomePage = () => {
@@ -158,24 +161,75 @@ const WelcomePage = () => {
         </Stack>
 
         {/* Language Selection */}
-        <Stack gap="md" mb="xl">
-          <Select
-            label="Select Language"
-            placeholder="Choose your language"
-            data={languages}
-            value={language}
-            onChange={handleLanguageChange}
-            size="lg"
-            styles={{
-              input: {
-                borderRadius: '12px',
-                border: '2px solid #E0E0E0',
-                '&:focus': {
-                  borderColor: '#C8653D',
-                }
-              }
-            }}
-          />
+        <Stack gap="lg" mb="xl">
+          <Text size="lg" fw={600} c="#0B152A" ta="center">
+            {t('welcome.selectLanguage')}
+          </Text>
+          
+          <Grid gutter="md">
+            {languages.map((lang) => (
+              <Grid.Col span={6} key={lang.value}>
+                <Card
+                  withBorder
+                  p="lg"
+                  radius="md"
+                  style={{
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    border: language === lang.value ? '3px solid #C8653D' : '2px solid #E0E0E0',
+                    backgroundColor: language === lang.value ? '#FFF5F2' : '#FFFFFF',
+                    '&:hover': {
+                      transform: 'scale(1.02)',
+                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                      borderColor: '#C8653D',
+                    }
+                  }}
+                  onClick={() => handleLanguageChange(lang.value)}
+                >
+                  <Stack align="center" gap="md">
+                    <Box style={{ position: 'relative' }}>
+                      <Image
+                        src={lang.flag}
+                        alt={lang.label}
+                        width={60}
+                        height={40}
+                        radius="sm"
+                        style={{ objectFit: 'cover' }}
+                      />
+                      {language === lang.value && (
+                        <Box
+                          style={{
+                            position: 'absolute',
+                            top: '-5px',
+                            right: '-5px',
+                            width: '20px',
+                            height: '20px',
+                            backgroundColor: '#C8653D',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                          }}
+                        >
+                          <IconCheck size={12} />
+                        </Box>
+                      )}
+                    </Box>
+                    
+                    <Text 
+                      size="md" 
+                      fw={600} 
+                      c={language === lang.value ? '#C8653D' : '#0B152A'}
+                      ta="center"
+                    >
+                      {lang.label}
+                    </Text>
+                  </Stack>
+                </Card>
+              </Grid.Col>
+            ))}
+          </Grid>
         </Stack>
 
         {/* Continue Button */}

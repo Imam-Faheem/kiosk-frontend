@@ -22,7 +22,49 @@ const PaymentTerminalPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
-  const { initiatePayment, pollPaymentStatus } = usePaymentMutation();
+  const initiatePayment = usePaymentMutation('initiate', {
+    onSuccess: (result) => {
+      if (result.success) {
+        setTransactionId(result.data.transactionId);
+        setPaymentStatus('processing');
+        // Start polling for payment status
+        const interval = setInterval(() => {
+          pollPaymentStatus.mutate(result.data.transactionId);
+        }, 2000);
+        setPollInterval(interval);
+        
+        // Set timeout for payment
+        const timeout = setTimeout(() => {
+          setPaymentStatus('timeout');
+          clearInterval(interval);
+        }, 30000);
+        setTimeoutId(timeout);
+      }
+    },
+    onError: (err) => {
+      console.error('Payment initiation error:', err);
+      setPaymentStatus('error');
+    }
+  });
+  
+  const pollPaymentStatus = usePaymentMutation('poll', {
+    onSuccess: (result) => {
+      if (result.success && result.data.status === 'completed') {
+        setPaymentStatus('completed');
+        clearInterval(pollInterval);
+        clearTimeout(timeoutId);
+        navigate('/checkin/card-dispensing', {
+          state: { reservation, paymentData: result.data }
+        });
+      }
+    },
+    onError: (err) => {
+      console.error('Payment polling error:', err);
+      setPaymentStatus('error');
+      clearInterval(pollInterval);
+      clearTimeout(timeoutId);
+    }
+  });
   const [paymentStatus, setPaymentStatus] = useState('idle');
   const [transactionId, setTransactionId] = useState(null);
   const [timeoutId, setTimeoutId] = useState(null);

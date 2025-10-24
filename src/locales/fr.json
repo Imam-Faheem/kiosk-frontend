@@ -2,6 +2,7 @@
   "welcome": {
     "title": "Bienvenue",
     "subtitle": "Veuillez sélectionner votre langue",
+    "selectLanguage": "Sélectionner la Langue",
     "continue": "Continuer"
   },
   "mainMenu": {

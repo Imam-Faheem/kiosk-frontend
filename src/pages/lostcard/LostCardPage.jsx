@@ -21,7 +21,25 @@ import { lostCardValidationSchema, lostCardInitialValues } from '../../schemas/l
 const LostCardPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { validateGuest } = useCardMutation();
+  const validateGuest = useCardMutation('validate', {
+    onSuccess: (result) => {
+      if (result.success) {
+        // Navigate to regenerate card page with validated data
+        navigate('/lost-card/regenerate', {
+          state: {
+            guestData: result.data,
+            validationData: form.values,
+          },
+        });
+      } else {
+        setError(t('error.guestValidationFailed'));
+      }
+    },
+    onError: (err) => {
+      console.error('Guest validation error:', err);
+      setError(err.message || t('error.guestValidationFailed'));
+    }
+  });
   const [error, setError] = useState(null);
 
   const form = useForm({
@@ -44,19 +62,7 @@ const LostCardPage = () => {
     setError(null);
     
     try {
-      const result = await validateGuest.mutateAsync(values);
-      
-      if (result.success) {
-        // Navigate to regenerate card page with validated data
-        navigate('/lost-card/regenerate', {
-          state: {
-            guestData: result.data,
-            validationData: values,
-          },
-        });
-      } else {
-        setError(t('error.guestValidationFailed'));
-      }
+      await validateGuest.mutateAsync(values);
     } catch (err) {
       console.error('Guest validation error:', err);
       setError(err.message || t('error.guestValidationFailed'));

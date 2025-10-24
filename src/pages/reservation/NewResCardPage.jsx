@@ -22,7 +22,18 @@ const NewResCardPage = () => {
   const { t } = useTranslation();
 
   const { reservation, room } = location.state || {};
-  const issueCard = useCardMutation('issue');
+  const issueCard = useCardMutation('issue', {
+    onSuccess: (result) => {
+      if (result.success) {
+        navigate('/reservation/complete', {
+          state: { reservation, room, cardData: result.data }
+        });
+      }
+    },
+    onError: (err) => {
+      console.error('Card issuance error:', err);
+    }
+  });
 
   useEffect(() => {
     if (!reservation) {
