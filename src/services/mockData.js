@@ -50,9 +50,9 @@ export const mockRooms = [
     currency: 'USD',
     amenities: ['WiFi', 'Air Conditioning', 'Mini Bar', 'Safe', 'TV'],
     images: [
-      '/images/rooms/deluxe-king-1.jpg',
-      '/images/rooms/deluxe-king-2.jpg',
-      '/images/rooms/deluxe-king-3.jpg'
+      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&h=600&fit=crop'
     ],
     available: true
   },
@@ -67,9 +67,9 @@ export const mockRooms = [
     currency: 'USD',
     amenities: ['WiFi', 'Air Conditioning', 'TV'],
     images: [
-      '/images/rooms/standard-twin-1.jpg',
-      '/images/rooms/standard-twin-2.jpg',
-      '/images/rooms/standard-twin-3.jpg'
+      'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop'
     ],
     available: true
   },
@@ -84,9 +84,9 @@ export const mockRooms = [
     currency: 'USD',
     amenities: ['WiFi', 'Air Conditioning', 'Mini Bar', 'Safe', 'TV', 'Work Desk', 'Sofa'],
     images: [
-      '/images/rooms/executive-suite-1.jpg',
-      '/images/rooms/executive-suite-2.jpg',
-      '/images/rooms/executive-suite-3.jpg'
+      'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800&h=600&fit=crop',
+      'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop'
     ],
     available: true
   }

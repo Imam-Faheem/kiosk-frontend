@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Container,
   Paper,
@@ -10,19 +10,32 @@ import {
   Box,
   Card,
   Checkbox,
+  Image,
+  Grid,
+  Badge,
+  SimpleGrid,
 } from '@mantine/core';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft, IconWifi, IconSnowflake, IconTv, IconShield, IconCoffee } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
 
 const RoomDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const { room, searchCriteria, guestDetails } = location.state || {};
+
+  // Amenity icons mapping
+  const amenityIcons = {
+    'WiFi': <IconWifi size={16} />,
+    'Air Conditioning': <IconSnowflake size={16} />,
+    'TV': <IconTv size={16} />,
+    'Safe': <IconShield size={16} />,
+    'Mini Bar': <IconCoffee size={16} />,
+  };
 
   const handleConfirm = () => {
     navigate('/reservation/payment', {
@@ -97,11 +110,95 @@ const RoomDetailPage = () => {
         </Group>
 
         <Stack gap="lg" mb="xl">
+          {/* Room Images Gallery */}
           <Card withBorder p="lg" radius="md">
-            <Stack gap="sm">
+            <Stack gap="md">
               <Text size="xl" fw={600}>{room.name}</Text>
+              
+              {/* Main Image */}
+              <Box style={{ position: 'relative' }}>
+                <Image
+                  src={room.images[selectedImageIndex]}
+                  alt={`${room.name} - Image ${selectedImageIndex + 1}`}
+                  height={300}
+                  radius="md"
+                  style={{ objectFit: 'cover', width: '100%' }}
+                />
+                <Badge
+                  size="sm"
+                  color="orange"
+                  style={{ position: 'absolute', top: 10, right: 10 }}
+                >
+                  {selectedImageIndex + 1} / {room.images.length}
+                </Badge>
+              </Box>
+
+              {/* Thumbnail Images */}
+              <SimpleGrid cols={3} spacing="sm">
+                {room.images.map((image, index) => (
+                  <Box
+                    key={index}
+                    style={{
+                      cursor: 'pointer',
+                      border: selectedImageIndex === index ? '2px solid #C8653D' : '2px solid transparent',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onClick={() => setSelectedImageIndex(index)}
+                  >
+                    <Image
+                      src={image}
+                      alt={`${room.name} - Thumbnail ${index + 1}`}
+                      height={80}
+                      style={{ objectFit: 'cover', width: '100%' }}
+                    />
+                  </Box>
+                ))}
+              </SimpleGrid>
+
+              {/* Room Description */}
               <Text size="md" c="#666666">{room.description}</Text>
-              <Text size="lg" fw={700}>Total: ${room.totalPrice} {room.currency}</Text>
+
+              {/* Room Amenities */}
+              <Stack gap="sm">
+                <Text size="md" fw={600}>Amenities:</Text>
+                <Group gap="sm">
+                  {room.amenities.map((amenity, index) => (
+                    <Badge
+                      key={index}
+                      variant="light"
+                      color="blue"
+                      leftSection={amenityIcons[amenity] || null}
+                      size="sm"
+                    >
+                      {amenity}
+                    </Badge>
+                  ))}
+                </Group>
+              </Stack>
+
+              {/* Room Details */}
+              <Grid>
+                <Grid.Col span={6}>
+                  <Text size="sm" c="#666666">Capacity:</Text>
+                  <Text size="md" fw={600}>{room.capacity} guests</Text>
+                </Grid.Col>
+                <Grid.Col span={6}>
+                  <Text size="sm" c="#666666">Max Guests:</Text>
+                  <Text size="md" fw={600}>{room.maxGuests} guests</Text>
+                </Grid.Col>
+              </Grid>
+
+              {/* Pricing */}
+              <Card withBorder p="md" radius="md" style={{ backgroundColor: '#f8f9fa' }}>
+                <Group justify="space-between">
+                  <Text size="lg" fw={600}>Total Price:</Text>
+                  <Text size="xl" fw={700} c="#C8653D">
+                    ${room.totalPrice} {room.currency}
+                  </Text>
+                </Group>
+              </Card>
             </Stack>
           </Card>
 
