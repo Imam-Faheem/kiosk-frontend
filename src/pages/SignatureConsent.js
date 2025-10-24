@@ -3,6 +3,7 @@ import { Card, Form, Button, Container, Alert, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "react-bootstrap-icons";
 import SignatureCanvas from "react-signature-canvas";
+import SignaturePad from "../components/SignaturePad";
 import axios from "axios";
 import { ReservationContext } from "../contexts/ReservationContext";
 
@@ -14,6 +15,7 @@ const SignatureConsent = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [useCustomSignature, setUseCustomSignature] = useState(false);
   const sigCanvas = useRef(null);
 
   const baseUrl = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
@@ -25,10 +27,26 @@ const SignatureConsent = () => {
       setError("Please provide signature before saving.");
       return;
     }
+    try {
+      // Use toDataURL instead of getTrimmedCanvas to avoid the trim_canvas error
+      const signatureData = sigCanvas.current.toDataURL("image/png");
+      setDetails(prev => ({
+        ...prev,
+        signature: signatureData
+      }));
+      setError(null);
+    } catch (err) {
+      console.error("Error saving signature:", err);
+      setError("Error saving signature. Please try again.");
+    }
+  };
+
+  const handleCustomSignature = (signatureData) => {
     setDetails(prev => ({
       ...prev,
-      signature: sigCanvas.current.getTrimmedCanvas().toDataURL("image/png")
+      signature: signatureData
     }));
+    setError(null);
   };
 
   const handleSubmit = async (e) => {
@@ -94,27 +112,48 @@ const SignatureConsent = () => {
           />
 
           <div className="mb-3">
-            <SignatureCanvas
-              ref={sigCanvas}
-              penColor="black"
-              canvasProps={{ width: 600, height: 200, className: "border" }}
-            />
-            <Button
-              variant="secondary"
-              size="sm"
-              className="mt-2 me-2"
-              onClick={clearSignature}
-            >
-              Clear
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              className="mt-2"
-              onClick={saveSignature}
-            >
-              Save
-            </Button>
+            <div className="mb-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="me-2"
+                onClick={() => setUseCustomSignature(!useCustomSignature)}
+              >
+                {useCustomSignature ? "Use Library Signature" : "Use Custom Signature"}
+              </Button>
+            </div>
+            
+            {useCustomSignature ? (
+              <SignaturePad
+                onSignatureChange={handleCustomSignature}
+                width={600}
+                height={200}
+              />
+            ) : (
+              <>
+                <SignatureCanvas
+                  ref={sigCanvas}
+                  penColor="black"
+                  canvasProps={{ width: 600, height: 200, className: "border" }}
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="mt-2 me-2"
+                  onClick={clearSignature}
+                >
+                  Clear
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="mt-2"
+                  onClick={saveSignature}
+                >
+                  Save
+                </Button>
+              </>
+            )}
           </div>
 
           <div className="text-center mt-3">

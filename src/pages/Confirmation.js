@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert } from 'react-bootstrap';
-import { submitForm } from '../api/api';
+import { api } from '../services/api/apiClient';
 
 const ConfirmationForm = ({ onSubmit, reservationId, propertyId }) => {
   const [details, setDetails] = useState({
@@ -24,7 +24,7 @@ const ConfirmationForm = ({ onSubmit, reservationId, propertyId }) => {
     e.preventDefault();
     setError(null); // Clear previous errors
     try {
-      await submitForm({
+      await api.post('/forms', {
         ...details,
         reservation_id: reservationId,
         property_id: propertyId,

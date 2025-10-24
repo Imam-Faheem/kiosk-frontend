@@ -2,7 +2,7 @@ import React from "react";
 import { Card, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../contexts/AppContext";
-import "./LanguageSelector.css";
+// CSS import removed - using Mantine styles instead
 
 const languages = [
   { code: "de", name: "Deutsch", flag: "/flags/de.png" },

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, Button, Row, Col, Card, Alert } from 'react-bootstrap';
 import { useAppContext } from '../contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
-import { submitForm } from '../api/api';
+import { api } from '../services/api/apiClient';
 
 const OnlineCheckinForm = ({ reservationId, propertyId }) => {
   const { setState } = useAppContext();
@@ -28,7 +28,7 @@ const OnlineCheckinForm = ({ reservationId, propertyId }) => {
     e.preventDefault();
     setError(null);
     try {
-      await submitForm({
+      await api.post('/forms', {
         ...details,
         reservation_id: reservationId,
         property_id: propertyId,

@@ -7,7 +7,7 @@ import axios from "axios";
 
 const CheckIn = () => {
   const navigate = useNavigate();
-  const { reservationData, setReservationData } = useContext(ReservationContext);
+  const { reservationData } = useContext(ReservationContext);
   const [apiData, setApiData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
