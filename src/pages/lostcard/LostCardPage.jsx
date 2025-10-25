@@ -123,10 +123,11 @@ const LostCardPage = () => {
             <Title 
               order={2} 
               style={{ 
-                fontSize: '24px',
+                fontSize: '30px !important',
                 color: 'rgb(34, 34, 34)',
                 fontWeight: '600',
-                letterSpacing: '1px'
+                letterSpacing: '1px',
+                marginLeft: '-9px'
               }}
             >
               UNO HOTELS

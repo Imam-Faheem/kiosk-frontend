@@ -80,10 +80,11 @@ const WelcomePage = () => {
             position: "absolute",
             top: "20px",
             left: "30px",
-            fontSize: "24px",
+            fontSize: "30px !important",
             color: "#222",
             fontWeight: "600",
             letterSpacing: "1px",
+            marginLeft: "-9px"
           }}
         >
           UNO HOTELS
