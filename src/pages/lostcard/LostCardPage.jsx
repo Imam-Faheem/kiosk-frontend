@@ -120,7 +120,15 @@ const LostCardPage = () => {
             >
               UNO
             </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '24px',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: '600',
+                letterSpacing: '1px'
+              }}
+            >
               UNO HOTELS
             </Title>
           </Group>

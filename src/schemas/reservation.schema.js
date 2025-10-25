@@ -27,8 +27,8 @@ export const roomSearchValidationSchema = yup.object({
 });
 
 export const roomSearchInitialValues = {
-  checkIn: '',
-  checkOut: '',
+  checkIn: null,
+  checkOut: null,
   guests: 1
 };
 

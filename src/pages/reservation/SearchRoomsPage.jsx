@@ -17,6 +17,7 @@ import {
   Alert,
   Loader,
 } from '@mantine/core';
+import { DateInput } from '@mantine/dates';
 import { IconSearch, IconCalendar, IconUsers } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
@@ -31,20 +32,14 @@ const SearchRoomsPage = () => {
   const { t } = useLanguage();
   const searchAvailability = useRoomMutation('searchAvailability', {
     onSuccess: (result) => {
-      if (result.success) {
-        setSearchResults(result.data);
-      } else {
-        setError(t('searchRooms.noRooms'));
-      }
+      setSearchResults(result.data);
     },
     onError: (err) => {
       console.error('Room search error:', err);
-      setError(err.message || t('searchRooms.noRooms'));
     }
   });
   const [searchResults, setSearchResults] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   const form = useForm({
     initialValues: roomSearchInitialValues,
@@ -64,23 +59,30 @@ const SearchRoomsPage = () => {
 
   const handleSearch = async (values) => {
     setLoading(true);
-    setError(null);
     
-    try {
-      await searchAvailability.mutateAsync(values);
-    } catch (err) {
-      console.error('Room search error:', err);
-      setError(err.message || t('searchRooms.noRooms'));
-    } finally {
-      setLoading(false);
-    }
+    // Convert Date objects to ISO string format for API
+    const searchData = {
+      ...values,
+      checkIn: values.checkIn ? (values.checkIn instanceof Date ? values.checkIn.toISOString().split('T')[0] : values.checkIn) : null,
+      checkOut: values.checkOut ? (values.checkOut instanceof Date ? values.checkOut.toISOString().split('T')[0] : values.checkOut) : null,
+    };
+    
+    await searchAvailability.mutateAsync(searchData);
+    setLoading(false);
   };
 
   const handleSelectRoom = (room) => {
+    // Convert Date objects to ISO string format for navigation state
+    const searchCriteria = {
+      ...form.values,
+      checkIn: form.values.checkIn ? (form.values.checkIn instanceof Date ? form.values.checkIn.toISOString().split('T')[0] : form.values.checkIn) : null,
+      checkOut: form.values.checkOut ? (form.values.checkOut instanceof Date ? form.values.checkOut.toISOString().split('T')[0] : form.values.checkOut) : null,
+    };
+    
     navigate('/reservation/guest-details', {
       state: {
         room,
-        searchCriteria: form.values,
+        searchCriteria,
       },
     });
   };
@@ -134,7 +136,15 @@ const SearchRoomsPage = () => {
                 objectFit: 'cover',
               }}
             />
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '24px',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: '600',
+                letterSpacing: '1px'
+              }}
+            >
               UNO HOTELS
             </Title>
           </Group>
@@ -145,13 +155,14 @@ const SearchRoomsPage = () => {
           <Stack gap="lg" mb="xl">
             <Grid>
               <Grid.Col span={4}>
-                <TextInput
+                <DateInput
                   label={t('searchRooms.checkIn')}
-                  type="date"
+                  placeholder="Select check-in date"
                   required
                   size="lg"
+                  valueFormat="YYYY-MM-DD"
                   {...form.getInputProps('checkIn')}
-                  min={new Date().toISOString().split('T')[0]}
+                  minDate={new Date()}
                   styles={{
                     input: {
                       borderRadius: '12px',
@@ -164,13 +175,14 @@ const SearchRoomsPage = () => {
                 />
               </Grid.Col>
               <Grid.Col span={4}>
-                <TextInput
+                <DateInput
                   label={t('searchRooms.checkOut')}
-                  type="date"
+                  placeholder="Select check-out date"
                   required
                   size="lg"
+                  valueFormat="YYYY-MM-DD"
                   {...form.getInputProps('checkOut')}
-                  min={form.values.checkIn || new Date().toISOString().split('T')[0]}
+                  minDate={form.values.checkIn ? new Date(form.values.checkIn) : new Date()}
                   styles={{
                     input: {
                       borderRadius: '12px',
@@ -239,19 +251,6 @@ const SearchRoomsPage = () => {
           </Stack>
         )}
 
-        {error && (
-          <Alert
-            icon={<IconSearch size={16} />}
-            title="No Rooms Available"
-            color="orange"
-            variant="light"
-            style={{ borderRadius: '8px' }}
-          >
-            <Text size="lg" fw={500}>
-              {error}
-            </Text>
-          </Alert>
-        )}
 
         {searchResults && searchResults.availableRooms && (
           <Stack gap="lg" mb="xl">
