@@ -115,7 +115,7 @@ const LostCardPage = () => {
                 color: 'white',
                 fontWeight: 'bold',
                 fontSize: '16px',
-                marginRight: '15px',
+                marginRight: '0px',
               }}
             >
               UNO

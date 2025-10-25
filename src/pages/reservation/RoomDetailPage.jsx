@@ -130,7 +130,7 @@ const RoomDetailPage = () => {
                 width: '50px',
                 height: '50px',
                 borderRadius: '8px',
-                marginRight: '15px',
+                marginRight: '0px',
                 objectFit: 'cover',
               }}
             />

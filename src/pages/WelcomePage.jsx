@@ -10,7 +10,7 @@ import {
   Image,
   Card,
 } from "@mantine/core";
-import { IconX, IconCheck } from "@tabler/icons-react";
+import { IconCheck } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
@@ -43,9 +43,6 @@ const WelcomePage = () => {
     navigate("/home");
   };
 
-  const handleExit = () => {
-    navigate("/");
-  };
 
   return (
     <Container

@@ -7,7 +7,7 @@ import {
   Title,
   Stack,
 } from '@mantine/core';
-import { IconX, IconArrowLeft, IconLogin, IconPlus, IconKey } from '@tabler/icons-react';
+import { IconArrowLeft, IconLogin, IconPlus, IconKey } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import useLanguage from '../hooks/useLanguage';
 import UnoLogo from '../assets/uno.jpg';
@@ -16,9 +16,6 @@ const MainMenuPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const handleExit = () => {
-    navigate('/');
-  };
 
   const handleBack = () => {
     navigate('/');
@@ -95,7 +92,7 @@ const MainMenuPage = () => {
                 width: '50px',
                 height: '50px',
                 borderRadius: '8px',
-                marginRight: '15px',
+                marginRight: '0px',
                 objectFit: 'cover',
               }}
             />
@@ -112,29 +109,6 @@ const MainMenuPage = () => {
             </Title>
           </Group>
           
-          <Button
-            size="lg"
-            leftSection={<IconX size={16} />}
-            onClick={handleExit}
-            style={{
-              backgroundColor: '#C8653D',
-              color: '#FFFFFF',
-              borderRadius: '12px',
-              fontWeight: 'bold',
-              fontSize: '16px',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#B8552F';
-              e.currentTarget.style.transform = 'scale(1.02)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#C8653D';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            Exit
-          </Button>
         </Group>
 
         {/* Main Buttons Section */}
