@@ -75,8 +75,8 @@
     "lastName": "Last Name",
     "email": "Email",
     "phone": "Phone Number",
-    "country": "Country (Optional)",
-    "address": "Address (Optional)",
+    "country": "Country",
+    "address": "Address",
     "continue": "Continue",
     "back": "Back"
   },

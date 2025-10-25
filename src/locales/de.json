@@ -84,8 +84,8 @@
     "lastName": "Nachname",
     "email": "E-Mail",
     "phone": "Telefonnummer",
-    "country": "Land (Optional)",
-    "address": "Adresse (Optional)",
+    "country": "Land",
+    "address": "Adresse",
     "continue": "Weiter",
     "back": "Zurück"
   },
