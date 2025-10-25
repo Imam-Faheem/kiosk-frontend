@@ -12,6 +12,7 @@ import {
 import { IconX, IconArrowLeft, IconLogin, IconPlus, IconKey } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import UnoLogo from '../assets/uno.jpg';
 
 const MainMenuPage = () => {
   const navigate = useNavigate();
@@ -149,23 +150,17 @@ const MainMenuPage = () => {
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
                 marginRight: '15px',
+                objectFit: 'cover',
               }}
-            >
-              UNO
-            </Box>
+            />
             <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
               {t('mainMenu.title')}
             </Title>

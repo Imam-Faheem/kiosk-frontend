@@ -18,6 +18,7 @@ import {
 import { IconArrowLeft, IconWifi, IconSnowflake, IconShield, IconCoffee, IconDeviceTv } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import UnoLogo from '../../assets/uno.jpg';
 
 const RoomDetailPage = () => {
   const navigate = useNavigate();
@@ -53,9 +54,44 @@ const RoomDetailPage = () => {
     });
   };
 
+  // Handle missing data without immediate redirect
   if (!room || !guestDetails) {
-    navigate('/reservation/search');
-    return null;
+    return (
+      <Container
+        size="lg"
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '20px',
+        }}
+      >
+        <Paper
+          withBorder
+          shadow="md"
+          p={40}
+          radius="xl"
+          style={{
+            width: '100%',
+            maxWidth: '500px',
+            textAlign: 'center',
+          }}
+        >
+          <Text size="lg" c="red">
+            {t('roomDetail.errorMissingData') || 'Missing room or guest details. Please go back and try again.'}
+          </Text>
+          <Button
+            variant="outline"
+            mt="md"
+            onClick={() => navigate('/reservation/search')}
+            style={{ borderColor: '#C8653D', color: '#C8653D', borderRadius: '12px' }}
+          >
+            {t('common.backToSearch')}
+          </Button>
+        </Paper>
+      </Container>
+    );
   }
 
   return (
@@ -86,23 +122,17 @@ const RoomDetailPage = () => {
       >
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
                 marginRight: '15px',
+                objectFit: 'cover',
               }}
-            >
-              UNO
-            </Box>
+            />
             <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
               {t('roomDetail.title')}
             </Title>

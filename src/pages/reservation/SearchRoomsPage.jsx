@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from '@mantine/form';
 import { useRoomMutation } from '../../hooks/useRoomMutation';
 import { roomSearchValidationSchema, roomSearchInitialValues } from '../../schemas/reservation.schema';
+import UnoLogo from '../../assets/uno.jpg';
 
 const SearchRoomsPage = () => {
   const navigate = useNavigate();
@@ -121,23 +122,17 @@ const SearchRoomsPage = () => {
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
                 marginRight: '15px',
+                objectFit: 'cover',
               }}
-            >
-              UNO
-            </Box>
+            />
             <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
               {t('searchRooms.title')}
             </Title>
