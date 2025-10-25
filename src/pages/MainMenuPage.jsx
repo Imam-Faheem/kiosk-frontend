@@ -1,102 +1,40 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import {
   Container,
   Paper,
   Group,
   Button,
-  Text,
   Title,
   Stack,
-  Box,
 } from '@mantine/core';
 import { IconX, IconArrowLeft, IconLogin, IconPlus, IconKey } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../hooks/useLanguage';
 import UnoLogo from '../assets/uno.jpg';
 
 const MainMenuPage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-  const [idleTimeoutId, setIdleTimeoutId] = useState(null);
-  const [screenSaverTimeoutId, setScreenSaverTimeoutId] = useState(null);
+  const { t } = useLanguage();
 
-  // Idle timeout return to Welcome after 2min
-  useEffect(() => {
-    const resetIdleTimeout = () => {
-      if (idleTimeoutId) {
-        clearTimeout(idleTimeoutId);
-      }
-      if (screenSaverTimeoutId) {
-        clearTimeout(screenSaverTimeoutId);
-      }
-
-      const idleTimeout = setTimeout(() => {
-        navigate('/');
-      }, 120000); // 2 minutes
-
-      const screenSaverTimeout = setTimeout(() => {
-        // Could implement screen saver here
-        console.log('Screen saver activated');
-      }, 120000); // 2 minutes
-
-      setIdleTimeoutId(idleTimeout);
-      setScreenSaverTimeoutId(screenSaverTimeout);
-    };
-
-    // Reset timeout on any user interaction
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    events.forEach(event => {
-      document.addEventListener(event, resetIdleTimeout, true);
-    });
-
-    resetIdleTimeout();
-
-    return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, resetIdleTimeout, true);
-      });
-      if (idleTimeoutId) {
-        clearTimeout(idleTimeoutId);
-      }
-      if (screenSaverTimeoutId) {
-        clearTimeout(screenSaverTimeoutId);
-      }
-    };
-  }, [navigate]);
-
-  const clearTimeouts = useCallback(() => {
-    if (idleTimeoutId) {
-      clearTimeout(idleTimeoutId);
-    }
-    if (screenSaverTimeoutId) {
-      clearTimeout(screenSaverTimeoutId);
-    }
-  }, [idleTimeoutId, screenSaverTimeoutId]);
-
-  const handleExit = useCallback(() => {
-    clearTimeouts();
+  const handleExit = () => {
     navigate('/');
-  }, [clearTimeouts, navigate]);
+  };
 
-  const handleBack = useCallback(() => {
-    clearTimeouts();
+  const handleBack = () => {
     navigate('/');
-  }, [clearTimeouts, navigate]);
+  };
 
-  const handleCheckIn = useCallback(() => {
-    clearTimeouts();
+  const handleCheckIn = () => {
     navigate('/checkin');
-  }, [clearTimeouts, navigate]);
+  };
 
-  const handleNewReservation = useCallback(() => {
-    clearTimeouts();
+  const handleNewReservation = () => {
     navigate('/reservation/search');
-  }, [clearTimeouts, navigate]);
+  };
 
-  const handleLostCard = useCallback(() => {
-    clearTimeouts();
+  const handleLostCard = () => {
     navigate('/lost-card');
-  }, [clearTimeouts, navigate]);
+  };
 
   const buttonStyle = {
     width: '100%',
@@ -162,20 +100,29 @@ const MainMenuPage = () => {
               }}
             />
             <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('mainMenu.title')}
+              UNO HOTELS
             </Title>
           </Group>
           
           <Button
-            variant="light"
-            size="sm"
+            size="lg"
             leftSection={<IconX size={16} />}
             onClick={handleExit}
             style={{
-              backgroundColor: '#E0E0E0',
-              color: '#000000',
-              border: '1px solid #D0D0D0',
-              borderRadius: '8px',
+              backgroundColor: '#C8653D',
+              color: '#FFFFFF',
+              borderRadius: '12px',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#B8552F';
+              e.currentTarget.style.transform = 'scale(1.02)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#C8653D';
+              e.currentTarget.style.transform = 'scale(1)';
             }}
           >
             Exit
@@ -242,24 +189,20 @@ const MainMenuPage = () => {
         {/* Bottom Section - Back Button */}
         <Group justify="flex-start" style={{ marginTop: '20px' }}>
           <Button
-            variant="filled"
+            size="lg"
             leftSection={<IconArrowLeft size={16} />}
             onClick={handleBack}
             style={{
               backgroundColor: '#C8653D',
               color: '#FFFFFF',
-              borderRadius: '20px',
-              padding: '12px 24px',
+              borderRadius: '12px',
               fontWeight: 'bold',
               fontSize: '16px',
-              fontFamily: 'sans-serif',
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
               transition: 'all 0.3s ease',
-              border: 'none',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#B8552F';
-              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.transform = 'scale(1.02)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = '#C8653D';

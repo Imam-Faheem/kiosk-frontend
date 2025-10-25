@@ -14,13 +14,13 @@ import {
 } from '@mantine/core';
 import { IconArrowLeft, IconCreditCard, IconCheck, IconMail } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
 
 const CardDispensingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const issueCard = useCardMutation('issue', {
     onSuccess: (result) => {
       if (result.success) {

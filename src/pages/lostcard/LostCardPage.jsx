@@ -11,16 +11,17 @@ import {
   TextInput,
   Alert,
 } from '@mantine/core';
-import { IconArrowLeft, IconKey, IconAlertCircle } from '@tabler/icons-react';
+import { IconKey, IconAlertCircle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
+import BackButton from '../../components/BackButton';
 import { useForm } from '@mantine/form';
 import { useCardMutation } from '../../hooks/useCardMutation';
 import { lostCardValidationSchema, lostCardInitialValues } from '../../schemas/lostCard.schema';
 
 const LostCardPage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const validateGuest = useCardMutation('validate', {
     onSuccess: (result) => {
       if (result.success) {
@@ -120,23 +121,11 @@ const LostCardPage = () => {
               UNO
             </Box>
             <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('lostCard.title')}
+              UNO HOTELS
             </Title>
           </Group>
         </Group>
 
-        {/* Help Text */}
-        <Alert
-          icon={<IconKey size={16} />}
-          title="Lost Your Card?"
-          color="blue"
-          variant="light"
-          style={{ borderRadius: '8px', marginBottom: '20px' }}
-        >
-          <Text size="sm">
-            {t('lostCard.helpText')}
-          </Text>
-        </Alert>
 
         {/* Form */}
         <form onSubmit={form.onSubmit(handleSubmit)}>
@@ -207,28 +196,7 @@ const LostCardPage = () => {
 
           {/* Action Buttons */}
           <Group justify="space-between">
-            <Button
-              variant="outline"
-              leftSection={<IconArrowLeft size={16} />}
-              onClick={handleBack}
-              style={{
-                borderColor: '#C8653D',
-                color: '#C8653D',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.color = '#FFFFFF';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#C8653D';
-              }}
-            >
-              {t('lostCard.back')}
-            </Button>
+            <BackButton onClick={handleBack} text={t('lostCard.back')} />
 
             <Button
               type="submit"

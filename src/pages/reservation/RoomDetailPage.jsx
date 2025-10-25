@@ -15,15 +15,16 @@ import {
   Badge,
   SimpleGrid,
 } from '@mantine/core';
-import { IconArrowLeft, IconWifi, IconSnowflake, IconShield, IconCoffee, IconDeviceTv } from '@tabler/icons-react';
+import { IconWifi, IconSnowflake, IconShield, IconCoffee, IconDeviceTv } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
+import BackButton from '../../components/BackButton';
 
 const RoomDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -134,7 +135,7 @@ const RoomDetailPage = () => {
               }}
             />
             <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('roomDetail.title')}
+              UNO HOTELS
             </Title>
           </Group>
         </Group>
@@ -240,18 +241,7 @@ const RoomDetailPage = () => {
         </Stack>
 
         <Group justify="space-between">
-          <Button
-            variant="outline"
-            leftSection={<IconArrowLeft size={16} />}
-            onClick={handleBack}
-            style={{
-              borderColor: '#C8653D',
-              color: '#C8653D',
-              borderRadius: '12px',
-            }}
-          >
-            {t('common.back')}
-          </Button>
+          <BackButton onClick={handleBack} text={t('common.back')} />
           <Button
             size="lg"
             disabled={!termsAccepted}

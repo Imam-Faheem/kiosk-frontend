@@ -10,16 +10,16 @@ import {
   Box,
   TextInput,
 } from '@mantine/core';
-import { IconArrowLeft } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useForm } from '@mantine/form';
 import { guestValidationSchema, guestInitialValues } from '../../schemas/guest.schema';
+import useLanguage from '../../hooks/useLanguage';
+import BackButton from '../../components/BackButton';
 
 const GuestDetailsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
 
   const { room, searchCriteria } = location.state || {};
 
@@ -155,18 +155,7 @@ const GuestDetailsPage = () => {
           </Stack>
 
           <Group justify="space-between">
-            <Button
-              variant="outline"
-              leftSection={<IconArrowLeft size={16} />}
-              onClick={handleBack}
-              style={{
-                borderColor: '#C8653D',
-                color: '#C8653D',
-                borderRadius: '12px',
-              }}
-            >
-              {t('guestDetails.back')}
-            </Button>
+            <BackButton onClick={handleBack} text={t('guestDetails.back')} />
             <Button
               type="submit"
               size="lg"

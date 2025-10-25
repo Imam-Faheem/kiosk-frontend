@@ -11,13 +11,12 @@ import {
 } from '@mantine/core';
 import { IconCheck, IconHome } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
 
 const ReservationCompletePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
-  const [countdown, setCountdown] = useState(20);
+  const { t } = useLanguage();
 
   const { reservation, cardData } = location.state || {};
 
@@ -27,18 +26,6 @@ const ReservationCompletePage = () => {
       return;
     }
 
-    const countdownInterval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdownInterval);
-          navigate('/home');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(countdownInterval);
   }, [reservation, navigate]);
 
   const handleReturnHome = () => {
@@ -124,9 +111,6 @@ const ReservationCompletePage = () => {
             {t('reservationComplete.reservationNumber')}: {reservation.reservationId}
           </Text>
 
-          <Text size="sm" c="#666666" ta="center">
-            Returning to main menu in {countdown} seconds...
-          </Text>
         </Stack>
 
         <Group justify="center">

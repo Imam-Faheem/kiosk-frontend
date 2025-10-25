@@ -15,13 +15,13 @@ import {
 } from '@mantine/core';
 import { IconArrowLeft, IconCreditCard, IconCheck, IconX } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
 import { usePaymentMutation } from '../../hooks/usePaymentMutation';
 
 const PaymentCheckPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const checkPaymentStatus = usePaymentMutation('checkStatus', {
     onSuccess: (result) => {
       if (result.success) {

@@ -13,13 +13,13 @@ import {
 } from '@mantine/core';
 import { IconArrowLeft, IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
 
 const NewResCardPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
 
   const { reservation, room } = location.state || {};
   const issueCard = useCardMutation('issue', {
@@ -50,14 +50,12 @@ const NewResCardPage = () => {
         });
 
         if (result.success) {
-          setTimeout(() => {
-            navigate('/reservation/complete', {
-              state: {
-                reservation,
-                cardData: result.data,
-              },
-            });
-          }, 3000);
+          navigate('/reservation/complete', {
+            state: {
+              reservation,
+              cardData: result.data,
+            },
+          });
         }
       } catch (err) {
         console.error('Card issuance error:', err);

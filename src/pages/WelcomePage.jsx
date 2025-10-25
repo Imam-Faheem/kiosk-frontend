@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import {
   Container,
   Paper,
-  Group,
   Button,
   Text,
   Stack,
@@ -29,18 +28,22 @@ const languages = [
 const WelcomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { language, setLanguage } = useLanguageStore();
-  const [timeoutId, setTimeoutId] = useState(null);
+  const { language, setLanguage, initializeLanguage } = useLanguageStore();
 
-  const handleLanguageChange = (value) => setLanguage(value);
+  // Ensure language is properly initialized
+  useEffect(() => {
+    initializeLanguage();
+  }, [initializeLanguage]);
+
+  const handleLanguageChange = (value) => {
+    setLanguage(value);
+  };
 
   const handleContinue = () => {
-    if (timeoutId) clearTimeout(timeoutId);
     navigate("/home");
   };
 
   const handleExit = () => {
-    if (timeoutId) clearTimeout(timeoutId);
     navigate("/");
   };
 
@@ -89,24 +92,6 @@ const WelcomePage = () => {
           UNO HOTELS
         </h2>
 
-        {/* ✅ Exit button top-right */}
-        <Button
-          variant="light"
-          size="sm"
-          leftSection={<IconX size={16} />}
-          onClick={handleExit}
-          style={{
-            position: "absolute",
-            top: "20px",
-            right: "30px",
-            backgroundColor: "#E0E0E0",
-            color: "#000000",
-            border: "1px solid #D0D0D0",
-            borderRadius: "8px",
-          }}
-        >
-          Exit
-        </Button>
 
         {/* ✅ Centered Logo */}
         <img
@@ -120,7 +105,7 @@ const WelcomePage = () => {
           }}
         />
 
-        {/* ✅ Main heading */}
+        {/* ✅ Main heading with dynamic language text */}
         <h3
           style={{
             color: "#333",
@@ -129,14 +114,28 @@ const WelcomePage = () => {
             fontWeight: "500",
           }}
         >
-          {t("welcome.selectLanguage") || "Please select your language"}
+          {language === "de" && "Sprache wählen"}
+          {language === "en" && "Select language"}
+          {language === "es" && "Seleccionar idioma"}
+          {language === "fr" && "Sélectionner la langue"}
+          {language === "it" && "Seleziona lingua"}
+          {language === "pt" && "Selecionar idioma"}
         </h3>
 
-        {/* ✅ Language Selection */}
-        <Grid gutter="lg" mb="xl">
-          {languages.map((lang) => (
-            <Grid.Col span={6} key={lang.value}>
-              <Card
+        {/* ✅ Language Selection - Centered Grid */}
+        <Box 
+          style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            width: '100%',
+            marginBottom: '2rem'
+          }}
+        >
+          <Grid gutter="lg" style={{ maxWidth: '600px', width: '100%' }}>
+            {languages.map((lang) => (
+              <Grid.Col span={6} key={lang.value}>
+                <Card
                 withBorder
                 p="lg"
                 radius="lg"
@@ -154,6 +153,11 @@ const WelcomePage = () => {
                     language === lang.value
                       ? "0 6px 16px rgba(200, 101, 61, 0.2)"
                       : "0 4px 10px rgba(0, 0, 0, 0.08)",
+                  minHeight: "200px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
                 }}
                 onClick={() => handleLanguageChange(lang.value)}
               >
@@ -162,9 +166,9 @@ const WelcomePage = () => {
                     <Image
                       src={lang.flag}
                       alt={lang.label}
-                      width={80}
-                      height={55}
-                      radius="sm"
+                      width={120}
+                      height={80}
+                      radius={0}
                       style={{ objectFit: "cover" }}
                     />
                     {language === lang.value && (
@@ -200,7 +204,8 @@ const WelcomePage = () => {
               </Card>
             </Grid.Col>
           ))}
-        </Grid>
+          </Grid>
+        </Box>
 
         {/* ✅ Continue Button */}
         <Box ta="center">

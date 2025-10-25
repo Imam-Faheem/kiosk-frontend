@@ -11,17 +11,18 @@ import {
   TextInput,
   Alert,
 } from '@mantine/core';
-import { IconArrowLeft, IconLogin, IconAlertCircle } from '@tabler/icons-react';
+import { IconLogin, IconAlertCircle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
 import { checkinValidationSchema, checkinInitialValues } from '../../schemas/checkin.schema';
+import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
+import BackButton from '../../components/BackButton';
 
 const CheckInPage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [error, setError] = useState(null);
   
   const validateReservation = useReservationMutation('validate', {
@@ -103,7 +104,7 @@ const CheckInPage = () => {
               }}
             />
             <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('checkIn.title')}
+              UNO HOTELS
             </Title>
           </Group>
         </Group>
@@ -160,28 +161,7 @@ const CheckInPage = () => {
 
           {/* Action Buttons */}
           <Group justify="space-between">
-            <Button
-              variant="outline"
-              leftSection={<IconArrowLeft size={16} />}
-              onClick={handleBack}
-              style={{
-                borderColor: '#C8653D',
-                color: '#C8653D',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.color = '#FFFFFF';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#C8653D';
-              }}
-            >
-              {t('checkIn.back')}
-            </Button>
+            <BackButton onClick={handleBack} text={t('checkIn.back')} />
 
             <Button
               type="submit"

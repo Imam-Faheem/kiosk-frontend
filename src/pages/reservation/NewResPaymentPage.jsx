@@ -12,12 +12,12 @@ import {
 } from '@mantine/core';
 import { IconArrowLeft, IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
 
 const NewResPaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [paymentStatus, setPaymentStatus] = useState('idle');
   const [error, setError] = useState(null);
   const hasProcessed = useRef(false);
@@ -40,37 +40,35 @@ const NewResPaymentPage = () => {
         hasProcessed.current = true;
         setPaymentStatus('processing');
         
-        // Mock success after 3 seconds
-        setTimeout(() => {
-          setPaymentStatus('success');
-          
-          // Mock reservation data
-          const mockReservation = {
-            reservationId: `RES-${Date.now()}`,
-            guestDetails,
-            roomTypeId: room.roomTypeId,
-            checkIn: searchCriteria.checkIn,
-            checkOut: searchCriteria.checkOut,
-            guests: searchCriteria.guests,
-            totalAmount: room.totalPrice,
-            currency: room.currency,
-            status: 'confirmed'
-          };
+        // Immediate success
+        setPaymentStatus('success');
+        
+        // Mock reservation data
+        const mockReservation = {
+          reservationId: `RES-${Date.now()}`,
+          guestDetails,
+          roomTypeId: room.roomTypeId,
+          checkIn: searchCriteria.checkIn,
+          checkOut: searchCriteria.checkOut,
+          guests: searchCriteria.guests,
+          totalAmount: room.totalPrice,
+          currency: room.currency,
+          status: 'confirmed'
+        };
 
-          // Navigate to card page after success
-          navigate('/reservation/card', {
-            state: {
-              reservation: mockReservation,
-              room,
-              paymentData: {
-                paymentId: `PAY-${Date.now()}`,
-                amount: room.totalPrice,
-                currency: room.currency,
-                status: 'initiated'
-              }
-            },
-          });
-        }, 3000);
+        // Navigate to card page after success
+        navigate('/reservation/card', {
+          state: {
+            reservation: mockReservation,
+            room,
+            paymentData: {
+              paymentId: `PAY-${Date.now()}`,
+              amount: room.totalPrice,
+              currency: room.currency,
+              status: 'initiated'
+            }
+          },
+        });
         
       } catch (err) {
         console.error('Payment error:', err);
