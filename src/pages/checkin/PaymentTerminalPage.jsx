@@ -13,10 +13,12 @@ import {
   Alert,
   Progress,
 } from '@mantine/core';
-import { IconArrowLeft, IconCreditCard, IconX, IconCheck } from '@tabler/icons-react';
+import { IconCreditCard, IconX, IconCheck } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { usePaymentMutation } from '../../hooks/usePaymentMutation';
+import UnoLogo from '../../assets/uno.jpg';
+import BackButton from '../../components/BackButton';
 
 const PaymentTerminalPage = () => {
   const navigate = useNavigate();
@@ -80,50 +82,47 @@ const PaymentTerminalPage = () => {
       return;
     }
 
+    let interval = null;
+    let timeout = null;
+    let countdownInterval = null;
+
     const startPayment = async () => {
       try {
         setPaymentStatus('initiating');
         
-        const result = await initiatePayment.mutateAsync({
-          reservationId: reservation.reservationId,
-          amount: reservation.totalAmount || 320.00,
-          currency: reservation.currency || 'USD'
-        });
-
-        if (result.success) {
-          setTransactionId(result.data.transactionId);
-          setPaymentStatus('processing');
-          
-          // Start polling for payment status
-          const interval = setInterval(async () => {
-            try {
-              const statusResult = await pollPaymentStatus.mutateAsync(result.data.transactionId);
+        // Simulate payment initiation
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const mockTransactionId = `TXN-${Date.now()}`;
+        setTransactionId(mockTransactionId);
+        setPaymentStatus('processing');
+        
+        // Start polling for payment status
+        interval = setInterval(async () => {
+          try {
+            // Simulate payment completion after 5 seconds
+            const elapsed = Date.now() - parseInt(mockTransactionId.split('-')[1]);
+            if (elapsed > 5000) {
+              setPaymentStatus('completed');
+              clearInterval(interval);
               
-              if (statusResult.success && statusResult.data.status === 'completed') {
-                setPaymentStatus('completed');
-                clearInterval(interval);
-                setPollInterval(null);
-                
-                // Navigate to card dispensing after success
-                setTimeout(() => {
-                  navigate('/checkin/card-dispensing', {
-                    state: { 
-                      reservation, 
-                      paymentStatus: statusResult.data,
-                      transactionId: result.data.transactionId
-                    }
-                  });
-                }, 2000);
-              }
-            } catch (err) {
-              console.error('Payment polling error:', err);
+              // Navigate to card dispensing after success
+              setTimeout(() => {
+                navigate('/checkin/card-dispensing', {
+                  state: { 
+                    reservation, 
+                    paymentStatus: { status: 'completed', transactionId: mockTransactionId },
+                    transactionId: mockTransactionId
+                  }
+                });
+              }, 2000);
             }
-          }, 2000); // Poll every 2 seconds
-          
-          setPollInterval(interval);
-        } else {
-          setPaymentStatus('failed');
-        }
+          } catch (err) {
+            console.error('Payment polling error:', err);
+          }
+        }, 1000); // Poll every 1 second
+        
+        setPollInterval(interval);
       } catch (err) {
         console.error('Payment initiation error:', err);
         setPaymentStatus('failed');
@@ -133,20 +132,17 @@ const PaymentTerminalPage = () => {
     startPayment();
 
     // 3-minute timeout
-    const timeout = setTimeout(() => {
-      if (paymentStatus === 'processing') {
-        setPaymentStatus('timeout');
-        if (pollInterval) {
-          clearInterval(pollInterval);
-          setPollInterval(null);
-        }
+    timeout = setTimeout(() => {
+      setPaymentStatus('timeout');
+      if (interval) {
+        clearInterval(interval);
       }
     }, 180000); // 3 minutes
 
     setTimeoutId(timeout);
 
     // Countdown timer
-    const countdownInterval = setInterval(() => {
+    countdownInterval = setInterval(() => {
       setTimeRemaining(prev => {
         if (prev <= 1) {
           clearInterval(countdownInterval);
@@ -160,12 +156,14 @@ const PaymentTerminalPage = () => {
       if (timeout) {
         clearTimeout(timeout);
       }
-      if (pollInterval) {
-        clearInterval(pollInterval);
+      if (interval) {
+        clearInterval(interval);
       }
-      clearInterval(countdownInterval);
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+      }
     };
-  }, [reservation, navigate, initiatePayment, pollPaymentStatus, paymentStatus, pollInterval]);
+  }, [reservation, navigate]);
 
   const handleCancel = () => {
     if (pollInterval) {
@@ -228,25 +226,28 @@ const PaymentTerminalPage = () => {
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
                 marginRight: '0px',
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '30px !important',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: '600',
+                letterSpacing: '1px',
+                marginLeft: '-9px'
               }}
             >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('paymentTerminal.title')}
+              UNO HOTELS
             </Title>
           </Group>
         </Group>
@@ -358,28 +359,7 @@ const PaymentTerminalPage = () => {
 
         {/* Action Buttons */}
         <Group justify="space-between">
-          <Button
-            variant="outline"
-            leftSection={<IconArrowLeft size={16} />}
-            onClick={handleBack}
-            style={{
-              borderColor: '#C8653D',
-              color: '#C8653D',
-              borderRadius: '12px',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#C8653D';
-              e.currentTarget.style.color = '#FFFFFF';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#C8653D';
-            }}
-          >
-            {t('common.back')}
-          </Button>
+          <BackButton onClick={handleBack} text={t('common.back')} />
 
           {(paymentStatus === 'failed' || paymentStatus === 'timeout') && (
             <Button

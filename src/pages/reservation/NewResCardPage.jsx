@@ -11,10 +11,12 @@ import {
   Stepper,
   Loader,
 } from '@mantine/core';
-import { IconArrowLeft, IconCreditCard } from '@tabler/icons-react';
+import { IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
+import UnoLogo from '../../assets/uno.jpg';
+import BackButton from '../../components/BackButton';
 
 const NewResCardPage = () => {
   const navigate = useNavigate();
@@ -93,33 +95,53 @@ const NewResCardPage = () => {
       >
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
                 marginRight: '0px',
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '30px !important',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: '600',
+                letterSpacing: '1px',
+                marginLeft: '-9px'
               }}
             >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('newResCard.title')}
+              UNO HOTELS
             </Title>
           </Group>
         </Group>
 
         <Stack gap="lg" mb="xl" align="center">
           <IconCreditCard size={64} color="#C8653D" />
-          <Loader size="lg" color="#C8653D" />
-          <Text size="lg">{t('newResCard.steps.preparing')}</Text>
+          
+          {/* Progress Steps */}
+          <Stepper active={0} orientation="vertical" size="sm" style={{ width: '100%' }}>
+            <Stepper.Step 
+              label={t('newResCard.steps.preparing')} 
+              description="Preparing your new card"
+              icon={<Loader size="sm" color="#C8653D" />}
+            />
+            <Stepper.Step 
+              label={t('newResCard.steps.encoding')} 
+              description="Encoding card with your details"
+            />
+            <Stepper.Step 
+              label={t('newResCard.steps.sending')} 
+              description="Sending confirmation"
+            />
+          </Stepper>
+          
+          <Text size="lg" fw={600} c="#C8653D">{t('newResCard.takeCard')}</Text>
         </Stack>
       </Paper>
     </Container>

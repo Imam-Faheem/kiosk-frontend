@@ -15,6 +15,7 @@ import { useForm } from '@mantine/form';
 import { guestValidationSchema, guestInitialValues } from '../../schemas/guest.schema';
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
+import UnoLogo from '../../assets/uno.jpg';
 
 const GuestDetailsPage = () => {
   const navigate = useNavigate();
@@ -86,25 +87,28 @@ const GuestDetailsPage = () => {
       >
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
                 marginRight: '0px',
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '30px !important',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: '600',
+                letterSpacing: '1px',
+                marginLeft: '-9px'
               }}
             >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('guestDetails.title')}
+              UNO HOTELS
             </Title>
           </Group>
         </Group>

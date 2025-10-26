@@ -16,57 +16,57 @@ import { useNavigate } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import { useForm } from '@mantine/form';
-import { useCardMutation } from '../../hooks/useCardMutation';
-import { lostCardValidationSchema, lostCardInitialValues } from '../../schemas/lostCard.schema';
+import UnoLogo from '../../assets/uno.jpg';
 
 const LostCardPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const validateGuest = useCardMutation('validate', {
-    onSuccess: (result) => {
-      if (result.success) {
-        // Navigate to regenerate card page with validated data
-        navigate('/lost-card/regenerate', {
-          state: {
-            guestData: result.data,
-            validationData: form.values,
-          },
-        });
-      } else {
-        setError(t('error.guestValidationFailed'));
-      }
-    },
-    onError: (err) => {
-      console.error('Guest validation error:', err);
-      setError(err.message || t('error.guestValidationFailed'));
-    }
-  });
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
-    initialValues: lostCardInitialValues,
-    validate: (values) => {
-      try {
-        lostCardValidationSchema.validateSync(values, { abortEarly: false });
-        return {};
-      } catch (err) {
-        const errors = {};
-        err.inner.forEach((error) => {
-          errors[error.path] = error.message;
-        });
-        return errors;
-      }
+    initialValues: {
+      roomNumber: '205',
+      reservationNumber: 'RES-2024-001234',
+      lastName: 'Smith'
+    },
+    validate: {
+      roomNumber: (value) => (!value ? 'Room number is required' : null),
+      reservationNumber: (value) => (!value ? 'Reservation number is required' : null),
+      lastName: (value) => (!value ? 'Last name is required' : null),
     },
   });
 
   const handleSubmit = async (values) => {
     setError(null);
+    setIsLoading(true);
     
     try {
-      await validateGuest.mutateAsync(values);
+      // Simulate validation delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock successful validation
+      const mockGuestData = {
+        roomNumber: values.roomNumber,
+        reservationNumber: values.reservationNumber,
+        lastName: values.lastName,
+        firstName: 'John',
+        email: 'john.smith@email.com',
+        phone: '+1-555-0123'
+      };
+      
+      // Navigate to regenerate card page with validated data
+      navigate('/lost-card/regenerate', {
+        state: {
+          guestData: mockGuestData,
+          validationData: values,
+        },
+      });
     } catch (err) {
       console.error('Guest validation error:', err);
       setError(err.message || t('error.guestValidationFailed'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -103,23 +103,17 @@ const LostCardPage = () => {
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
                 marginRight: '0px',
+                objectFit: 'cover',
               }}
-            >
-              UNO
-            </Box>
+            />
             <Title 
               order={2} 
               style={{ 
@@ -211,7 +205,7 @@ const LostCardPage = () => {
               type="submit"
               size="lg"
               leftSection={<IconKey size={20} />}
-              loading={validateGuest.isPending}
+              loading={isLoading}
               style={{
                 backgroundColor: '#C8653D',
                 color: '#FFFFFF',
@@ -221,15 +215,19 @@ const LostCardPage = () => {
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8552F';
-                e.currentTarget.style.transform = 'scale(1.02)';
+                if (!e.currentTarget.disabled) {
+                  e.currentTarget.style.backgroundColor = '#B8552F';
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.transform = 'scale(1)';
+                if (!e.currentTarget.disabled) {
+                  e.currentTarget.style.backgroundColor = '#C8653D';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }
               }}
             >
-              {t('lostCard.submit')}
+              {isLoading ? 'Validating...' : t('lostCard.submit')}
             </Button>
           </Group>
         </form>

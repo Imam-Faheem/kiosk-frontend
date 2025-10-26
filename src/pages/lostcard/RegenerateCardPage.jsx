@@ -12,10 +12,12 @@ import {
   Alert,
   Loader,
 } from '@mantine/core';
-import { IconArrowLeft, IconKey, IconCheck, IconX } from '@tabler/icons-react';
+import { IconKey, IconCheck, IconX } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
+import UnoLogo from '../../assets/uno.jpg';
+import BackButton from '../../components/BackButton';
 
 const RegenerateCardPage = () => {
   const navigate = useNavigate();
@@ -142,25 +144,28 @@ const RegenerateCardPage = () => {
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
                 marginRight: '0px',
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '30px !important',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: '600',
+                letterSpacing: '1px',
+                marginLeft: '-9px'
               }}
             >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('regenerateCard.title')}
+              UNO HOTELS
             </Title>
           </Group>
         </Group>
@@ -296,28 +301,7 @@ const RegenerateCardPage = () => {
 
         {/* Back Button */}
         <Group justify="flex-start">
-          <Button
-            variant="outline"
-            leftSection={<IconArrowLeft size={16} />}
-            onClick={handleBack}
-            style={{
-              borderColor: '#C8653D',
-              color: '#C8653D',
-              borderRadius: '12px',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#C8653D';
-              e.currentTarget.style.color = '#FFFFFF';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#C8653D';
-            }}
-          >
-            {t('common.back')}
-          </Button>
+          <BackButton onClick={handleBack} text={t('common.back')} />
         </Group>
       </Paper>
     </Container>

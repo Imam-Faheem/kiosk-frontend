@@ -13,10 +13,12 @@ import {
   Loader,
   Alert,
 } from '@mantine/core';
-import { IconArrowLeft, IconCreditCard, IconCheck, IconX } from '@tabler/icons-react';
+import { IconCreditCard, IconCheck, IconX } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { usePaymentMutation } from '../../hooks/usePaymentMutation';
+import UnoLogo from '../../assets/uno.jpg';
+import BackButton from '../../components/BackButton';
 
 const PaymentCheckPage = () => {
   const navigate = useNavigate();
@@ -67,7 +69,36 @@ const PaymentCheckPage = () => {
     const checkStatus = async () => {
       try {
         setLoading(true);
-        await checkPaymentStatus.mutateAsync(reservation.reservationId);
+        
+        // Simulate payment status check
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Mock payment status based on reservation data
+        const mockPaymentStatus = {
+          status: reservation.paymentStatus, // 'pending' or 'paid'
+          amount: reservation.totalAmount,
+          currency: reservation.currency,
+          transactionId: `TXN-${Date.now()}`
+        };
+        
+        setPaymentStatus(mockPaymentStatus);
+        
+        // Navigate based on payment status
+        if (mockPaymentStatus.status === 'paid') {
+          // Already paid, go to card dispensing
+          setTimeout(() => {
+            navigate('/checkin/card-dispensing', {
+              state: { reservation, paymentStatus: mockPaymentStatus }
+            });
+          }, 2000);
+        } else {
+          // Not paid, go to payment terminal
+          setTimeout(() => {
+            navigate('/checkin/payment', {
+              state: { reservation, paymentStatus: mockPaymentStatus }
+            });
+          }, 2000);
+        }
       } catch (err) {
         console.error('Payment status check error:', err);
         setError(err.message || t('error.paymentFailed'));
@@ -77,7 +108,7 @@ const PaymentCheckPage = () => {
     };
 
     checkStatus();
-  }, [reservation, navigate, checkPaymentStatus, t]);
+  }, [reservation, navigate, t]);
 
   const handleBack = () => {
     navigate('/checkin');
@@ -116,25 +147,28 @@ const PaymentCheckPage = () => {
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
                 marginRight: '0px',
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '30px !important',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: '600',
+                letterSpacing: '1px',
+                marginLeft: '-9px'
               }}
             >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('paymentCheck.title')}
+              UNO HOTELS
             </Title>
           </Group>
         </Group>
@@ -169,7 +203,7 @@ const PaymentCheckPage = () => {
                   
                   <Group justify="space-between">
                     <Text size="md" c="#666666">{t('paymentCheck.guestName')}:</Text>
-                    <Text size="md" fw={500}>{reservation.guestName}</Text>
+                    <Text size="md" fw={500}>{reservation.firstName} {reservation.lastName}</Text>
                   </Group>
                   
                   <Group justify="space-between">
@@ -178,13 +212,23 @@ const PaymentCheckPage = () => {
                   </Group>
                   
                   <Group justify="space-between">
+                    <Text size="md" c="#666666">Room Number:</Text>
+                    <Text size="md" fw={500}>{reservation.roomNumber}</Text>
+                  </Group>
+                  
+                  <Group justify="space-between">
                     <Text size="md" c="#666666">{t('paymentCheck.checkIn')}:</Text>
-                    <Text size="md" fw={500}>{reservation.checkIn}</Text>
+                    <Text size="md" fw={500}>{new Date(reservation.checkIn).toLocaleDateString()}</Text>
                   </Group>
                   
                   <Group justify="space-between">
                     <Text size="md" c="#666666">{t('paymentCheck.checkOut')}:</Text>
-                    <Text size="md" fw={500}>{reservation.checkOut}</Text>
+                    <Text size="md" fw={500}>{new Date(reservation.checkOut).toLocaleDateString()}</Text>
+                  </Group>
+                  
+                  <Group justify="space-between">
+                    <Text size="md" c="#666666">Total Amount:</Text>
+                    <Text size="md" fw={500}>${reservation.totalAmount} {reservation.currency}</Text>
                   </Group>
                 </Stack>
               </Card>
@@ -228,28 +272,7 @@ const PaymentCheckPage = () => {
 
         {/* Back Button */}
         <Group justify="flex-start">
-          <Button
-            variant="outline"
-            leftSection={<IconArrowLeft size={16} />}
-            onClick={handleBack}
-            style={{
-              borderColor: '#C8653D',
-              color: '#C8653D',
-              borderRadius: '12px',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#C8653D';
-              e.currentTarget.style.color = '#FFFFFF';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#C8653D';
-            }}
-          >
-            {t('common.back')}
-          </Button>
+          <BackButton onClick={handleBack} text={t('common.back')} />
         </Group>
       </Paper>
     </Container>
