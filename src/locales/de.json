@@ -102,6 +102,26 @@
     "editDetails": "Details bearbeiten",
     "cancel": "Abbrechen"
   },
+  "signature": {
+    "title": "Digitale Unterschrift erforderlich",
+    "subtitle": "Bitte unterschreiben Sie unten, um Ihre Reservierung zu bestätigen",
+    "guestInfo": "Gästeinformationen",
+    "guestName": "Gastname",
+    "room": "Zimmer",
+    "checkIn": "Check-In",
+    "checkOut": "Check-Out",
+    "signatureLabel": "Bitte unterschreiben Sie im Feld unten:",
+    "signHere": "Hier unterschreiben...",
+    "signed": "Unterschrift erfasst",
+    "signedMessage": "Ihre Unterschrift wurde erfolgreich erfasst.",
+    "clear": "Löschen",
+    "save": "Unterschrift speichern",
+    "termsTitle": "Allgemeine Geschäftsbedingungen",
+    "termsText": "Mit Ihrer Unterschrift stimmen Sie den Hotel-AGB zu, einschließlich Stornierungsbedingungen, Check-in/Check-out-Zeiten und etwaigen Gebühren. Ihre Unterschrift dient als elektronische Zustimmung für diese Reservierung.",
+    "editDetails": "Details bearbeiten",
+    "continue": "Weiter zur Zahlung",
+    "errorMissingData": "Fehlende Zimmer- oder Gästedaten. Bitte gehen Sie zurück und versuchen Sie es erneut."
+  },
   "newResPayment": {
     "title": "Zahlung",
     "bookingSummary": "Buchungsübersicht",

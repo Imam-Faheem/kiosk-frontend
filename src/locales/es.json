@@ -93,6 +93,26 @@
     "editDetails": "Editar Detalles",
     "cancel": "Cancelar"
   },
+  "signature": {
+    "title": "Firma digital requerida",
+    "subtitle": "Por favor firme abajo para confirmar su acuerdo de reserva",
+    "guestInfo": "Información del Huésped",
+    "guestName": "Nombre del Huésped",
+    "room": "Habitación",
+    "checkIn": "Check In",
+    "checkOut": "Check Out",
+    "signatureLabel": "Por favor firme en el recuadro:",
+    "signHere": "Firme aquí...",
+    "signed": "Firma capturada",
+    "signedMessage": "Su firma ha sido capturada exitosamente.",
+    "clear": "Borrar",
+    "save": "Guardar firma",
+    "termsTitle": "Términos y Condiciones",
+    "termsText": "Al firmar arriba, usted acepta los términos y condiciones del hotel, incluyendo políticas de cancelación, horarios de check-in/check-out y cualquier cargo aplicable. Su firma sirve como consentimiento electrónico para esta reserva.",
+    "editDetails": "Editar Detalles",
+    "continue": "Continuar al Pago",
+    "errorMissingData": "Faltan datos de habitación o huésped. Por favor regrese e intente de nuevo."
+  },
   "newResPayment": {
     "title": "Pago",
     "bookingSummary": "Resumen de Reserva",

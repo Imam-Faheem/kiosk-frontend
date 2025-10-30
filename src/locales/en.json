@@ -93,6 +93,26 @@
     "editDetails": "Edit Details",
     "cancel": "Cancel"
   },
+  "signature": {
+    "title": "Digital Signature Required",
+    "subtitle": "Please sign below to confirm your reservation agreement",
+    "guestInfo": "Guest Information",
+    "guestName": "Guest Name",
+    "room": "Room",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out",
+    "signatureLabel": "Please sign in the box below:",
+    "signHere": "Sign here...",
+    "signed": "Signature Captured",
+    "signedMessage": "Your signature has been successfully captured.",
+    "clear": "Clear",
+    "save": "Save Signature",
+    "termsTitle": "Terms and Conditions",
+    "termsText": "By signing above, you agree to the hotel's terms and conditions, including cancellation policies, check-in/check-out times, and any applicable fees. Your signature serves as electronic consent for this reservation.",
+    "editDetails": "Edit Details",
+    "continue": "Continue to Payment",
+    "errorMissingData": "Missing room or guest details. Please go back and try again."
+  },
   "newResPayment": {
     "title": "Payment",
     "bookingSummary": "Booking Summary",

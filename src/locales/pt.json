@@ -11,6 +11,26 @@
     "lostCard": "Perdi Meu Cartão",
     "back": "Voltar"
   },
+  "signature": {
+    "title": "Assinatura digital necessária",
+    "subtitle": "Por favor assine abaixo para confirmar seu acordo de reserva",
+    "guestInfo": "Informações do hóspede",
+    "guestName": "Nome do hóspede",
+    "room": "Quarto",
+    "checkIn": "Check-In",
+    "checkOut": "Check-Out",
+    "signatureLabel": "Por favor assine na caixa abaixo:",
+    "signHere": "Assine aqui...",
+    "signed": "Assinatura capturada",
+    "signedMessage": "Sua assinatura foi capturada com sucesso.",
+    "clear": "Limpar",
+    "save": "Salvar assinatura",
+    "termsTitle": "Termos e condições",
+    "termsText": "Ao assinar acima, você concorda com os termos e condições do hotel, incluindo políticas de cancelamento, horários de check-in/check-out e quaisquer taxas aplicáveis. Sua assinatura serve como consentimento eletrônico para esta reserva.",
+    "editDetails": "Editar detalhes",
+    "continue": "Continuar para o Pagamento",
+    "errorMissingData": "Faltam dados do quarto ou do hóspede. Por favor, volte e tente novamente."
+  },
   "common": {
     "loading": "Carregando...",
     "error": "Erro",

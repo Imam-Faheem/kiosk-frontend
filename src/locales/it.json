@@ -11,6 +11,26 @@
     "lostCard": "Ho perso la mia carta",
     "back": "Indietro"
   },
+  "signature": {
+    "title": "Firma digitale richiesta",
+    "subtitle": "Per favore firma qui sotto per confermare l'accordo di prenotazione",
+    "guestInfo": "Informazioni dell'ospite",
+    "guestName": "Nome dell'ospite",
+    "room": "Camera",
+    "checkIn": "Check-In",
+    "checkOut": "Check-Out",
+    "signatureLabel": "Firma nel riquadro sottostante:",
+    "signHere": "Firma qui...",
+    "signed": "Firma acquisita",
+    "signedMessage": "La tua firma è stata acquisita con successo.",
+    "clear": "Cancella",
+    "save": "Salva firma",
+    "termsTitle": "Termini e condizioni",
+    "termsText": "Firmando sopra, accetti i termini e condizioni dell'hotel, incluse le politiche di cancellazione, gli orari di check-in/check-out e le eventuali tariffe applicabili. La tua firma funge da consenso elettronico per questa prenotazione.",
+    "editDetails": "Modifica dettagli",
+    "continue": "Continua al pagamento",
+    "errorMissingData": "Dati della camera o dell'ospite mancanti. Torna indietro e riprova."
+  },
   "common": {
     "loading": "Caricamento...",
     "error": "Errore",

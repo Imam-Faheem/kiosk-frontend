@@ -22,6 +22,7 @@ import CheckInCompletePage from "./pages/checkin/CheckInCompletePage";
 import SearchRoomsPage from "./pages/reservation/SearchRoomsPage";
 import GuestDetailsPage from "./pages/reservation/GuestDetailsPage";
 import RoomDetailPage from "./pages/reservation/RoomDetailPage";
+import SignaturePage from "./pages/reservation/SignaturePage";
 import NewResPaymentPage from "./pages/reservation/NewResPaymentPage";
 import NewResCardPage from "./pages/reservation/NewResCardPage";
 import ReservationCompletePage from "./pages/reservation/ReservationCompletePage";
@@ -78,6 +79,7 @@ const AppRoutes = () => {
           <Route path="/reservation/search" element={<SearchRoomsPage />} />
           <Route path="/reservation/guest-details" element={<GuestDetailsPage />} />
           <Route path="/reservation/room-details" element={<RoomDetailPage />} />
+          <Route path="/reservation/signature" element={<SignaturePage />} />
           <Route path="/reservation/payment" element={<NewResPaymentPage />} />
           <Route path="/reservation/card" element={<NewResCardPage />} />
           <Route path="/reservation/complete" element={<ReservationCompletePage />} />

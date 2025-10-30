@@ -93,6 +93,26 @@
     "editDetails": "Modifier les Détails",
     "cancel": "Annuler"
   },
+  "signature": {
+    "title": "Signature numérique requise",
+    "subtitle": "Veuillez signer ci-dessous pour confirmer votre accord de réservation",
+    "guestInfo": "Informations du client",
+    "guestName": "Nom du client",
+    "room": "Chambre",
+    "checkIn": "Arrivée",
+    "checkOut": "Départ",
+    "signatureLabel": "Veuillez signer dans le cadre ci-dessous :",
+    "signHere": "Signez ici...",
+    "signed": "Signature capturée",
+    "signedMessage": "Votre signature a été capturée avec succès.",
+    "clear": "Effacer",
+    "save": "Enregistrer la signature",
+    "termsTitle": "Termes et conditions",
+    "termsText": "En signant ci-dessus, vous acceptez les termes et conditions de l'hôtel, y compris les politiques d'annulation, les heures d'arrivée/de départ et les frais applicables. Votre signature vaut consentement électronique pour cette réservation.",
+    "editDetails": "Modifier les Détails",
+    "continue": "Continuer au Paiement",
+    "errorMissingData": "Données de chambre ou du client manquantes. Veuillez revenir en arrière et réessayer."
+  },
   "newResPayment": {
     "title": "Paiement",
     "bookingSummary": "Résumé de la Réservation",

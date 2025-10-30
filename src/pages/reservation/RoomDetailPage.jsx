@@ -40,7 +40,7 @@ const RoomDetailPage = () => {
   };
 
   const handleConfirm = () => {
-    navigate('/reservation/payment', {
+    navigate('/reservation/signature', {
       state: {
         room,
         searchCriteria,

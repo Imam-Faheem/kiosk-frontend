@@ -32,7 +32,7 @@ apiClient.interceptors.response.use(
     // Handle 401 errors (unauthorized)
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token');
-      // window.location.href = '/login';
+    
     }
     
     // Handle network errors

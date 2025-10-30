@@ -1,4 +1,3 @@
-// src/styles/style.constants.js
 
 export const buttonStyles = {
   base: {
