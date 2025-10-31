@@ -26,8 +26,7 @@ export const usePaymentMutation = (action, { onSuccess, onError } = {}) => {
     throw new Error(`Invalid payment action: ${action}`);
   }
 
-  return useMutation({
-    mutationFn,
+  return useMutation(mutationFn, {
     onSuccess,
     onError: (error) => {
       console.error(`Payment ${action} failed:`, error);
