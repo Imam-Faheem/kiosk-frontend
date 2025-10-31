@@ -37,3 +37,5 @@ The signature page automatically appears in the reservation flow after guests co
 - Touch devices (tablets, phones)
 - Desktop with mouse/trackpad input
 
+
+

@@ -121,11 +121,18 @@ const NewResCardPage = () => {
           </Group>
         </Group>
 
+        {/* Page title under logo */}
+        <Title order={3} style={{ fontSize: '24px', fontWeight: 800, color: '#222', textAlign: 'center', marginBottom: '12px' }}>
+          Issuing Your New Key Card
+        </Title>
+
         <Stack gap="lg" mb="xl" align="center">
-          <IconCreditCard size={64} color="#C8653D" />
+          {/* Animated card icon to indicate progress */}
+          <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+          <IconCreditCard size={96} color="#C8653D" style={{ animation: 'spin 3s linear infinite' }} />
           
           {/* Progress Steps */}
-          <Stepper active={0} orientation="vertical" size="sm" style={{ width: '100%' }}>
+          <Stepper active={0} orientation="vertical" size="sm" style={{ width: '100%' }} allowNextStepsSelect={false}>
             <Stepper.Step 
               label={t('newResCard.steps.preparing')} 
               description="Preparing your new card"
@@ -140,8 +147,7 @@ const NewResCardPage = () => {
               description="Sending confirmation"
             />
           </Stepper>
-          
-          <Text size="lg" fw={600} c="#C8653D">{t('newResCard.takeCard')}</Text>
+          {/* No final message on in-progress screen */}
         </Stack>
       </Paper>
     </Container>

@@ -138,7 +138,7 @@ const RegenerateCardPage = () => {
           maxWidth: '600px',
           backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
+          borderRadius: '10px',
         }}
       >
         {/* Header */}
@@ -202,9 +202,6 @@ const RegenerateCardPage = () => {
                         <IconKey size={20} color="#666666" />
                       )}
                     </Group>
-                    <Text size="sm" c="#666666">
-                      {step.description}
-                    </Text>
                     {index === currentStep && (
                       <Progress
                         value={100}
@@ -219,59 +216,18 @@ const RegenerateCardPage = () => {
                 ))}
               </Stack>
 
-              {/* Card Animation */}
-              <Stack align="center" gap="md">
-                <Box
-                  style={{
-                    width: '120px',
-                    height: '80px',
-                    backgroundColor: '#C8653D',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: '14px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-                    animation: cardStatus === 'completed' ? 'none' : 'pulse 2s infinite',
-                    transform: cardStatus === 'completed' ? 'scale(1.1)' : 'scale(1)',
-                    transition: 'all 0.3s ease',
-                  }}
-                >
-                  <IconKey size={32} />
-                </Box>
-
-                {cardStatus === 'deactivating' && (
-                  <Text size="lg" c="#666666" ta="center">
-                    {t('regenerateCard.pleaseWait')}
+              {/* Completion Message */}
+              {cardStatus === 'completed' && (
+                <Stack align="center" gap="sm" mt="md">
+                  <IconCheck size={32} color="green" />
+                  <Text size="lg" fw={600} c="#0B152A" ta="center">
+                    Card regenerated successfully!
                   </Text>
-                )}
-
-                {cardStatus === 'generating' && (
-                  <Text size="lg" c="#666666" ta="center">
-                    Generating new access credentials...
+                  <Text size="md" c="#666666" ta="center">
+                    Your new card is ready.
                   </Text>
-                )}
-
-                {cardStatus === 'programming' && (
-                  <Text size="lg" c="#666666" ta="center">
-                    Programming your new card...
-                  </Text>
-                )}
-
-                {cardStatus === 'completed' && (
-                  <Stack align="center" gap="sm">
-                    <IconCheck size={32} color="green" />
-                    <Text size="lg" fw={600} c="#0B152A" ta="center">
-                      Card regenerated successfully!
-                    </Text>
-                    <Text size="md" c="#666666" ta="center">
-                      Your new card is ready.
-                    </Text>
-                  </Stack>
-                )}
-              </Stack>
+                </Stack>
+              )}
 
               {/* Card Details */}
               {cardData && (
@@ -301,7 +257,10 @@ const RegenerateCardPage = () => {
 
         {/* Back Button */}
         <Group justify="flex-start">
-          <BackButton onClick={handleBack} text={t('common.back')} />
+          <BackButton 
+            onClick={handleBack} 
+            text={t('common.back')}
+          />
         </Group>
       </Paper>
     </Container>

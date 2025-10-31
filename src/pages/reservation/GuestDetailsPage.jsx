@@ -9,6 +9,7 @@ import {
   Stack,
   Box,
   TextInput,
+  Select,
 } from '@mantine/core';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from '@mantine/form';
@@ -115,6 +116,8 @@ const GuestDetailsPage = () => {
 
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="lg" mb="xl">
+            <Title order={3} style={{ fontSize: '24px', fontWeight: 800, color: '#222' }}>{t('guestDetails.formTitle')}</Title>
+
             <TextInput
               label={t('guestDetails.firstName')}
               placeholder="Enter your first name"
@@ -137,24 +140,62 @@ const GuestDetailsPage = () => {
               type="email"
               {...form.getInputProps('email')}
             />
+            <Group grow>
+              <Select
+                label={t('guestDetails.country')}
+                placeholder={t('guestDetails.countryPlaceholder')}
+                required
+                size="lg"
+                data={[
+                  { value: 'US', label: 'United States (+1)' },
+                  { value: 'GB', label: 'United Kingdom (+44)' },
+                  { value: 'DE', label: 'Germany (+49)' },
+                  { value: 'FR', label: 'France (+33)' },
+                  { value: 'IT', label: 'Italy (+39)' },
+                  { value: 'ES', label: 'Spain (+34)' },
+                  { value: 'PT', label: 'Portugal (+351)' },
+                ]}
+                {...form.getInputProps('country')}
+              />
+              <TextInput
+                label={t('guestDetails.phone')}
+                placeholder={t('guestDetails.phonePlaceholder')}
+                required
+                size="lg"
+                {...form.getInputProps('phone')}
+              />
+            </Group>
+
+            <Title order={4} style={{ fontSize: '18px', fontWeight: 700, color: '#444', marginTop: '8px' }}>{t('guestDetails.addressSection')}</Title>
             <TextInput
-              label={t('guestDetails.phone')}
-              placeholder="Enter your phone number"
+              label={t('guestDetails.addressStreet')}
+              placeholder={t('guestDetails.streetPlaceholder')}
               required
               size="lg"
-              {...form.getInputProps('phone')}
+              {...form.getInputProps('addressStreet')}
             />
+            <Group grow>
+              <TextInput
+                label={t('guestDetails.addressCity')}
+                placeholder={t('guestDetails.cityPlaceholder')}
+                required
+                size="lg"
+                {...form.getInputProps('addressCity')}
+              />
+              <TextInput
+                label={t('guestDetails.addressState')}
+                placeholder={t('guestDetails.statePlaceholder')}
+                required
+                size="lg"
+                {...form.getInputProps('addressState')}
+              />
+            </Group>
             <TextInput
-              label={t('guestDetails.country')}
-              placeholder="Enter your country (Optional)"
+              label={t('guestDetails.addressPostal')}
+              placeholder={t('guestDetails.postalPlaceholder')}
+              required
               size="lg"
-              {...form.getInputProps('country')}
-            />
-            <TextInput
-              label={t('guestDetails.address')}
-              placeholder="Enter your address (Optional)"
-              size="lg"
-              {...form.getInputProps('address')}
+              {...form.getInputProps('addressPostal')}
             />
           </Stack>
 
@@ -163,10 +204,22 @@ const GuestDetailsPage = () => {
             <Button
               type="submit"
               size="lg"
+              rightSection={<span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
               style={{
                 backgroundColor: '#C8653D',
                 color: '#FFFFFF',
                 borderRadius: '12px',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#B8552F';
+                e.currentTarget.style.transform = 'scale(1.02)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#C8653D';
+                e.currentTarget.style.transform = 'scale(1)';
               }}
             >
               {t('guestDetails.continue')}

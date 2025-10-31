@@ -7,8 +7,6 @@ import {
   Text,
   Title,
   Stack,
-  Box,
-  TextInput,
   Select,
   Grid,
   Card,
@@ -18,7 +16,7 @@ import {
   Loader,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
-import { IconSearch, IconCalendar, IconUsers } from '@tabler/icons-react';
+import { IconSearch, IconUsers } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useRoomMutation } from '../../hooks/useRoomMutation';
@@ -30,16 +28,23 @@ import BackButton from '../../components/BackButton';
 const SearchRoomsPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const [searchResults, setSearchResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+  
+
   const searchAvailability = useRoomMutation('searchAvailability', {
     onSuccess: (result) => {
-      setSearchResults(result.data);
+      setSearchResults(result?.data || null);
+      setErrorMessage(null);
     },
     onError: (err) => {
       console.error('Room search error:', err);
+      const details = err?.response?.data;
+      const msg = (details && (details.message || details.error)) || err?.message || 'Request failed';
+      setErrorMessage(msg);
     }
   });
-  const [searchResults, setSearchResults] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   const form = useForm({
     initialValues: roomSearchInitialValues,
@@ -59,14 +64,16 @@ const SearchRoomsPage = () => {
 
   const handleSearch = async (values) => {
     setLoading(true);
+    setErrorMessage(null);
+    setSearchResults(null);
     
-    // Convert Date objects to ISO string format for API
+    // Convert Date objects to ISO string format for API and coerce guests to number
     const searchData = {
       ...values,
       checkIn: values.checkIn ? (values.checkIn instanceof Date ? values.checkIn.toISOString().split('T')[0] : values.checkIn) : null,
       checkOut: values.checkOut ? (values.checkOut instanceof Date ? values.checkOut.toISOString().split('T')[0] : values.checkOut) : null,
+      guests: values.guests ? Number(values.guests) : null,
     };
-    
     await searchAvailability.mutateAsync(searchData);
     setLoading(false);
   };
@@ -106,6 +113,7 @@ const SearchRoomsPage = () => {
         justifyContent: 'center',
         alignItems: 'center',
         padding: '20px',
+        overflow: 'visible',
         backgroundColor: '#FFFFFF',
       }}
     >
@@ -120,6 +128,7 @@ const SearchRoomsPage = () => {
           backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
           borderRadius: '20px',
+          overflow: 'visible',
         }}
       >
         {/* Header */}
@@ -164,6 +173,7 @@ const SearchRoomsPage = () => {
                   valueFormat="YYYY-MM-DD"
                   {...form.getInputProps('checkIn')}
                   minDate={new Date()}
+                  popoverProps={{ withinPortal: true, position: 'bottom-start', shadow: 'md', zIndex: 300 }}
                   styles={{
                     input: {
                       borderRadius: '12px',
@@ -184,6 +194,7 @@ const SearchRoomsPage = () => {
                   valueFormat="YYYY-MM-DD"
                   {...form.getInputProps('checkOut')}
                   minDate={form.values.checkIn ? new Date(form.values.checkIn) : new Date()}
+                  popoverProps={{ withinPortal: true, position: 'bottom-start', shadow: 'md', zIndex: 300 }}
                   styles={{
                     input: {
                       borderRadius: '12px',
@@ -252,11 +263,24 @@ const SearchRoomsPage = () => {
           </Stack>
         )}
 
+        {/* Error message from backend */}
+        {errorMessage && !loading && (
+          <Alert color="red" variant="light">
+            {errorMessage}
+          </Alert>
+        )}
 
-        {searchResults && searchResults.availableRooms && (
+        {/* No rooms available message */}
+        {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length === 0 && !loading && (
+          <Alert color="yellow" variant="light">
+            {t('searchRooms.noRooms')}
+          </Alert>
+        )}
+
+        {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length > 0 && (
           <Stack gap="lg" mb="xl">
             <Text size="xl" fw={600} c="#0B152A">
-              Available Rooms ({searchResults.totalAvailable})
+              Available Rooms ({typeof searchResults.totalAvailable === 'number' ? searchResults.totalAvailable : (Array.isArray(searchResults.availableRooms) ? searchResults.availableRooms.length : 0)})
             </Text>
             
             <Grid>
@@ -278,7 +302,7 @@ const SearchRoomsPage = () => {
                   >
                     <Stack gap="md">
                       <Image
-                        src={room.images[0] || '/images/rooms/default.jpg'}
+                        src={(room.images && room.images[0]) || UnoLogo}
                         alt={room.name}
                         height={200}
                         radius="md"

@@ -84,7 +84,7 @@ const CardIssuedPage = () => {
           maxWidth: '600px',
           backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
+          borderRadius: '10px',
         }}
       >
         {/* Header */}
@@ -217,7 +217,7 @@ const CardIssuedPage = () => {
             style={{
               backgroundColor: '#C8653D',
               color: '#FFFFFF',
-              borderRadius: '12px',
+              borderRadius: '8px',
               fontWeight: 'bold',
               fontSize: '16px',
               transition: 'all 0.3s ease',

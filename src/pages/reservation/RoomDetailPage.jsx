@@ -29,6 +29,16 @@ const RoomDetailPage = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const { room, searchCriteria, guestDetails } = location.state || {};
+  const formatDate = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    return date.toLocaleDateString(undefined, {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
   // Amenity icons mapping
   const amenityIcons = {
@@ -238,47 +248,47 @@ const RoomDetailPage = () => {
                   {/* Guest Name */}
                   <Group justify="space-between">
                     <Text size="md" c="#666666">Guest Name:</Text>
-                    <Text size="md" fw={600}>{guestDetails.firstName} {guestDetails.lastName}</Text>
+                    <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{guestDetails.firstName} {guestDetails.lastName}</Text>
                   </Group>
                   
                   {/* Dates */}
                   <Group justify="space-between">
-                    <Text size="md" c="#666666">{t('roomDetail.checkIn')}:</Text>
-                    <Text size="md" fw={600}>{new Date(searchCriteria.checkIn).toLocaleDateString()}</Text>
+                    <Text size="md" c="#666666">{t('roomDetail.checkInDate') || 'Check-In Date'}:</Text>
+                    <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{formatDate(searchCriteria.checkIn)}</Text>
                   </Group>
                   
                   <Group justify="space-between">
-                    <Text size="md" c="#666666">{t('roomDetail.checkOut')}:</Text>
-                    <Text size="md" fw={600}>{new Date(searchCriteria.checkOut).toLocaleDateString()}</Text>
+                    <Text size="md" c="#666666">{t('roomDetail.checkOutDate') || 'Check-Out Date'}:</Text>
+                    <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{formatDate(searchCriteria.checkOut)}</Text>
                   </Group>
                   
                   {/* Number of Nights */}
                   <Group justify="space-between">
                     <Text size="md" c="#666666">Number of Nights:</Text>
-                    <Text size="md" fw={600}>
+                    <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
                       {Math.ceil((new Date(searchCriteria.checkOut) - new Date(searchCriteria.checkIn)) / (1000 * 60 * 60 * 24))} {t('roomDetail.nights')}
                     </Text>
                   </Group>
                   
-                  {/* Price per Night */}
-                  <Group justify="space-between">
-                    <Text size="md" c="#666666">{t('roomDetail.pricePerNight')}:</Text>
-                    <Text size="md" fw={600}>${room.pricePerNight} {room.currency}</Text>
-                  </Group>
-                  
-                  {/* Taxes */}
-                  <Group justify="space-between">
-                    <Text size="md" c="#666666">{t('roomDetail.taxes')}:</Text>
-                    <Text size="md" fw={600}>${room.taxes || 0} {room.currency}</Text>
-                  </Group>
-                  
-                  {/* Total Price */}
-                  <Group justify="space-between" style={{ borderTop: '2px solid #C8653D', paddingTop: '10px' }}>
-                    <Text size="lg" fw={700} c="#C8653D">{t('roomDetail.total')}:</Text>
-                    <Text size="xl" fw={700} c="#C8653D">
-                      ${room.totalPrice} {room.currency}
-                    </Text>
-                  </Group>
+                  {/* Financial Summary */}
+                  <Box style={{ borderTop: '1px solid #e5e7eb', paddingTop: '8px', backgroundColor: '#fff', borderRadius: '8px' }}>
+                    <Stack gap="xs">
+                      <Group justify="space-between">
+                        <Text size="sm" c="#666666">{t('roomDetail.pricePerNight')}:</Text>
+                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{room.currency} {room.pricePerNight}</Text>
+                      </Group>
+                      <Group justify="space-between">
+                        <Text size="sm" c="#666666">{t('roomDetail.taxes')}:</Text>
+                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{room.currency} {room.taxes || 0}</Text>
+                      </Group>
+                      <Group justify="space-between" style={{ borderTop: '2px solid #C8653D', paddingTop: '10px' }}>
+                        <Text size="lg" fw={700} c="#C8653D">{t('roomDetail.total')}:</Text>
+                        <Text size="xl" fw={700} c="#C8653D" style={{ textAlign: 'right', minWidth: '180px' }}>
+                          {room.currency} {room.totalPrice}
+                        </Text>
+                      </Group>
+                    </Stack>
+                  </Box>
                 </Stack>
               </Card>
             </Stack>
@@ -306,36 +316,18 @@ const RoomDetailPage = () => {
                 fontSize: '16px',
                 transition: 'all 0.3s ease',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.color = '#FFFFFF';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#C8653D';
-              }}
             >
               {t('roomDetail.editDetails')}
             </Button>
             <Button
               size="lg"
-              variant="outline"
+              variant="subtle"
+              color="dark"
               onClick={() => navigate('/reservation/search')}
               style={{
-                borderColor: '#dc3545',
-                color: '#dc3545',
                 borderRadius: '12px',
                 fontWeight: 'bold',
                 fontSize: '16px',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#dc3545';
-                e.currentTarget.style.color = '#FFFFFF';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#dc3545';
               }}
             >
               {t('roomDetail.cancel')}

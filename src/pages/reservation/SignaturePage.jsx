@@ -30,6 +30,17 @@ const SignaturePage = () => {
 
   const { room, searchCriteria, guestDetails } = location.state || {};
 
+  const formatDate = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    return date.toLocaleDateString(undefined, {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
   const handleClear = () => {
     sigCanvas.current.clear();
     setIsSigned(false);
@@ -189,11 +200,11 @@ const SignaturePage = () => {
               </Group>
               <Group justify="space-between">
                 <Text size="md" c="#666666">{t('signature.checkIn') || 'Check-in'}:</Text>
-                <Text size="md" fw={600}>{new Date(searchCriteria.checkIn).toLocaleDateString()}</Text>
+                <Text size="md" fw={600}>{formatDate(searchCriteria.checkIn)}</Text>
               </Group>
               <Group justify="space-between">
                 <Text size="md" c="#666666">{t('signature.checkOut') || 'Check-out'}:</Text>
-                <Text size="md" fw={600}>{new Date(searchCriteria.checkOut).toLocaleDateString()}</Text>
+                <Text size="md" fw={600}>{formatDate(searchCriteria.checkOut)}</Text>
               </Group>
             </Stack>
           </Card>

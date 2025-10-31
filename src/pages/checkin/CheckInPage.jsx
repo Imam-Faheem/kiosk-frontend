@@ -11,7 +11,7 @@ import {
   TextInput,
   Alert,
 } from '@mantine/core';
-import { IconLogin, IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconArrowRight } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
@@ -139,6 +139,17 @@ const CheckInPage = () => {
           </Group>
         </Group>
 
+        {/* Context Title */}
+        <Title order={3} style={{
+          fontSize: '26px',
+          fontWeight: 800,
+          color: '#222',
+          marginBottom: '16px',
+          letterSpacing: '0.5px'
+        }}>
+          Find Your Reservation
+        </Title>
+
         {/* Form */}
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="lg" mb="xl">
@@ -156,17 +167,21 @@ const CheckInPage = () => {
 
             <TextInput
               label={t('checkIn.reservationId')}
-              placeholder="Enter your reservation ID"
+              placeholder="Enter your 10-digit reservation number"
               required
               size="lg"
               {...form.getInputProps('reservationId')}
+              description="This can be found in your confirmation email."
               styles={{
                 input: {
                   borderRadius: '12px',
                   border: '2px solid #E0E0E0',
-                  '&:focus': {
-                    borderColor: '#C8653D',
-                  }
+                  outline: 'none',
+                  transition: 'box-shadow 150ms ease, border-color 150ms ease',
+                },
+                inputFocused: {
+                  borderColor: '#C8653D',
+                  boxShadow: '0 0 0 3px rgba(200, 101, 61, 0.15)'
                 }
               }}
             />
@@ -181,9 +196,12 @@ const CheckInPage = () => {
                 input: {
                   borderRadius: '12px',
                   border: '2px solid #E0E0E0',
-                  '&:focus': {
-                    borderColor: '#C8653D',
-                  }
+                  outline: 'none',
+                  transition: 'box-shadow 150ms ease, border-color 150ms ease',
+                },
+                inputFocused: {
+                  borderColor: '#C8653D',
+                  boxShadow: '0 0 0 3px rgba(200, 101, 61, 0.15)'
                 }
               }}
             />
@@ -196,7 +214,7 @@ const CheckInPage = () => {
             <Button
               type="submit"
               size="lg"
-              leftSection={<IconLogin size={20} />}
+              rightSection={<IconArrowRight size={20} />}
               loading={validateReservation.isPending}
               style={{
                 backgroundColor: '#C8653D',

@@ -11,7 +11,7 @@ import {
   TextInput,
   Alert,
 } from '@mantine/core';
-import { IconKey, IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
@@ -97,7 +97,7 @@ const LostCardPage = () => {
           maxWidth: '600px',
           backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
+          borderRadius: '10px',
         }}
       >
         {/* Header */}
@@ -132,7 +132,7 @@ const LostCardPage = () => {
 
         {/* Form */}
         <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Stack gap="lg" mb="xl">
+          <Stack gap="xl" mb="xl">
             {error && (
               <Alert
                 icon={<IconAlertCircle size={16} />}
@@ -152,8 +152,20 @@ const LostCardPage = () => {
               size="lg"
               {...form.getInputProps('roomNumber')}
               styles={{
+                label: {
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: '4px',
+                  marginBottom: '10px',
+                },
+                required: {
+                  marginLeft: '2px',
+                  transform: 'translateY(-1px)',
+                },
                 input: {
-                  borderRadius: '12px',
+                  height: '48px',
+                  minHeight: '48px',
+                  borderRadius: '8px',
                   border: '2px solid #E0E0E0',
                   '&:focus': {
                     borderColor: '#C8653D',
@@ -169,8 +181,20 @@ const LostCardPage = () => {
               size="lg"
               {...form.getInputProps('reservationNumber')}
               styles={{
+                label: {
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: '4px',
+                  marginBottom: '10px',
+                },
+                required: {
+                  marginLeft: '2px',
+                  transform: 'translateY(-1px)',
+                },
                 input: {
-                  borderRadius: '12px',
+                  height: '48px',
+                  minHeight: '48px',
+                  borderRadius: '8px',
                   border: '2px solid #E0E0E0',
                   '&:focus': {
                     borderColor: '#C8653D',
@@ -186,8 +210,20 @@ const LostCardPage = () => {
               size="lg"
               {...form.getInputProps('lastName')}
               styles={{
+                label: {
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: '4px',
+                  marginBottom: '10px',
+                },
+                required: {
+                  marginLeft: '2px',
+                  transform: 'translateY(-1px)',
+                },
                 input: {
-                  borderRadius: '12px',
+                  height: '48px',
+                  minHeight: '48px',
+                  borderRadius: '8px',
                   border: '2px solid #E0E0E0',
                   '&:focus': {
                     borderColor: '#C8653D',
@@ -204,12 +240,12 @@ const LostCardPage = () => {
             <Button
               type="submit"
               size="lg"
-              leftSection={<IconKey size={20} />}
+              leftSection={<IconCheck size={20} />}
               loading={isLoading}
               style={{
                 backgroundColor: '#C8653D',
                 color: '#FFFFFF',
-                borderRadius: '12px',
+                borderRadius: '8px',
                 fontWeight: 'bold',
                 fontSize: '16px',
                 transition: 'all 0.3s ease',
