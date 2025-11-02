@@ -66,10 +66,23 @@ export const regenerateCard = async (data) => {
     
     return response.data;
   } catch (error) {
-    if (debug) console.error('[card] regenerate error', error?.response?.data || error?.message);
+    if (debug) console.error('[card] regenerate error', error);
     
+    // Handle network errors with more detail
+    if (!error.response) {
+      if (error.code === 'ECONNREFUSED' || error.message?.includes('Network Error')) {
+        throw new Error('Cannot connect to server. Please ensure the backend server is running on port 5001.');
+      }
+      if (error.code === 'ETIMEDOUT') {
+        throw new Error('Request timed out. Please check your connection and try again.');
+      }
+      throw new Error(error.message || 'Network error. Please check your connection.');
+    }
+    
+    // Handle HTTP error responses
     const errorMessage = error?.response?.data?.message || 
                          error?.response?.data?.error || 
+                         error?.response?.statusText ||
                          error?.message || 
                          'Failed to regenerate card';
     throw new Error(errorMessage);
