@@ -74,9 +74,10 @@ const RegenerateCardPage = () => {
         setCardStatus('programming');
         
         const result = await regenerateCard.mutateAsync({
-          reservationId: guestData.reservationId,
+          reservationId: guestData.reservationId || guestData.reservationNumber,
           roomNumber: guestData.roomNumber,
-          guestName: guestData.guestName,
+          guestName: guestData.guestName || `${guestData.firstName || ''} ${guestData.lastName || ''}`.trim(),
+          propertyId: guestData.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
         });
 
         if (result.success) {

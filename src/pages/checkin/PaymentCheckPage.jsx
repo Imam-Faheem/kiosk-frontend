@@ -70,34 +70,36 @@ const PaymentCheckPage = () => {
       try {
         setLoading(true);
         
-        // Simulate payment status check
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Mock payment status based on reservation data
-        const mockPaymentStatus = {
-          status: reservation.paymentStatus, // 'pending' or 'paid'
-          amount: reservation.totalAmount,
-          currency: reservation.currency,
-          transactionId: `TXN-${Date.now()}`
+        // Payment status is already in reservation data from Apaleo
+        // Check balance to determine payment status
+        const paymentStatusData = {
+          status: reservation.paymentStatus || (reservation.balance <= 0 ? 'paid' : 'pending'),
+          amount: reservation.totalAmount || Math.abs(reservation.balance || 0),
+          currency: reservation.currency || 'EUR',
+          balance: reservation.balance || 0,
+          transactionId: reservation.id || `TXN-${Date.now()}`
         };
         
-        setPaymentStatus(mockPaymentStatus);
+        setPaymentStatus(paymentStatusData);
+        
+        // Small delay for UI
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Navigate based on payment status
-        if (mockPaymentStatus.status === 'paid') {
-          // Already paid, go to card dispensing
+        if (paymentStatusData.status === 'paid' || paymentStatusData.balance <= 0) {
+          // Already paid, go to card dispensing (which will trigger Apaleo check-in)
           setTimeout(() => {
             navigate('/checkin/card-dispensing', {
-              state: { reservation, paymentStatus: mockPaymentStatus }
+              state: { reservation, paymentStatus: paymentStatusData }
             });
-          }, 2000);
+          }, 500);
         } else {
           // Not paid, go to payment terminal
           setTimeout(() => {
             navigate('/checkin/payment', {
-              state: { reservation, paymentStatus: mockPaymentStatus }
+              state: { reservation, paymentStatus: paymentStatusData }
             });
-          }, 2000);
+          }, 500);
         }
       } catch (err) {
         console.error('Payment status check error:', err);

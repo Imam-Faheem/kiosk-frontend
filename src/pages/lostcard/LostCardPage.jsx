@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import { useForm } from '@mantine/form';
+import { apiClient } from '../../services/api/apiClient';
 import UnoLogo from '../../assets/uno.jpg';
 
 const LostCardPage = () => {
@@ -26,12 +27,12 @@ const LostCardPage = () => {
 
   const form = useForm({
     initialValues: {
-      roomNumber: '205',
-      reservationNumber: 'RES-2024-001234',
-      lastName: 'Smith'
+      roomType: '',
+      reservationNumber: '',
+      lastName: ''
     },
     validate: {
-      roomNumber: (value) => (!value ? 'Room number is required' : null),
+      roomType: (value) => (!value ? 'Room type is required' : null),
       reservationNumber: (value) => (!value ? 'Reservation number is required' : null),
       lastName: (value) => (!value ? 'Last name is required' : null),
     },
@@ -42,29 +43,30 @@ const LostCardPage = () => {
     setIsLoading(true);
     
     try {
-      // Simulate validation delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock successful validation
-      const mockGuestData = {
-        roomNumber: values.roomNumber,
+      // Call backend API to validate guest with Apaleo
+      const response = await apiClient.post('/lost-card/validate', {
         reservationNumber: values.reservationNumber,
+        roomType: values.roomType,
         lastName: values.lastName,
-        firstName: 'John',
-        email: 'john.smith@email.com',
-        phone: '+1-555-0123'
-      };
-      
-      // Navigate to regenerate card page with validated data
-      navigate('/lost-card/regenerate', {
-        state: {
-          guestData: mockGuestData,
-          validationData: values,
-        },
       });
+      
+      if (response.data.success) {
+        const guestData = response.data.data;
+        
+        // Navigate to regenerate card page with validated data
+        navigate('/lost-card/regenerate', {
+          state: {
+            guestData: guestData,
+            validationData: values,
+          },
+        });
+      } else {
+        throw new Error(response.data.message || 'Validation failed');
+      }
     } catch (err) {
       console.error('Guest validation error:', err);
-      setError(err.message || t('error.guestValidationFailed'));
+      const errorMessage = err?.response?.data?.message || err?.message || t('error.guestValidationFailed');
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -146,11 +148,12 @@ const LostCardPage = () => {
             )}
 
             <TextInput
-              label={t('lostCard.roomNumber')}
-              placeholder="Enter your room number"
+              label={t('lostCard.roomType') || 'Room Type'}
+              placeholder="Enter room type (e.g., Double, Single, Suite)"
               required
               size="lg"
-              {...form.getInputProps('roomNumber')}
+              {...form.getInputProps('roomType')}
+              description="Room type from your reservation (e.g., Double, Single, Suite)"
               styles={{
                 label: {
                   display: 'inline-flex',

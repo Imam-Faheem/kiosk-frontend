@@ -39,10 +39,7 @@ const CheckInPage = () => {
   });
 
   const form = useForm({
-    initialValues: {
-      reservationId: 'RES-2024-789456',
-      lastName: 'Johnson'
-    },
+    initialValues: checkinInitialValues,
     validate: {
       reservationId: (value) => (!value ? 'Reservation ID is required' : null),
       lastName: (value) => (!value ? 'Last name is required' : null),
@@ -53,28 +50,15 @@ const CheckInPage = () => {
     setError(null);
     
     try {
-      // Simulate validation delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call backend API to validate reservation with Apaleo
+      const result = await validateReservation.mutateAsync(values);
       
-      // Mock reservation data
-      const mockReservation = {
-        reservationId: values.reservationId,
-        lastName: values.lastName,
-        firstName: 'Michael',
-        roomNumber: '312',
-        roomType: 'Deluxe Suite',
-        checkIn: '2024-01-15',
-        checkOut: '2024-01-18',
-        guests: 2,
-        paymentStatus: 'pending', // or 'paid' to test different flows
-        totalAmount: 450.00,
-        currency: 'USD'
-      };
-      
-      // Navigate to payment check page
-      navigate('/checkin/payment-check', {
-        state: { reservation: mockReservation },
-      });
+      if (result.success) {
+        // Navigate to payment check page with real reservation data
+        navigate('/checkin/payment-check', {
+          state: { reservation: result.data },
+        });
+      }
     } catch (err) {
       setError(err.message || t('error.reservationNotFound'));
     }
