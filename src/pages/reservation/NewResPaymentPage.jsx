@@ -114,8 +114,25 @@ const NewResPaymentPage = () => {
         
       } catch (err) {
         console.error('Payment/Booking error:', err);
+        console.error('Error response:', err?.response?.data);
         setPaymentStatus('failed');
-        const errorMessage = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to create booking';
+        
+        // Extract detailed error message from Apaleo
+        const errorData = err?.response?.data;
+        let errorMessage = 'Failed to create booking';
+        
+        if (errorData?.details?.messages && Array.isArray(errorData.details.messages)) {
+          errorMessage = errorData.details.messages.join('. ');
+        } else if (errorData?.messages && Array.isArray(errorData.messages)) {
+          errorMessage = errorData.messages.join('. ');
+        } else if (errorData?.message) {
+          errorMessage = errorData.message;
+        } else if (errorData?.error) {
+          errorMessage = errorData.error;
+        } else if (err?.message) {
+          errorMessage = err.message;
+        }
+        
         setError(errorMessage);
         hasProcessed.current = false; // Allow retry
       }
