@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Container,
   Paper,
@@ -10,6 +10,8 @@ import {
   Box,
   TextInput,
   Select,
+  Alert,
+  Loader,
 } from '@mantine/core';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from '@mantine/form';
@@ -17,11 +19,14 @@ import { guestValidationSchema, guestInitialValues } from '../../schemas/guest.s
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
+import { saveGuestDetails } from '../../services/guestService';
 
 const GuestDetailsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const { room, searchCriteria } = location.state || {};
 
@@ -41,14 +46,41 @@ const GuestDetailsPage = () => {
     },
   });
 
-  const handleSubmit = (values) => {
-    navigate('/reservation/room-details', {
-      state: {
-        room,
-        searchCriteria,
-        guestDetails: values,
-      },
-    });
+  const handleSubmit = async (values) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Prepare guest data with propertyId if available
+      const guestData = {
+        ...values,
+        propertyId: process.env.REACT_APP_PROPERTY_ID || 'BER',
+        // reservationId can be added later when reservation is created
+      };
+
+      // Save guest details to backend
+      const result = await saveGuestDetails(guestData);
+
+      if (result.success) {
+        // Navigate with both guest details and saved guest data
+        navigate('/reservation/room-details', {
+          state: {
+            room,
+            searchCriteria,
+            guestDetails: values,
+            savedGuest: result.data, // Include saved guest data (with guestId)
+          },
+        });
+      } else {
+        setError(result.message || 'Failed to save guest details');
+      }
+    } catch (err) {
+      console.error('Error saving guest details:', err);
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to save guest details';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -117,6 +149,12 @@ const GuestDetailsPage = () => {
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="lg" mb="xl">
             <Title order={3} style={{ fontSize: '24px', fontWeight: 800, color: '#222' }}>{t('guestDetails.formTitle')}</Title>
+
+            {error && (
+              <Alert color="red" variant="light" onClose={() => setError(null)} withCloseButton>
+                {error}
+              </Alert>
+            )}
 
             <TextInput
               label={t('guestDetails.firstName')}
@@ -204,7 +242,9 @@ const GuestDetailsPage = () => {
             <Button
               type="submit"
               size="lg"
-              rightSection={<span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
+              loading={loading}
+              rightSection={!loading && <span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
+              disabled={loading}
               style={{
                 backgroundColor: '#C8653D',
                 color: '#FFFFFF',
@@ -214,15 +254,19 @@ const GuestDetailsPage = () => {
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8552F';
-                e.currentTarget.style.transform = 'scale(1.02)';
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#B8552F';
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.transform = 'scale(1)';
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#C8653D';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }
               }}
             >
-              {t('guestDetails.continue')}
+              {loading ? 'Saving...' : t('guestDetails.continue')}
             </Button>
           </Group>
         </form>

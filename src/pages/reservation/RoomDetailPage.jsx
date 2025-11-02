@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -20,6 +20,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
+import { getRoomDetails } from '../../services/roomService';
 
 const RoomDetailPage = () => {
   const navigate = useNavigate();
@@ -27,8 +28,72 @@ const RoomDetailPage = () => {
   const { t } = useLanguage();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [roomData, setRoomData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const { room, searchCriteria, guestDetails } = location.state || {};
+
+  // Fetch room details with images if room images are missing
+  useEffect(() => {
+    const fetchRoomImages = async () => {
+      if (room && room.roomTypeId) {
+        // Check if room has images
+        const hasImages = room.images && Array.isArray(room.images) && room.images.length > 0;
+        
+        if (!hasImages) {
+          setLoading(true);
+          try {
+            const propertyId = process.env.REACT_APP_PROPERTY_ID || 'BER';
+            const result = await getRoomDetails(room.roomTypeId, propertyId);
+            
+            if (result.success && result.data && result.data.images) {
+              // Merge room data with fetched images
+              setRoomData({
+                ...room,
+                images: result.data.images.length > 0 ? result.data.images : [UnoLogo],
+              });
+            } else {
+              // Use default logo if no images found
+              setRoomData({
+                ...room,
+                images: [UnoLogo],
+              });
+            }
+          } catch (err) {
+            console.error('Error fetching room images:', err);
+            // Use default logo on error
+            setRoomData({
+              ...room,
+              images: [UnoLogo],
+            });
+          } finally {
+            setLoading(false);
+          }
+        } else {
+          // Room already has images, use it as is
+          setRoomData(room);
+        }
+      } else if (room) {
+        // Room exists but no roomTypeId, use it with default image
+        setRoomData({
+          ...room,
+          images: room.images && Array.isArray(room.images) && room.images.length > 0 
+            ? room.images 
+            : [UnoLogo],
+        });
+      }
+    };
+
+    fetchRoomImages();
+  }, [room]);
+
+  // Use roomData if available, otherwise fallback to room
+  const displayRoom = roomData || room;
+  
+  // Ensure images array exists
+  const roomImages = displayRoom?.images && Array.isArray(displayRoom.images) && displayRoom.images.length > 0
+    ? displayRoom.images
+    : [UnoLogo];
   const formatDate = (value) => {
     if (!value) return '';
     const date = new Date(value);
@@ -52,7 +117,7 @@ const RoomDetailPage = () => {
   const handleConfirm = () => {
     navigate('/reservation/signature', {
       state: {
-        room,
+        room: displayRoom,
         searchCriteria,
         guestDetails,
       },
@@ -61,12 +126,12 @@ const RoomDetailPage = () => {
 
   const handleBack = () => {
     navigate('/reservation/guest-details', {
-      state: { room, searchCriteria },
+      state: { room: displayRoom, searchCriteria },
     });
   };
 
   // Handle missing data without immediate redirect
-  if (!room || !guestDetails) {
+  if (!displayRoom || !guestDetails) {
     return (
       <Container
         size="lg"
@@ -163,29 +228,41 @@ const RoomDetailPage = () => {
           {/* Room Images Gallery */}
           <Card withBorder p="lg" radius="md">
             <Stack gap="md">
-              <Text size="xl" fw={600}>{room.name}</Text>
+              <Text size="xl" fw={600}>{displayRoom.name}</Text>
               
               {/* Main Image */}
-              <Box style={{ position: 'relative' }}>
-                <Image
-                  src={room.images[selectedImageIndex]}
-                  alt={`${room.name} - Image ${selectedImageIndex + 1}`}
-                  height={300}
-                  radius="md"
-                  style={{ objectFit: 'cover', width: '100%' }}
-                />
-                <Badge
-                  size="sm"
-                  color="orange"
-                  style={{ position: 'absolute', top: 10, right: 10 }}
-                >
-                  {selectedImageIndex + 1} / {room.images.length}
-                </Badge>
-              </Box>
+              {loading ? (
+                <Box style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
+                  <Text c="#666666">Loading images...</Text>
+                </Box>
+              ) : (
+                <Box style={{ position: 'relative' }}>
+                  <Image
+                    src={roomImages[selectedImageIndex] || UnoLogo}
+                    alt={`${displayRoom.name} - Image ${selectedImageIndex + 1}`}
+                    height={300}
+                    radius="md"
+                    style={{ objectFit: 'cover', width: '100%' }}
+                    onError={(e) => {
+                      e.target.src = UnoLogo;
+                    }}
+                  />
+                  {roomImages.length > 1 && (
+                    <Badge
+                      size="sm"
+                      color="orange"
+                      style={{ position: 'absolute', top: 10, right: 10 }}
+                    >
+                      {selectedImageIndex + 1} / {roomImages.length}
+                    </Badge>
+                  )}
+                </Box>
+              )}
 
               {/* Thumbnail Images */}
-              <SimpleGrid cols={3} spacing="sm">
-                {room.images.map((image, index) => (
+              {!loading && roomImages.length > 1 && (
+                <SimpleGrid cols={3} spacing="sm">
+                  {roomImages.map((image, index) => (
                   <Box
                     key={index}
                     style={{
@@ -198,23 +275,27 @@ const RoomDetailPage = () => {
                     onClick={() => setSelectedImageIndex(index)}
                   >
                     <Image
-                      src={image}
-                      alt={`${room.name} - Thumbnail ${index + 1}`}
+                      src={image || UnoLogo}
+                      alt={`${displayRoom.name} - Thumbnail ${index + 1}`}
                       height={80}
                       style={{ objectFit: 'cover', width: '100%' }}
+                      onError={(e) => {
+                        e.target.src = UnoLogo;
+                      }}
                     />
                   </Box>
-                ))}
-              </SimpleGrid>
+                  ))}
+                </SimpleGrid>
+              )}
 
               {/* Room Description */}
-              <Text size="md" c="#666666">{room.description}</Text>
+              <Text size="md" c="#666666">{displayRoom.description}</Text>
 
               {/* Room Amenities */}
               <Stack gap="sm">
                 <Text size="md" fw={600}>Amenities:</Text>
                 <Group gap="sm">
-                  {room.amenities.map((amenity, index) => (
+                  {(displayRoom.amenities || []).map((amenity, index) => (
                     <Badge
                       key={index}
                       variant="light"
@@ -232,11 +313,11 @@ const RoomDetailPage = () => {
               <Grid>
                 <Grid.Col span={6}>
                   <Text size="sm" c="#666666">Capacity:</Text>
-                  <Text size="md" fw={600}>{room.capacity} guests</Text>
+                  <Text size="md" fw={600}>{displayRoom.capacity || displayRoom.maxGuests || 1} guests</Text>
                 </Grid.Col>
                 <Grid.Col span={6}>
                   <Text size="sm" c="#666666">Max Guests:</Text>
-                  <Text size="md" fw={600}>{room.maxGuests} guests</Text>
+                  <Text size="md" fw={600}>{displayRoom.maxGuests || displayRoom.capacity || 1} guests</Text>
                 </Grid.Col>
               </Grid>
 
@@ -275,16 +356,16 @@ const RoomDetailPage = () => {
                     <Stack gap="xs">
                       <Group justify="space-between">
                         <Text size="sm" c="#666666">{t('roomDetail.pricePerNight')}:</Text>
-                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{room.currency} {room.pricePerNight}</Text>
+                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{displayRoom.currency || 'EUR'} {displayRoom.pricePerNight || 0}</Text>
                       </Group>
                       <Group justify="space-between">
                         <Text size="sm" c="#666666">{t('roomDetail.taxes')}:</Text>
-                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{room.currency} {room.taxes || 0}</Text>
+                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{displayRoom.currency || 'EUR'} {displayRoom.taxes || 0}</Text>
                       </Group>
                       <Group justify="space-between" style={{ borderTop: '2px solid #C8653D', paddingTop: '10px' }}>
                         <Text size="lg" fw={700} c="#C8653D">{t('roomDetail.total')}:</Text>
                         <Text size="xl" fw={700} c="#C8653D" style={{ textAlign: 'right', minWidth: '180px' }}>
-                          {room.currency} {room.totalPrice}
+                          {displayRoom.currency || 'EUR'} {displayRoom.totalPrice || 0}
                         </Text>
                       </Group>
                     </Stack>

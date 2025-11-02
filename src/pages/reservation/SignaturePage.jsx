@@ -28,7 +28,7 @@ const SignaturePage = () => {
   const [isSigned, setIsSigned] = useState(false);
   const [signatureData, setSignatureData] = useState(null);
 
-  const { room, searchCriteria, guestDetails } = location.state || {};
+  const { room, searchCriteria, guestDetails, savedGuest } = location.state || {};
 
   const formatDate = (value) => {
     if (!value) return '';
@@ -67,6 +67,7 @@ const SignaturePage = () => {
         room,
         searchCriteria,
         guestDetails,
+        savedGuest, // Include saved guest data if available
         signature: signatureData,
       },
     });

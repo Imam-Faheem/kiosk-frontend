@@ -71,7 +71,9 @@ export const searchRoomAvailability = async (data) => {
       }
       
       return {
-        roomTypeId,
+        roomTypeId, // unitGroup.id
+        unitGroupId: unitGroup?.id || roomTypeId, // For booking
+        ratePlanId: ratePlan?.id || null, // For booking
         name: unitGroup?.name || ratePlan?.name || 'Room',
         description: unitGroup?.description || ratePlan?.description || '',
         capacity: unitGroup?.maxPersons || Number(adults) || 1,
@@ -82,6 +84,13 @@ export const searchRoomAvailability = async (data) => {
         totalPrice,
         currency,
         available: true,
+        // Store original offer data for booking
+        _offerData: {
+          unitGroupId: unitGroup?.id,
+          ratePlanId: ratePlan?.id,
+          arrival: offer?.arrival,
+          departure: offer?.departure,
+        },
       };
     });
     

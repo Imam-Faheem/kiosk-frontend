@@ -10,10 +10,13 @@ import {
   Box,
   Loader,
   Card,
+  Alert,
 } from '@mantine/core';
 import { IconArrowLeft, IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
+import { createBooking } from '../../services/bookingService';
+import { updateApaleoReservationWithGuest } from '../../services/guestService';
 
 const NewResPaymentPage = () => {
   const navigate = useNavigate();
@@ -21,9 +24,102 @@ const NewResPaymentPage = () => {
   const { t } = useLanguage();
   const [paymentStatus, setPaymentStatus] = useState('idle');
   const [error, setError] = useState(null);
+  const [bookingData, setBookingData] = useState(null);
   const hasProcessed = useRef(false);
 
-  const { room, searchCriteria, guestDetails } = location.state || {};
+  const { room, searchCriteria, guestDetails, savedGuest, signature } = location.state || {};
+
+  const processPayment = async () => {
+      try {
+        hasProcessed.current = true;
+        setPaymentStatus('processing');
+        
+        const propertyId = process.env.REACT_APP_PROPERTY_ID || 'BER';
+        const hotelId = propertyId; // Use propertyId as hotelId for the endpoint
+        
+        // Prepare booking data for Apaleo
+        const bookingPayload = {
+          propertyId,
+          unitGroupId: room.unitGroupId || room.roomTypeId || room._offerData?.unitGroupId,
+          ratePlanId: room.ratePlanId || room._offerData?.ratePlanId,
+          arrival: searchCriteria.checkIn,
+          departure: searchCriteria.checkOut,
+          adults: Number(searchCriteria.guests) || 1,
+          primaryGuest: {
+            firstName: guestDetails.firstName,
+            lastName: guestDetails.lastName,
+            email: guestDetails.email,
+            phone: guestDetails.phone,
+            address: {
+              addressLine1: guestDetails.addressStreet,
+              city: guestDetails.addressCity,
+              postalCode: guestDetails.addressPostal,
+              countryCode: guestDetails.country,
+              ...(guestDetails.addressState ? { region: guestDetails.addressState } : {}),
+            },
+          },
+        };
+
+        if (!bookingPayload.unitGroupId || !bookingPayload.ratePlanId) {
+          throw new Error('Missing room information. Please select a room again.');
+        }
+
+        // Create booking in Apaleo
+        const bookingResult = await createBooking(bookingPayload, hotelId);
+        
+        // Extract reservation ID from booking response
+        const reservationId = bookingResult?.id || bookingResult?.reservationId || bookingResult?.reservation?.id;
+        
+        if (!reservationId) {
+          throw new Error('Booking created but no reservation ID returned');
+        }
+
+        // Update Apaleo reservation with additional guest info (if needed)
+        try {
+          await updateApaleoReservationWithGuest(reservationId, guestDetails, propertyId);
+        } catch (updateErr) {
+          console.warn('Failed to update reservation with guest info:', updateErr);
+          // Continue even if update fails
+        }
+
+        setPaymentStatus('success');
+        
+        // Prepare reservation data
+        const reservation = {
+          reservationId,
+          id: reservationId,
+          guestDetails,
+          roomTypeId: room.roomTypeId,
+          checkIn: searchCriteria.checkIn,
+          checkOut: searchCriteria.checkOut,
+          guests: searchCriteria.guests,
+          totalAmount: room.totalPrice,
+          currency: room.currency,
+          status: 'confirmed',
+          bookingData: bookingResult,
+        };
+
+        setBookingData(reservation);
+
+        // Navigate to completion page after a short delay to show success
+        setTimeout(() => {
+          navigate('/reservation/complete', {
+            state: {
+              reservation,
+              room,
+              guestDetails,
+            },
+          });
+        }, 1500);
+        
+      } catch (err) {
+        console.error('Payment/Booking error:', err);
+        setPaymentStatus('failed');
+        const errorMessage = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to create booking';
+        setError(errorMessage);
+        hasProcessed.current = false; // Allow retry
+      }
+  };
 
   useEffect(() => {
     if (!room || !guestDetails) {
@@ -36,50 +132,11 @@ const NewResPaymentPage = () => {
       return;
     }
 
-    const processPayment = async () => {
-      try {
-        hasProcessed.current = true;
-        setPaymentStatus('processing');
-        
-        // Immediate success
-        setPaymentStatus('success');
-        
-        // Mock reservation data
-        const mockReservation = {
-          reservationId: `RES-${Date.now()}`,
-          guestDetails,
-          roomTypeId: room.roomTypeId,
-          checkIn: searchCriteria.checkIn,
-          checkOut: searchCriteria.checkOut,
-          guests: searchCriteria.guests,
-          totalAmount: room.totalPrice,
-          currency: room.currency,
-          status: 'confirmed'
-        };
-
-        // Navigate to card page after success
-        navigate('/reservation/card', {
-          state: {
-            reservation: mockReservation,
-            room,
-            paymentData: {
-              paymentId: `PAY-${Date.now()}`,
-              amount: room.totalPrice,
-              currency: room.currency,
-              status: 'initiated'
-            }
-          },
-        });
-        
-      } catch (err) {
-        console.error('Payment error:', err);
-        setPaymentStatus('failed');
-        setError(err.message || t('error.paymentFailed'));
-      }
-    };
-
-    processPayment();
-  }, [room, guestDetails, searchCriteria, navigate, t]);
+    // Only auto-process if we have all required data
+    if (room && guestDetails && searchCriteria && !hasProcessed.current) {
+      processPayment();
+    }
+  }, [room, guestDetails, searchCriteria, navigate]);
 
   const handleBack = () => {
     navigate('/reservation/room-details', {
@@ -176,19 +233,27 @@ const NewResPaymentPage = () => {
           <IconCreditCard size={64} color="#C8653D" />
           {paymentStatus === 'processing' && <Loader size="lg" color="#C8653D" />}
           <Text size="xl" fw={600} ta="center">
-            {paymentStatus === 'processing' && t('newResPayment.swipeCard')}
-            {paymentStatus === 'success' && 'Payment Successful!'}
-            {paymentStatus === 'failed' && 'Payment Failed'}
+            {paymentStatus === 'idle' && 'Ready to process payment'}
+            {paymentStatus === 'processing' && (t('newResPayment.swipeCard') || 'Processing booking...')}
+            {paymentStatus === 'success' && 'Booking Successful!'}
+            {paymentStatus === 'failed' && 'Booking Failed'}
           </Text>
           {paymentStatus === 'processing' && (
             <Text size="md" c="#666666" ta="center">
-              {t('newResPayment.processing')}
+              {t('newResPayment.processing') || 'Creating your reservation...'}
+            </Text>
+          )}
+          {paymentStatus === 'success' && (
+            <Text size="md" c="green" ta="center" fw={600}>
+              Redirecting to confirmation...
             </Text>
           )}
           {error && (
-            <Text size="md" c="red" ta="center">
-              {error}
-            </Text>
+            <Alert color="red" variant="light" style={{ width: '100%' }}>
+              <Text size="md" c="red" ta="center">
+                {error}
+              </Text>
+            </Alert>
           )}
         </Stack>
 
@@ -217,9 +282,30 @@ const NewResPaymentPage = () => {
             {t('common.back')}
           </Button>
           
+          {paymentStatus === 'failed' && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                hasProcessed.current = false;
+                setPaymentStatus('idle');
+                setError(null);
+                processPayment();
+              }}
+              style={{
+                borderColor: '#C8653D',
+                color: '#C8653D',
+                borderRadius: '12px',
+                fontWeight: 'bold',
+                fontSize: '16px',
+              }}
+            >
+              Retry Booking
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => navigate('/reservation/search')}
+            disabled={paymentStatus === 'processing'}
             style={{
               borderColor: '#dc3545',
               color: '#dc3545',
@@ -229,15 +315,19 @@ const NewResPaymentPage = () => {
               transition: 'all 0.3s ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#dc3545';
-              e.currentTarget.style.color = '#FFFFFF';
+              if (!e.currentTarget.disabled) {
+                e.currentTarget.style.backgroundColor = '#dc3545';
+                e.currentTarget.style.color = '#FFFFFF';
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#dc3545';
+              if (!e.currentTarget.disabled) {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#dc3545';
+              }
             }}
           >
-            {t('newResPayment.cancelBooking')}
+            {t('newResPayment.cancelBooking') || 'Cancel'}
           </Button>
         </Group>
       </Paper>
