@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Container,
   Paper,
@@ -9,17 +9,24 @@ import {
   Stack,
   Box,
   TextInput,
+  Select,
+  Alert,
+  Loader,
 } from '@mantine/core';
-import { IconArrowLeft } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useForm } from '@mantine/form';
 import { guestValidationSchema, guestInitialValues } from '../../schemas/guest.schema';
+import useLanguage from '../../hooks/useLanguage';
+import BackButton from '../../components/BackButton';
+import UnoLogo from '../../assets/uno.jpg';
+import { saveGuestDetails } from '../../services/guestService';
 
 const GuestDetailsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const { room, searchCriteria } = location.state || {};
 
@@ -39,14 +46,41 @@ const GuestDetailsPage = () => {
     },
   });
 
-  const handleSubmit = (values) => {
-    navigate('/reservation/room-details', {
-      state: {
-        room,
-        searchCriteria,
-        guestDetails: values,
-      },
-    });
+  const handleSubmit = async (values) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Prepare guest data with propertyId if available
+      const guestData = {
+        ...values,
+        propertyId: process.env.REACT_APP_PROPERTY_ID || 'BER',
+        // reservationId can be added later when reservation is created
+      };
+
+      // Save guest details to backend
+      const result = await saveGuestDetails(guestData);
+
+      if (result.success) {
+        // Navigate with both guest details and saved guest data
+        navigate('/reservation/room-details', {
+          state: {
+            room,
+            searchCriteria,
+            guestDetails: values,
+            savedGuest: result.data, // Include saved guest data (with guestId)
+          },
+        });
+      } else {
+        setError(result.message || 'Failed to save guest details');
+      }
+    } catch (err) {
+      console.error('Error saving guest details:', err);
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to save guest details';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -86,31 +120,42 @@ const GuestDetailsPage = () => {
       >
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                marginRight: '15px',
+                marginRight: '0px',
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '30px !important',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: '600',
+                letterSpacing: '1px',
+                marginLeft: '-9px'
               }}
             >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('guestDetails.title')}
+              UNO HOTELS
             </Title>
           </Group>
         </Group>
 
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="lg" mb="xl">
+            <Title order={3} style={{ fontSize: '24px', fontWeight: 800, color: '#222' }}>{t('guestDetails.formTitle')}</Title>
+
+            {error && (
+              <Alert color="red" variant="light" onClose={() => setError(null)} withCloseButton>
+                {error}
+              </Alert>
+            )}
+
             <TextInput
               label={t('guestDetails.firstName')}
               placeholder="Enter your first name"
@@ -133,50 +178,95 @@ const GuestDetailsPage = () => {
               type="email"
               {...form.getInputProps('email')}
             />
+            <Group grow>
+              <Select
+                label={t('guestDetails.country')}
+                placeholder={t('guestDetails.countryPlaceholder')}
+                required
+                size="lg"
+                data={[
+                  { value: 'US', label: 'United States (+1)' },
+                  { value: 'GB', label: 'United Kingdom (+44)' },
+                  { value: 'DE', label: 'Germany (+49)' },
+                  { value: 'FR', label: 'France (+33)' },
+                  { value: 'IT', label: 'Italy (+39)' },
+                  { value: 'ES', label: 'Spain (+34)' },
+                  { value: 'PT', label: 'Portugal (+351)' },
+                ]}
+                {...form.getInputProps('country')}
+              />
+              <TextInput
+                label={t('guestDetails.phone')}
+                placeholder={t('guestDetails.phonePlaceholder')}
+                required
+                size="lg"
+                {...form.getInputProps('phone')}
+              />
+            </Group>
+
+            <Title order={4} style={{ fontSize: '18px', fontWeight: 700, color: '#444', marginTop: '8px' }}>{t('guestDetails.addressSection')}</Title>
             <TextInput
-              label={t('guestDetails.phone')}
-              placeholder="Enter your phone number"
+              label={t('guestDetails.addressStreet')}
+              placeholder={t('guestDetails.streetPlaceholder')}
               required
               size="lg"
-              {...form.getInputProps('phone')}
+              {...form.getInputProps('addressStreet')}
             />
+            <Group grow>
+              <TextInput
+                label={t('guestDetails.addressCity')}
+                placeholder={t('guestDetails.cityPlaceholder')}
+                required
+                size="lg"
+                {...form.getInputProps('addressCity')}
+              />
+              <TextInput
+                label={t('guestDetails.addressState')}
+                placeholder={t('guestDetails.statePlaceholder')}
+                required
+                size="lg"
+                {...form.getInputProps('addressState')}
+              />
+            </Group>
             <TextInput
-              label={t('guestDetails.country')}
-              placeholder="Enter your country (Optional)"
+              label={t('guestDetails.addressPostal')}
+              placeholder={t('guestDetails.postalPlaceholder')}
+              required
               size="lg"
-              {...form.getInputProps('country')}
-            />
-            <TextInput
-              label={t('guestDetails.address')}
-              placeholder="Enter your address (Optional)"
-              size="lg"
-              {...form.getInputProps('address')}
+              {...form.getInputProps('addressPostal')}
             />
           </Stack>
 
           <Group justify="space-between">
-            <Button
-              variant="outline"
-              leftSection={<IconArrowLeft size={16} />}
-              onClick={handleBack}
-              style={{
-                borderColor: '#C8653D',
-                color: '#C8653D',
-                borderRadius: '12px',
-              }}
-            >
-              {t('guestDetails.back')}
-            </Button>
+            <BackButton onClick={handleBack} text={t('guestDetails.back')} />
             <Button
               type="submit"
               size="lg"
+              loading={loading}
+              rightSection={!loading && <span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
+              disabled={loading}
               style={{
                 backgroundColor: '#C8653D',
                 color: '#FFFFFF',
                 borderRadius: '12px',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#B8552F';
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#C8653D';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }
               }}
             >
-              {t('guestDetails.continue')}
+              {loading ? 'Saving...' : t('guestDetails.continue')}
             </Button>
           </Group>
         </form>

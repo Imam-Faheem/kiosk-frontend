@@ -11,61 +11,64 @@ import {
   TextInput,
   Alert,
 } from '@mantine/core';
-import { IconArrowLeft, IconKey, IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
+import BackButton from '../../components/BackButton';
 import { useForm } from '@mantine/form';
-import { useCardMutation } from '../../hooks/useCardMutation';
-import { lostCardValidationSchema, lostCardInitialValues } from '../../schemas/lostCard.schema';
+import { apiClient } from '../../services/api/apiClient';
+import UnoLogo from '../../assets/uno.jpg';
 
 const LostCardPage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-  const validateGuest = useCardMutation('validate', {
-    onSuccess: (result) => {
-      if (result.success) {
-        // Navigate to regenerate card page with validated data
-        navigate('/lost-card/regenerate', {
-          state: {
-            guestData: result.data,
-            validationData: form.values,
-          },
-        });
-      } else {
-        setError(t('error.guestValidationFailed'));
-      }
-    },
-    onError: (err) => {
-      console.error('Guest validation error:', err);
-      setError(err.message || t('error.guestValidationFailed'));
-    }
-  });
+  const { t } = useLanguage();
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
-    initialValues: lostCardInitialValues,
-    validate: (values) => {
-      try {
-        lostCardValidationSchema.validateSync(values, { abortEarly: false });
-        return {};
-      } catch (err) {
-        const errors = {};
-        err.inner.forEach((error) => {
-          errors[error.path] = error.message;
-        });
-        return errors;
-      }
+    initialValues: {
+      roomType: '',
+      reservationNumber: '',
+      lastName: ''
+    },
+    validate: {
+      roomType: (value) => (!value ? 'Room type is required' : null),
+      reservationNumber: (value) => (!value ? 'Reservation number is required' : null),
+      lastName: (value) => (!value ? 'Last name is required' : null),
     },
   });
 
   const handleSubmit = async (values) => {
     setError(null);
+    setIsLoading(true);
     
     try {
-      await validateGuest.mutateAsync(values);
+      // Call backend API to validate guest with Apaleo
+      const response = await apiClient.post('/lost-card/validate', {
+        reservationNumber: values.reservationNumber,
+        roomType: values.roomType,
+        lastName: values.lastName,
+      });
+      
+      if (response.data.success) {
+        const guestData = response.data.data;
+        
+        // Navigate to regenerate card page with validated data
+        navigate('/lost-card/regenerate', {
+          state: {
+            guestData: guestData,
+            validationData: values,
+          },
+        });
+      } else {
+        throw new Error(response.data.message || 'Validation failed');
+      }
     } catch (err) {
       console.error('Guest validation error:', err);
-      setError(err.message || t('error.guestValidationFailed'));
+      const errorMessage = err?.response?.data?.message || err?.message || t('error.guestValidationFailed');
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -96,51 +99,42 @@ const LostCardPage = () => {
           maxWidth: '600px',
           backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
+          borderRadius: '10px',
         }}
       >
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                marginRight: '15px',
+                marginRight: '0px',
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '30px !important',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: '600',
+                letterSpacing: '1px',
+                marginLeft: '-9px'
               }}
             >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('lostCard.title')}
+              UNO HOTELS
             </Title>
           </Group>
         </Group>
 
-        {/* Help Text */}
-        <Alert
-          icon={<IconKey size={16} />}
-          title="Lost Your Card?"
-          color="blue"
-          variant="light"
-          style={{ borderRadius: '8px', marginBottom: '20px' }}
-        >
-          <Text size="sm">
-            {t('lostCard.helpText')}
-          </Text>
-        </Alert>
 
         {/* Form */}
         <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Stack gap="lg" mb="xl">
+          <Stack gap="xl" mb="xl">
             {error && (
               <Alert
                 icon={<IconAlertCircle size={16} />}
@@ -154,14 +148,27 @@ const LostCardPage = () => {
             )}
 
             <TextInput
-              label={t('lostCard.roomNumber')}
-              placeholder="Enter your room number"
+              label={t('lostCard.roomType') || 'Room Type'}
+              placeholder="Enter room type (e.g., Double, Single, Suite)"
               required
               size="lg"
-              {...form.getInputProps('roomNumber')}
+              {...form.getInputProps('roomType')}
+              description="Room type from your reservation (e.g., Double, Single, Suite)"
               styles={{
+                label: {
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: '4px',
+                  marginBottom: '10px',
+                },
+                required: {
+                  marginLeft: '2px',
+                  transform: 'translateY(-1px)',
+                },
                 input: {
-                  borderRadius: '12px',
+                  height: '48px',
+                  minHeight: '48px',
+                  borderRadius: '8px',
                   border: '2px solid #E0E0E0',
                   '&:focus': {
                     borderColor: '#C8653D',
@@ -177,8 +184,20 @@ const LostCardPage = () => {
               size="lg"
               {...form.getInputProps('reservationNumber')}
               styles={{
+                label: {
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: '4px',
+                  marginBottom: '10px',
+                },
+                required: {
+                  marginLeft: '2px',
+                  transform: 'translateY(-1px)',
+                },
                 input: {
-                  borderRadius: '12px',
+                  height: '48px',
+                  minHeight: '48px',
+                  borderRadius: '8px',
                   border: '2px solid #E0E0E0',
                   '&:focus': {
                     borderColor: '#C8653D',
@@ -194,8 +213,20 @@ const LostCardPage = () => {
               size="lg"
               {...form.getInputProps('lastName')}
               styles={{
+                label: {
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: '4px',
+                  marginBottom: '10px',
+                },
+                required: {
+                  marginLeft: '2px',
+                  transform: 'translateY(-1px)',
+                },
                 input: {
-                  borderRadius: '12px',
+                  height: '48px',
+                  minHeight: '48px',
+                  borderRadius: '8px',
                   border: '2px solid #E0E0E0',
                   '&:focus': {
                     borderColor: '#C8653D',
@@ -207,52 +238,35 @@ const LostCardPage = () => {
 
           {/* Action Buttons */}
           <Group justify="space-between">
-            <Button
-              variant="outline"
-              leftSection={<IconArrowLeft size={16} />}
-              onClick={handleBack}
-              style={{
-                borderColor: '#C8653D',
-                color: '#C8653D',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.color = '#FFFFFF';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#C8653D';
-              }}
-            >
-              {t('lostCard.back')}
-            </Button>
+            <BackButton onClick={handleBack} text={t('lostCard.back')} />
 
             <Button
               type="submit"
               size="lg"
-              leftSection={<IconKey size={20} />}
-              loading={validateGuest.isPending}
+              leftSection={<IconCheck size={20} />}
+              loading={isLoading}
               style={{
                 backgroundColor: '#C8653D',
                 color: '#FFFFFF',
-                borderRadius: '12px',
+                borderRadius: '8px',
                 fontWeight: 'bold',
                 fontSize: '16px',
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8552F';
-                e.currentTarget.style.transform = 'scale(1.02)';
+                if (!e.currentTarget.disabled) {
+                  e.currentTarget.style.backgroundColor = '#B8552F';
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.transform = 'scale(1)';
+                if (!e.currentTarget.disabled) {
+                  e.currentTarget.style.backgroundColor = '#C8653D';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }
               }}
             >
-              {t('lostCard.submit')}
+              {isLoading ? 'Validating...' : t('lostCard.submit')}
             </Button>
           </Group>
         </form>

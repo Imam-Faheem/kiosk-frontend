@@ -9,12 +9,14 @@ import {
   Stack,
   Box,
   Alert,
+  Card,
 } from '@mantine/core';
 import { IconAlertCircle, IconHome, IconRefresh } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../services/api/apiClient';
+import UnoLogo from '../assets/uno.jpg';
 
 const ErrorPage = () => {
   const navigate = useNavigate();
@@ -113,23 +115,17 @@ const ErrorPage = () => {
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                marginRight: '15px',
+                marginRight: '0px',
+                objectFit: 'cover',
               }}
-            >
-              UNO
-            </Box>
+            />
             <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
               {t('error.title')}
             </Title>
@@ -138,44 +134,68 @@ const ErrorPage = () => {
 
         {/* Error Content */}
         <Stack gap="xl" align="center" mb="xl">
+          {/* Error Icon */}
           <Box
             style={{
-              fontSize: '64px',
+              fontSize: '80px',
               textAlign: 'center',
               marginBottom: '20px',
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))',
             }}
           >
             {getErrorIcon()}
           </Box>
 
+          {/* Error Message Display */}
           <Alert
-            icon={<IconAlertCircle size={24} />}
+            icon={<IconAlertCircle size={32} />}
             title={t('error.title')}
             color="red"
-            variant="light"
+            variant="filled"
             style={{
               width: '100%',
-              borderRadius: '12px',
+              borderRadius: '16px',
+              border: '2px solid #dc3545',
             }}
           >
-            <Text size="lg" fw={500}>
+            <Text size="xl" fw={600} c="white">
               {getErrorMessage()}
             </Text>
           </Alert>
 
-          <Text c="#666666" size="md" ta="center">
-            {t('error.contactSupport')}
-          </Text>
+          {/* Friendly Explanation */}
+          <Card withBorder p="lg" radius="md" style={{ backgroundColor: '#f8f9fa', width: '100%' }}>
+            <Stack gap="sm" align="center">
+              <Text size="lg" fw={600} c="#C8653D">What happened?</Text>
+              <Text size="md" c="#666666" ta="center">
+                {errorType === 'paymentFailed' && 'Your payment could not be processed. Please check your card details and try again.'}
+                {errorType === 'cardDispenserError' && 'There was an issue with the card dispenser. Our technical team has been notified.'}
+                {errorType === 'reservationNotFound' && 'We could not find your reservation. Please verify your details and try again.'}
+                {errorType === 'roomNotAvailable' && 'The selected room is no longer available. Please choose a different room or dates.'}
+                {!errorType && 'Something unexpected happened. Don\'t worry, we\'re here to help!'}
+              </Text>
+            </Stack>
+          </Card>
 
-          {/* Support Info */}
-          <Box ta="center">
-            <Text size="sm" c="#666666" fw={500}>
-              Support: +1-800-UNO-HELP
-            </Text>
-            <Text size="sm" c="#666666">
-              support@unohotels.com
-            </Text>
-          </Box>
+          {/* Contact Support Info */}
+          <Card withBorder p="lg" radius="md" style={{ backgroundColor: '#C8653D', color: 'white', width: '100%' }}>
+            <Stack gap="sm" align="center">
+              <Text size="lg" fw={600}>Need Help?</Text>
+              <Text size="md" ta="center">
+                Our support team is available 24/7 to assist you
+              </Text>
+              <Group gap="xl" justify="center">
+                <Box ta="center">
+                  <Text size="sm" fw={500}>Phone</Text>
+                  <Text size="md" fw={600}>+1-800-UNO-HELP</Text>
+                </Box>
+                <Box ta="center">
+                  <Text size="sm" fw={500}>Email</Text>
+                  <Text size="md" fw={600}>support@unohotels.com</Text>
+                </Box>
+              </Group>
+            </Stack>
+          </Card>
         </Stack>
 
         {/* Action Buttons */}

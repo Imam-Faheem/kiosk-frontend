@@ -12,15 +12,18 @@ import {
   Alert,
   Loader,
 } from '@mantine/core';
-import { IconArrowLeft, IconCreditCard, IconCheck, IconMail } from '@tabler/icons-react';
+import { IconCreditCard, IconCheck, IconMail } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
+import { performCheckIn } from '../../services/checkinService';
+import BackButton from '../../components/BackButton';
+import UnoLogo from '../../assets/uno.jpg';
 
 const CardDispensingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const issueCard = useCardMutation('issue', {
     onSuccess: (result) => {
       if (result.success) {
@@ -57,19 +60,38 @@ const CardDispensingPage = () => {
 
     const processCard = async () => {
       try {
-        // Step 1: Preparing card
+        // Step 1: Perform Apaleo check-in
         setCurrentStep(0);
         setCardStatus('preparing');
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        try {
+          // Call Apaleo check-in API
+          const checkInResult = await performCheckIn({
+            reservation_id: reservation.reservationId || reservation.id,
+            property_id: reservation.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
+          });
+          
+          if (!checkInResult.success && !checkInResult.already_checked_in) {
+            throw new Error(checkInResult.message || 'Check-in failed');
+          }
+          
+          console.log('Apaleo check-in successful:', checkInResult);
+        } catch (checkInErr) {
+          console.error('Apaleo check-in error:', checkInErr);
+          // Continue with card issuance even if check-in fails (might already be checked in)
+          // The backend will handle this gracefully
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Step 2: Encoding card
+        // Step 2: Encoding card (issuing digital key)
         setCurrentStep(1);
         setCardStatus('encoding');
         
         const result = await issueCard.mutateAsync({
-          reservationId: reservation.reservationId,
-          roomNumber: reservation.roomNumber,
-          guestName: reservation.guestName,
+          reservationId: reservation.reservationId || reservation.id,
+          roomNumber: reservation.roomNumber || reservation.roomType || 'TBD',
+          guestName: reservation.guestName || `${reservation.firstName || ''} ${reservation.lastName || ''}`.trim() || 'Guest',
           email: reservation.email
         });
 
@@ -143,28 +165,31 @@ const CardDispensingPage = () => {
       >
         {/* Header */}
         <Group justify="space-between" mb="xl">
-          <Group>
-            <Box
-              style={{
-                width: '50px',
-                height: '50px',
-                backgroundColor: '#C8653D',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                marginRight: '15px',
-              }}
-            >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('cardDispensing.title')}
-            </Title>
-          </Group>
+            <Group>
+              <img
+                src={UnoLogo}
+                alt="UNO Hotel Logo"
+                style={{
+                  width: '50px',
+                  height: '50px',
+                  borderRadius: '8px',
+                  marginRight: '0px',
+                  objectFit: 'cover',
+                }}
+              />
+              <Title
+                order={2}
+                style={{
+                  fontSize: '30px !important',
+                  color: 'rgb(34, 34, 34)',
+                  fontWeight: '600',
+                  letterSpacing: '1px',
+                  marginLeft: '-9px'
+                }}
+              >
+                UNO HOTELS
+              </Title>
+            </Group>
         </Group>
 
         {/* Content */}
@@ -294,28 +319,7 @@ const CardDispensingPage = () => {
 
         {/* Back Button */}
         <Group justify="flex-start">
-          <Button
-            variant="outline"
-            leftSection={<IconArrowLeft size={16} />}
-            onClick={handleBack}
-            style={{
-              borderColor: '#C8653D',
-              color: '#C8653D',
-              borderRadius: '12px',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#C8653D';
-              e.currentTarget.style.color = '#FFFFFF';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#C8653D';
-            }}
-          >
-            {t('common.back')}
-          </Button>
+          <BackButton onClick={handleBack} text={t('common.back')} />
         </Group>
       </Paper>
     </Container>

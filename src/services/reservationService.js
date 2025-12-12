@@ -1,30 +1,19 @@
 import { apiClient } from './api/apiClient';
 import { simulateApiDelay, mockReservations, mockSuccessResponses, mockErrors } from './mockData';
+import { validateReservation as validateReservationApaleo } from './checkinService';
 
-// Validate reservation for check-in
+const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
+
+// Validate reservation for check-in using Apaleo API
 export const validateReservation = async (data) => {
+  if (debug) console.log('[reservation] validating reservation', data);
+  
   try {
-    await simulateApiDelay();
-    
-    // Mock implementation - in real app, this would call your backend
-    const mockResponse = await apiClient.post('/reservations/validate', data);
-    return mockResponse.data;
+    // Use Apaleo API to validate reservation
+    return await validateReservationApaleo(data);
   } catch (error) {
-    // Fallback to mock data if API fails
-    const { reservationId, lastName } = data;
-    const reservation = mockReservations.find(r => 
-      r.reservationId === reservationId && r.lastName.toLowerCase() === lastName.toLowerCase()
-    );
-    
-    if (!reservation) {
-      throw new Error(mockErrors.RESERVATION_NOT_FOUND.message);
-    }
-    
-    return {
-      success: true,
-      data: reservation,
-      message: 'Reservation validated successfully'
-    };
+    if (debug) console.error('[reservation] validation error', error?.message);
+    throw error;
   }
 };
 

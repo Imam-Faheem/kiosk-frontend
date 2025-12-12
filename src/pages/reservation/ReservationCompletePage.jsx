@@ -8,38 +8,37 @@ import {
   Title,
   Stack,
   Box,
+  Card,
+  Divider,
 } from '@mantine/core';
-import { IconCheck, IconHome } from '@tabler/icons-react';
+import { IconCheck, IconHome, IconCalendar, IconUser, IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
 
 const ReservationCompletePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
-  const [countdown, setCountdown] = useState(20);
+  const { t } = useLanguage();
 
-  const { reservation, cardData } = location.state || {};
+  const { reservation, room, guestDetails } = location.state || {};
 
   useEffect(() => {
     if (!reservation) {
       navigate('/reservation/search');
       return;
     }
-
-    const countdownInterval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdownInterval);
-          navigate('/home');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(countdownInterval);
   }, [reservation, navigate]);
+
+  const formatDate = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    return date.toLocaleDateString(undefined, {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
   const handleReturnHome = () => {
     navigate('/home');
@@ -89,7 +88,7 @@ const ReservationCompletePage = () => {
                 color: 'white',
                 fontWeight: 'bold',
                 fontSize: '16px',
-                marginRight: '15px',
+                marginRight: '0px',
               }}
             >
               UNO
@@ -105,7 +104,7 @@ const ReservationCompletePage = () => {
             style={{
               width: '120px',
               height: '120px',
-              backgroundColor: 'green',
+              backgroundColor: '#28a745',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
@@ -117,16 +116,66 @@ const ReservationCompletePage = () => {
           </Box>
 
           <Title order={1} c="#0B152A" fw={700} ta="center">
-            {t('reservationComplete.success')}
+            {t('reservationComplete.success') || 'Reservation Confirmed!'}
           </Title>
 
-          <Text size="lg" fw={600}>
-            {t('reservationComplete.reservationNumber')}: {reservation.reservationId}
+          <Text size="lg" fw={600} c="#C8653D">
+            {t('reservationComplete.reservationNumber') || 'Reservation Number'}: {reservation.reservationId || reservation.id}
           </Text>
 
-          <Text size="sm" c="#666666" ta="center">
-            Returning to main menu in {countdown} seconds...
-          </Text>
+          {/* Reservation Details Card */}
+          {(room || guestDetails || reservation.checkIn) && (
+            <Card withBorder p="lg" radius="md" style={{ width: '100%', backgroundColor: '#f8f9fa' }}>
+              <Stack gap="md">
+                {guestDetails && (
+                  <Group gap="sm">
+                    <IconUser size={20} color="#C8653D" />
+                    <Text size="md" fw={600}>Guest:</Text>
+                    <Text size="md">{guestDetails.firstName} {guestDetails.lastName}</Text>
+                  </Group>
+                )}
+                
+                {room && (
+                  <Group gap="sm">
+                    <IconCreditCard size={20} color="#C8653D" />
+                    <Text size="md" fw={600}>Room:</Text>
+                    <Text size="md">{room.name}</Text>
+                  </Group>
+                )}
+                
+                {reservation.checkIn && (
+                  <>
+                    <Divider />
+                    <Group gap="sm">
+                      <IconCalendar size={20} color="#C8653D" />
+                      <Text size="md" fw={600}>Check-in:</Text>
+                      <Text size="md">{formatDate(reservation.checkIn)}</Text>
+                    </Group>
+                    {reservation.checkOut && (
+                      <Group gap="sm">
+                        <IconCalendar size={20} color="#C8653D" />
+                        <Text size="md" fw={600}>Check-out:</Text>
+                        <Text size="md">{formatDate(reservation.checkOut)}</Text>
+                      </Group>
+                    )}
+                  </>
+                )}
+                
+                {reservation.totalAmount && (
+                  <>
+                    <Divider />
+                    <Group justify="space-between">
+                      <Text size="md" fw={600}>Total Amount:</Text>
+                      <Text size="lg" fw={700} c="#C8653D">
+                        {reservation.currency || 'EUR'} {reservation.totalAmount}
+                      </Text>
+                    </Group>
+                  </>
+                )}
+              </Stack>
+            </Card>
+          )}
+
         </Stack>
 
         <Group justify="center">

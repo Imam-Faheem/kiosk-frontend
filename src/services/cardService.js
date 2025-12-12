@@ -25,58 +25,67 @@ export const issueCard = async (data) => {
   }
 };
 
-// Validate guest for lost card
+// Validate guest for lost card using Apaleo API
 export const validateGuest = async (data) => {
+  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
+  
+  if (debug) console.log('[card] validating guest for lost card', data);
+  
   try {
-    await simulateApiDelay();
+    const response = await apiClient.post('/lost-card/validate', {
+      reservationNumber: data.reservationNumber,
+      roomType: data.roomType,
+      lastName: data.lastName,
+    });
     
-    // Mock implementation - in real app, this would call your backend
-    const mockResponse = await apiClient.post('/cards/validate-guest', data);
-    return mockResponse.data;
+    if (debug) console.log('[card] validation response', response.data);
+    
+    return response.data;
   } catch (error) {
-    // Fallback to mock data if API fails
-    // Simulate validation - in real app, this would check against Apaleo
-    const isValid = data.roomNumber && data.reservationNumber && data.lastName;
+    if (debug) console.error('[card] validation error', error?.response?.data || error?.message);
     
-    if (!isValid) {
-      throw new Error(mockErrors.GUEST_VALIDATION_FAILED.message);
-    }
-    
-    return {
-      success: true,
-      data: {
-        reservationId: data.reservationNumber,
-        roomNumber: data.roomNumber,
-        guestName: `${data.lastName}`,
-        status: 'validated'
-      },
-      message: 'Guest validated successfully'
-    };
+    const errorMessage = error?.response?.data?.message || error?.message || 'Failed to validate guest';
+    throw new Error(errorMessage);
   }
 };
 
-// Regenerate lost card
+// Regenerate lost card using backend API
 export const regenerateCard = async (data) => {
+  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
+  
+  if (debug) console.log('[card] regenerating card', data);
+  
   try {
-    await simulateHardwareDelay();
+    const response = await apiClient.post('/lost-card/regenerate', {
+      reservation_id: data.reservationId || data.reservation_id,
+      property_id: data.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
+      room_number: data.roomNumber || data.room_number,
+    });
     
-    // Mock implementation - in real app, this would call your backend
-    const mockResponse = await apiClient.post('/cards/regenerate', data);
-    return mockResponse.data;
+    if (debug) console.log('[card] regenerate response', response.data);
+    
+    return response.data;
   } catch (error) {
-    // Fallback to mock data if API fails
-    return {
-      success: true,
-      data: {
-        cardId: `CARD-${Date.now()}`,
-        accessCode: `AC-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
-        status: 'active',
-        roomNumber: data.roomNumber,
-        reservationId: data.reservationId,
-        oldCardDeactivated: true
-      },
-      message: 'Card regenerated successfully'
-    };
+    if (debug) console.error('[card] regenerate error', error);
+    
+    // Handle network errors with more detail
+    if (!error.response) {
+      if (error.code === 'ECONNREFUSED' || error.message?.includes('Network Error')) {
+        throw new Error('Cannot connect to server. Please ensure the backend server is running on port 5001.');
+      }
+      if (error.code === 'ETIMEDOUT') {
+        throw new Error('Request timed out. Please check your connection and try again.');
+      }
+      throw new Error(error.message || 'Network error. Please check your connection.');
+    }
+    
+    // Handle HTTP error responses
+    const errorMessage = error?.response?.data?.message || 
+                         error?.response?.data?.error || 
+                         error?.response?.statusText ||
+                         error?.message || 
+                         'Failed to regenerate card';
+    throw new Error(errorMessage);
   }
 };
 

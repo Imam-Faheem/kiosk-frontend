@@ -1,123 +1,55 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import {
   Container,
   Paper,
   Group,
   Button,
-  Text,
   Title,
   Stack,
-  Box,
 } from '@mantine/core';
-import { IconX, IconArrowLeft, IconLogin, IconPlus, IconKey } from '@tabler/icons-react';
+import { IconKey, IconCalendar, IconCreditCardOff } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../hooks/useLanguage';
+import UnoLogo from '../assets/uno.jpg';
+import BackButton from '../components/BackButton';
 
 const MainMenuPage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
-  const [idleTimeoutId, setIdleTimeoutId] = useState(null);
-  const [screenSaverTimeoutId, setScreenSaverTimeoutId] = useState(null);
+  const { t } = useLanguage();
 
-  // Idle timeout return to Welcome after 2min
-  useEffect(() => {
-    const resetIdleTimeout = () => {
-      if (idleTimeoutId) {
-        clearTimeout(idleTimeoutId);
-      }
-      if (screenSaverTimeoutId) {
-        clearTimeout(screenSaverTimeoutId);
-      }
 
-      const idleTimeout = setTimeout(() => {
-        navigate('/');
-      }, 120000); // 2 minutes
-
-      const screenSaverTimeout = setTimeout(() => {
-        // Could implement screen saver here
-        console.log('Screen saver activated');
-      }, 120000); // 2 minutes
-
-      setIdleTimeoutId(idleTimeout);
-      setScreenSaverTimeoutId(screenSaverTimeout);
-    };
-
-    // Reset timeout on any user interaction
-    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
-    events.forEach(event => {
-      document.addEventListener(event, resetIdleTimeout, true);
-    });
-
-    resetIdleTimeout();
-
-    return () => {
-      events.forEach(event => {
-        document.removeEventListener(event, resetIdleTimeout, true);
-      });
-      if (idleTimeoutId) {
-        clearTimeout(idleTimeoutId);
-      }
-      if (screenSaverTimeoutId) {
-        clearTimeout(screenSaverTimeoutId);
-      }
-    };
-  }, [navigate]);
-
-  const clearTimeouts = useCallback(() => {
-    if (idleTimeoutId) {
-      clearTimeout(idleTimeoutId);
-    }
-    if (screenSaverTimeoutId) {
-      clearTimeout(screenSaverTimeoutId);
-    }
-  }, [idleTimeoutId, screenSaverTimeoutId]);
-
-  const handleExit = useCallback(() => {
-    clearTimeouts();
+  const handleBack = () => {
     navigate('/');
-  }, [clearTimeouts, navigate]);
-
-  const handleBack = useCallback(() => {
-    clearTimeouts();
-    navigate('/');
-  }, [clearTimeouts, navigate]);
-
-  const handleCheckIn = useCallback(() => {
-    clearTimeouts();
-    navigate('/checkin');
-  }, [clearTimeouts, navigate]);
-
-  const handleNewReservation = useCallback(() => {
-    clearTimeouts();
-    navigate('/reservation/search');
-  }, [clearTimeouts, navigate]);
-
-  const handleLostCard = useCallback(() => {
-    clearTimeouts();
-    navigate('/lost-card');
-  }, [clearTimeouts, navigate]);
-
-  const buttonStyle = {
-    width: '100%',
-    maxWidth: '500px',
-    height: '80px',
-    backgroundColor: '#C8653D',
-    color: '#FFFFFF',
-    borderRadius: '20px',
-    fontWeight: 'bold',
-    fontSize: '20px',
-    textTransform: 'uppercase',
-    fontFamily: 'sans-serif',
-    padding: '20px 100px',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.15)',
-    transition: 'all 0.3s ease',
-    border: 'none',
   };
 
-  const hoverStyle = {
-    transform: 'scale(1.02)',
-    boxShadow: '0 6px 15px rgba(0, 0, 0, 0.2)',
-    backgroundColor: '#B8552F',
+  const handleCheckIn = () => {
+    navigate('/checkin');
+  };
+
+  const handleNewReservation = () => {
+    navigate('/reservation/search');
+  };
+
+  const handleLostCard = () => {
+    navigate('/lost-card');
+  };
+
+  const baseButtonStyle = {
+    width: '100%',
+    maxWidth: '560px',
+    height: '96px',
+    backgroundColor: '#C8653D',
+    color: '#FFFFFF',
+    borderRadius: '8px',
+    fontWeight: 800,
+    fontSize: '22px',
+    letterSpacing: '1px',
+    textTransform: 'uppercase',
+    fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
+    padding: '24px 100px',
+    border: 'none',
+    transition: 'transform 200ms ease, box-shadow 200ms ease, background-color 200ms ease',
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)',
   };
 
   return (
@@ -129,7 +61,7 @@ const MainMenuPage = () => {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '20px',
+        padding: '24px',
         backgroundColor: '#FFFFFF',
       }}
     >
@@ -140,67 +72,63 @@ const MainMenuPage = () => {
         radius="xl"
         style={{
           width: '100%',
-          maxWidth: '800px',
+          maxWidth: '820px',
           backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
           borderRadius: '20px',
         }}
       >
         {/* Header */}
-        <Group justify="space-between" mb="xl">
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                marginRight: '15px',
+                marginRight: '0px',
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '30px !important',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: 800,
+                letterSpacing: '1px',
+                marginLeft: '-9px',
+                fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif'
               }}
             >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('mainMenu.title')}
+              UNO HOTELS
             </Title>
           </Group>
           
-          <Button
-            variant="light"
-            size="sm"
-            leftSection={<IconX size={16} />}
-            onClick={handleExit}
-            style={{
-              backgroundColor: '#E0E0E0',
-              color: '#000000',
-              border: '1px solid #D0D0D0',
-              borderRadius: '8px',
-            }}
-          >
-            Exit
-          </Button>
         </Group>
 
         {/* Main Buttons Section */}
-        <Stack gap="xl" mb="xl" align="center" style={{ minHeight: '400px', justifyContent: 'center' }}>
+        <Stack gap="xl" mb="xl" align="center" style={{ minHeight: '420px', justifyContent: 'center', gap: '32px' }}>
           <Button
             size="xl"
             p="xl"
-            leftSection={<IconLogin size={24} />}
+            leftSection={<IconKey size={28} />}
             onClick={handleCheckIn}
-            style={buttonStyle}
+            style={{
+              ...baseButtonStyle,
+              padding: '26px 100px',
+              boxShadow: '0 6px 18px rgba(0, 0, 0, 0.45)'
+            }}
             onMouseEnter={(e) => {
-              Object.assign(e.currentTarget.style, hoverStyle);
+              e.currentTarget.style.transform = 'scale(1.02)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.5)';
+              e.currentTarget.style.backgroundColor = '#B8552F';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.15)';
+              e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.45)';
               e.currentTarget.style.backgroundColor = '#C8653D';
             }}
           >
@@ -210,15 +138,17 @@ const MainMenuPage = () => {
           <Button
             size="xl"
             p="xl"
-            leftSection={<IconPlus size={24} />}
+            leftSection={<IconCalendar size={28} />}
             onClick={handleNewReservation}
-            style={buttonStyle}
+            style={baseButtonStyle}
             onMouseEnter={(e) => {
-              Object.assign(e.currentTarget.style, hoverStyle);
+              e.currentTarget.style.transform = 'scale(1.02)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.5)';
+              e.currentTarget.style.backgroundColor = '#B8552F';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.15)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.4)';
               e.currentTarget.style.backgroundColor = '#C8653D';
             }}
           >
@@ -228,15 +158,17 @@ const MainMenuPage = () => {
           <Button
             size="xl"
             p="xl"
-            leftSection={<IconKey size={24} />}
+            leftSection={<IconCreditCardOff size={28} />}
             onClick={handleLostCard}
-            style={buttonStyle}
+            style={baseButtonStyle}
             onMouseEnter={(e) => {
-              Object.assign(e.currentTarget.style, hoverStyle);
+              e.currentTarget.style.transform = 'scale(1.02)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.5)';
+              e.currentTarget.style.backgroundColor = '#B8552F';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.15)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.4)';
               e.currentTarget.style.backgroundColor = '#C8653D';
             }}
           >
@@ -246,33 +178,7 @@ const MainMenuPage = () => {
 
         {/* Bottom Section - Back Button */}
         <Group justify="flex-start" style={{ marginTop: '20px' }}>
-          <Button
-            variant="filled"
-            leftSection={<IconArrowLeft size={16} />}
-            onClick={handleBack}
-            style={{
-              backgroundColor: '#C8653D',
-              color: '#FFFFFF',
-              borderRadius: '20px',
-              padding: '12px 24px',
-              fontWeight: 'bold',
-              fontSize: '16px',
-              fontFamily: 'sans-serif',
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
-              transition: 'all 0.3s ease',
-              border: 'none',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#B8552F';
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#C8653D';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            {t('mainMenu.back')}
-          </Button>
+          <BackButton onClick={handleBack} text={t('mainMenu.back')} />
         </Group>
       </Paper>
     </Container>

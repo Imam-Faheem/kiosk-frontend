@@ -26,8 +26,7 @@ export const useCardMutation = (action, { onSuccess, onError } = {}) => {
     throw new Error(`Invalid card action: ${action}`);
   }
 
-  return useMutation({
-    mutationFn,
+  return useMutation(mutationFn, {
     onSuccess,
     onError: (error) => {
       console.error(`Card ${action} failed:`, error);

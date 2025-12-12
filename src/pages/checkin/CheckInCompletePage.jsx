@@ -13,14 +13,14 @@ import {
 } from '@mantine/core';
 import { IconCheck, IconHome, IconMail, IconCalendar } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../services/api/apiClient';
 
 const CheckInCompletePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [countdown, setCountdown] = useState(15);
   
   const reservation = location.state?.reservation;
@@ -120,7 +120,7 @@ const CheckInCompletePage = () => {
                 color: 'white',
                 fontWeight: 'bold',
                 fontSize: '16px',
-                marginRight: '15px',
+                marginRight: '0px',
               }}
             >
               UNO

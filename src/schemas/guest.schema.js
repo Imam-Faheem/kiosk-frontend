@@ -35,12 +35,32 @@ export const guestValidationSchema = yup.object({
   
   country: yup
     .string()
+    .required('Country is required')
     .max(50, 'Country must be less than 50 characters')
     .trim(),
-  
-  address: yup
+
+  addressStreet: yup
     .string()
-    .max(200, 'Address must be less than 200 characters')
+    .required('Street address is required')
+    .max(120, 'Street must be less than 120 characters')
+    .trim(),
+
+  addressCity: yup
+    .string()
+    .required('City is required')
+    .max(80, 'City must be less than 80 characters')
+    .trim(),
+
+  addressState: yup
+    .string()
+    .required('State/Province is required')
+    .max(80, 'State/Province must be less than 80 characters')
+    .trim(),
+
+  addressPostal: yup
+    .string()
+    .required('ZIP/Postal code is required')
+    .max(20, 'ZIP/Postal must be less than 20 characters')
     .trim()
 });
 
@@ -50,5 +70,8 @@ export const guestInitialValues = {
   email: '',
   phone: '',
   country: '',
-  address: ''
+  addressStreet: '',
+  addressCity: '',
+  addressState: '',
+  addressPostal: ''
 };

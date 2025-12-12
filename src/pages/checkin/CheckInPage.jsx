@@ -11,16 +11,18 @@ import {
   TextInput,
   Alert,
 } from '@mantine/core';
-import { IconArrowLeft, IconLogin, IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconArrowRight } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
 import { checkinValidationSchema, checkinInitialValues } from '../../schemas/checkin.schema';
+import useLanguage from '../../hooks/useLanguage';
+import UnoLogo from '../../assets/uno.jpg';
+import BackButton from '../../components/BackButton';
 
 const CheckInPage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const [error, setError] = useState(null);
   
   const validateReservation = useReservationMutation('validate', {
@@ -38,23 +40,28 @@ const CheckInPage = () => {
 
   const form = useForm({
     initialValues: checkinInitialValues,
-    validate: (values) => {
-      try {
-        checkinValidationSchema.validateSync(values, { abortEarly: false });
-        return {};
-      } catch (err) {
-        const errors = {};
-        err.inner.forEach((error) => {
-          errors[error.path] = error.message;
-        });
-        return errors;
-      }
+    validate: {
+      reservationId: (value) => (!value ? 'Reservation ID is required' : null),
+      lastName: (value) => (!value ? 'Last name is required' : null),
     },
   });
 
   const handleSubmit = async (values) => {
     setError(null);
-    validateReservation.mutate(values);
+    
+    try {
+      // Call backend API to validate reservation with Apaleo
+      const result = await validateReservation.mutateAsync(values);
+      
+      if (result.success) {
+        // Navigate to payment check page with real reservation data
+        navigate('/checkin/payment-check', {
+          state: { reservation: result.data },
+        });
+      }
+    } catch (err) {
+      setError(err.message || t('error.reservationNotFound'));
+    }
   };
 
   const handleBack = () => {
@@ -90,28 +97,42 @@ const CheckInPage = () => {
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                marginRight: '15px',
+                marginRight: '0px',
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '30px !important',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: '600',
+                letterSpacing: '1px',
+                marginLeft: '-9px'
               }}
             >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('checkIn.title')}
+              UNO HOTELS
             </Title>
           </Group>
         </Group>
+
+        {/* Context Title */}
+        <Title order={3} style={{
+          fontSize: '26px',
+          fontWeight: 800,
+          color: '#222',
+          marginBottom: '16px',
+          letterSpacing: '0.5px'
+        }}>
+          Find Your Reservation
+        </Title>
 
         {/* Form */}
         <form onSubmit={form.onSubmit(handleSubmit)}>
@@ -130,17 +151,21 @@ const CheckInPage = () => {
 
             <TextInput
               label={t('checkIn.reservationId')}
-              placeholder="Enter your reservation ID"
+              placeholder="Enter your 10-digit reservation number"
               required
               size="lg"
               {...form.getInputProps('reservationId')}
+              description="This can be found in your confirmation email."
               styles={{
                 input: {
                   borderRadius: '12px',
                   border: '2px solid #E0E0E0',
-                  '&:focus': {
-                    borderColor: '#C8653D',
-                  }
+                  outline: 'none',
+                  transition: 'box-shadow 150ms ease, border-color 150ms ease',
+                },
+                inputFocused: {
+                  borderColor: '#C8653D',
+                  boxShadow: '0 0 0 3px rgba(200, 101, 61, 0.15)'
                 }
               }}
             />
@@ -155,9 +180,12 @@ const CheckInPage = () => {
                 input: {
                   borderRadius: '12px',
                   border: '2px solid #E0E0E0',
-                  '&:focus': {
-                    borderColor: '#C8653D',
-                  }
+                  outline: 'none',
+                  transition: 'box-shadow 150ms ease, border-color 150ms ease',
+                },
+                inputFocused: {
+                  borderColor: '#C8653D',
+                  boxShadow: '0 0 0 3px rgba(200, 101, 61, 0.15)'
                 }
               }}
             />
@@ -165,33 +193,12 @@ const CheckInPage = () => {
 
           {/* Action Buttons */}
           <Group justify="space-between">
-            <Button
-              variant="outline"
-              leftSection={<IconArrowLeft size={16} />}
-              onClick={handleBack}
-              style={{
-                borderColor: '#C8653D',
-                color: '#C8653D',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.color = '#FFFFFF';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#C8653D';
-              }}
-            >
-              {t('checkIn.back')}
-            </Button>
+            <BackButton onClick={handleBack} text={t('checkIn.back')} />
 
             <Button
               type="submit"
               size="lg"
-              leftSection={<IconLogin size={20} />}
+              rightSection={<IconArrowRight size={20} />}
               loading={validateReservation.isPending}
               style={{
                 backgroundColor: '#C8653D',

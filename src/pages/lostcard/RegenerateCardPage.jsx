@@ -12,15 +12,17 @@ import {
   Alert,
   Loader,
 } from '@mantine/core';
-import { IconArrowLeft, IconKey, IconCheck, IconX } from '@tabler/icons-react';
+import { IconKey, IconCheck, IconX } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
+import UnoLogo from '../../assets/uno.jpg';
+import BackButton from '../../components/BackButton';
 
 const RegenerateCardPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const regenerateCard = useCardMutation('regenerate', {
     onSuccess: (result) => {
       if (result.success) {
@@ -72,9 +74,10 @@ const RegenerateCardPage = () => {
         setCardStatus('programming');
         
         const result = await regenerateCard.mutateAsync({
-          reservationId: guestData.reservationId,
+          reservationId: guestData.reservationId || guestData.reservationNumber,
           roomNumber: guestData.roomNumber,
-          guestName: guestData.guestName,
+          guestName: guestData.guestName || `${guestData.firstName || ''} ${guestData.lastName || ''}`.trim(),
+          propertyId: guestData.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
         });
 
         if (result.success) {
@@ -136,31 +139,34 @@ const RegenerateCardPage = () => {
           maxWidth: '600px',
           backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
+          borderRadius: '10px',
         }}
       >
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <Group>
-            <Box
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
               style={{
                 width: '50px',
                 height: '50px',
-                backgroundColor: '#C8653D',
                 borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                marginRight: '15px',
+                marginRight: '0px',
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '30px !important',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: '600',
+                letterSpacing: '1px',
+                marginLeft: '-9px'
               }}
             >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('regenerateCard.title')}
+              UNO HOTELS
             </Title>
           </Group>
         </Group>
@@ -197,9 +203,6 @@ const RegenerateCardPage = () => {
                         <IconKey size={20} color="#666666" />
                       )}
                     </Group>
-                    <Text size="sm" c="#666666">
-                      {step.description}
-                    </Text>
                     {index === currentStep && (
                       <Progress
                         value={100}
@@ -214,59 +217,18 @@ const RegenerateCardPage = () => {
                 ))}
               </Stack>
 
-              {/* Card Animation */}
-              <Stack align="center" gap="md">
-                <Box
-                  style={{
-                    width: '120px',
-                    height: '80px',
-                    backgroundColor: '#C8653D',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: '14px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-                    animation: cardStatus === 'completed' ? 'none' : 'pulse 2s infinite',
-                    transform: cardStatus === 'completed' ? 'scale(1.1)' : 'scale(1)',
-                    transition: 'all 0.3s ease',
-                  }}
-                >
-                  <IconKey size={32} />
-                </Box>
-
-                {cardStatus === 'deactivating' && (
-                  <Text size="lg" c="#666666" ta="center">
-                    {t('regenerateCard.pleaseWait')}
+              {/* Completion Message */}
+              {cardStatus === 'completed' && (
+                <Stack align="center" gap="sm" mt="md">
+                  <IconCheck size={32} color="green" />
+                  <Text size="lg" fw={600} c="#0B152A" ta="center">
+                    Card regenerated successfully!
                   </Text>
-                )}
-
-                {cardStatus === 'generating' && (
-                  <Text size="lg" c="#666666" ta="center">
-                    Generating new access credentials...
+                  <Text size="md" c="#666666" ta="center">
+                    Your new card is ready.
                   </Text>
-                )}
-
-                {cardStatus === 'programming' && (
-                  <Text size="lg" c="#666666" ta="center">
-                    Programming your new card...
-                  </Text>
-                )}
-
-                {cardStatus === 'completed' && (
-                  <Stack align="center" gap="sm">
-                    <IconCheck size={32} color="green" />
-                    <Text size="lg" fw={600} c="#0B152A" ta="center">
-                      Card regenerated successfully!
-                    </Text>
-                    <Text size="md" c="#666666" ta="center">
-                      Your new card is ready.
-                    </Text>
-                  </Stack>
-                )}
-              </Stack>
+                </Stack>
+              )}
 
               {/* Card Details */}
               {cardData && (
@@ -296,28 +258,10 @@ const RegenerateCardPage = () => {
 
         {/* Back Button */}
         <Group justify="flex-start">
-          <Button
-            variant="outline"
-            leftSection={<IconArrowLeft size={16} />}
-            onClick={handleBack}
-            style={{
-              borderColor: '#C8653D',
-              color: '#C8653D',
-              borderRadius: '12px',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#C8653D';
-              e.currentTarget.style.color = '#FFFFFF';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#C8653D';
-            }}
-          >
-            {t('common.back')}
-          </Button>
+          <BackButton 
+            onClick={handleBack} 
+            text={t('common.back')}
+          />
         </Group>
       </Paper>
     </Container>

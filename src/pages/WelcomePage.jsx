@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import {
   Container,
   Paper,
-  Group,
   Button,
   Text,
   Stack,
@@ -11,19 +10,17 @@ import {
   Image,
   Card,
 } from "@mantine/core";
-import { IconX, IconCheck } from "@tabler/icons-react";
+import { IconCheck } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
-
-// ✅ Correct logo import from src/assets
 import UnoLogo from "../assets/uno.jpg";
 
 const languages = [
+  { value: "de", label: "Deutsch", flag: "/flags/de.png" },
   { value: "en", label: "English", flag: "/flags/gb.png" },
   { value: "es", label: "Español", flag: "/flags/es.png" },
   { value: "fr", label: "Français", flag: "/flags/fr.png" },
-  { value: "de", label: "Deutsch", flag: "/flags/de.png" },
   { value: "it", label: "Italiano", flag: "/flags/it.png" },
   { value: "pt", label: "Português", flag: "/flags/pt.png" },
 ];
@@ -31,20 +28,21 @@ const languages = [
 const WelcomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { language, setLanguage } = useLanguageStore();
-  const [timeoutId, setTimeoutId] = useState(null);
+  const { language, setLanguage, initializeLanguage } = useLanguageStore();
 
-  const handleLanguageChange = (value) => setLanguage(value);
+  // Ensure language is properly initialized
+  useEffect(() => {
+    initializeLanguage();
+  }, [initializeLanguage]);
+
+  const handleLanguageChange = (value) => {
+    setLanguage(value);
+  };
 
   const handleContinue = () => {
-    if (timeoutId) clearTimeout(timeoutId);
     navigate("/home");
   };
 
-  const handleExit = () => {
-    if (timeoutId) clearTimeout(timeoutId);
-    navigate("/");
-  };
 
   return (
     <Container
@@ -66,90 +64,98 @@ const WelcomePage = () => {
         radius="xl"
         style={{
           width: "100%",
-          maxWidth: "800px",
+          maxWidth: "850px",
           backgroundColor: "#ffffff",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-          borderRadius: "20px",
+          border: "1px solid #f0f0f0",
+          boxShadow: "0 6px 18px rgba(0, 0, 0, 0.1)",
+          borderRadius: "24px",
           position: "relative",
           textAlign: "center",
           paddingTop: "100px",
         }}
       >
-     
+        {/* ✅ Top-left hotel name */}
         <h2
           style={{
             position: "absolute",
             top: "20px",
             left: "30px",
-            fontSize: "24px",
+            fontSize: "30px !important",
             color: "#222",
             fontWeight: "600",
             letterSpacing: "1px",
+            marginLeft: "-9px"
           }}
         >
           UNO HOTELS
         </h2>
 
-        {/* ✅ Exit button top-right */}
-        <Button
-          variant="light"
-          size="sm"
-          leftSection={<IconX size={16} />}
-          onClick={handleExit}
-          style={{
-            position: "absolute",
-            top: "20px",
-            right: "30px",
-            backgroundColor: "#E0E0E0",
-            color: "#000000",
-            border: "1px solid #D0D0D0",
-            borderRadius: "8px",
-          }}
-        >
-          Exit
-        </Button>
 
         {/* ✅ Centered Logo */}
         <img
           src={UnoLogo}
           alt="UNO Hotel Logo"
           style={{
-            width: "150px",
+            width: "110px",
             height: "auto",
             borderRadius: "8px",
             marginBottom: "20px",
           }}
         />
 
-        {/* ✅ Centered Text */}
+        {/* ✅ Main heading with dynamic language text */}
         <h3
           style={{
             color: "#333",
             fontSize: "22px",
-            marginBottom: "30px",
+            marginBottom: "40px",
             fontWeight: "500",
           }}
         >
-          {t("welcome.selectLanguage") || "Please select your language"}
+          {language === "de" && "Sprache wählen"}
+          {language === "en" && "Select language"}
+          {language === "es" && "Seleccionar idioma"}
+          {language === "fr" && "Sélectionner la langue"}
+          {language === "it" && "Seleziona lingua"}
+          {language === "pt" && "Selecionar idioma"}
         </h3>
 
-        {/* ✅ Language Selection Cards */}
-        <Grid gutter="md" mb="xl">
-          {languages.map((lang) => (
-            <Grid.Col span={6} key={lang.value}>
-              <Card
+        {/* ✅ Language Selection - Centered Grid */}
+        <Box 
+          style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            width: '100%',
+            marginBottom: '2rem'
+          }}
+        >
+          <Grid gutter="lg" style={{ maxWidth: '600px', width: '100%' }}>
+            {languages.map((lang) => (
+              <Grid.Col span={6} key={lang.value}>
+                <Card
                 withBorder
                 p="lg"
-                radius="md"
+                radius="lg"
                 style={{
                   cursor: "pointer",
                   transition: "all 0.3s ease",
                   border:
                     language === lang.value
                       ? "3px solid #C8653D"
-                      : "2px solid #E0E0E0",
+                      : "2px solid #F2F2F2",
                   backgroundColor:
-                    language === lang.value ? "#FFF5F2" : "#FFFFFF",
+                    language === lang.value ? "#FFF8F5" : "#FFFFFF",
+                  borderRadius: "16px",
+                  boxShadow:
+                    language === lang.value
+                      ? "0 6px 16px rgba(200, 101, 61, 0.2)"
+                      : "0 4px 10px rgba(0, 0, 0, 0.08)",
+                  minHeight: "200px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                  alignItems: "center",
                 }}
                 onClick={() => handleLanguageChange(lang.value)}
               >
@@ -158,9 +164,9 @@ const WelcomePage = () => {
                     <Image
                       src={lang.flag}
                       alt={lang.label}
-                      width={60}
-                      height={40}
-                      radius="sm"
+                      width={120}
+                      height={80}
+                      radius={0}
                       style={{ objectFit: "cover" }}
                     />
                     {language === lang.value && (
@@ -196,7 +202,8 @@ const WelcomePage = () => {
               </Card>
             </Grid.Col>
           ))}
-        </Grid>
+          </Grid>
+        </Box>
 
         {/* ✅ Continue Button */}
         <Box ta="center">

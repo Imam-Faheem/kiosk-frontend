@@ -28,8 +28,7 @@ export const useReservationMutation = (action, { onSuccess, onError } = {}) => {
     throw new Error(`Invalid reservation action: ${action}`);
   }
 
-  return useMutation({
-    mutationFn,
+  return useMutation(mutationFn, {
     onSuccess,
     onError: (error) => {
       console.error(`Reservation ${action} failed:`, error);

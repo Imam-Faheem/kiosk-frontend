@@ -12,15 +12,14 @@ import {
 } from '@mantine/core';
 import { IconCheck, IconHome, IconKey, IconMail } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../../hooks/useLanguage';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../services/api/apiClient';
 
 const CardIssuedPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
-  const [countdown, setCountdown] = useState(15);
+  const { t } = useLanguage();
   
   const guestData = location.state?.guestData;
   const cardData = location.state?.cardData;
@@ -52,21 +51,6 @@ const CardIssuedPage = () => {
       oldCardDeactivated: cardData.oldCardDeactivated,
     });
 
-    // Auto-return to MainMenu after 15s
-    const countdownInterval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(countdownInterval);
-          navigate('/home');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      clearInterval(countdownInterval);
-    };
   }, [guestData, cardData, navigate, logCardReissueMutation]);
 
   const handleReturnHome = () => {
@@ -100,7 +84,7 @@ const CardIssuedPage = () => {
           maxWidth: '600px',
           backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
+          borderRadius: '10px',
         }}
       >
         {/* Header */}
@@ -118,7 +102,7 @@ const CardIssuedPage = () => {
                 color: 'white',
                 fontWeight: 'bold',
                 fontSize: '16px',
-                marginRight: '15px',
+                marginRight: '0px',
               }}
             >
               UNO
@@ -222,10 +206,6 @@ const CardIssuedPage = () => {
             </Text>
           </Box>
 
-          {/* Auto-return countdown */}
-          <Text size="sm" c="#666666" ta="center">
-            Returning to main menu in {countdown} seconds...
-          </Text>
         </Stack>
 
         {/* Return Home Button */}
@@ -237,7 +217,7 @@ const CardIssuedPage = () => {
             style={{
               backgroundColor: '#C8653D',
               color: '#FFFFFF',
-              borderRadius: '12px',
+              borderRadius: '8px',
               fontWeight: 'bold',
               fontSize: '16px',
               transition: 'all 0.3s ease',
