@@ -7,51 +7,44 @@ const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 't
  * @returns {Promise<Object>} Properties response with data array
  */
 export const getProperties = async () => {
-  if (debug) console.log('[properties] fetching properties');
+  if (debug) console.log('[properties] fetching properties from Apaleo');
   
   try {
     const response = await apiClient.get('/properties');
     
-    if (debug) console.log('[properties] response', response.data);
+    if (debug) console.log('[properties] API response:', response.data);
     
-    // Backend returns { data: [...] } format
-    let properties = response.data?.data || response.data || [];
+    // Backend returns { data: [...], count: number } format
+    let properties = response.data?.data || [];
     
     // Ensure it's an array
     if (!Array.isArray(properties)) {
+      console.warn('[properties] Response data is not an array:', properties);
       properties = [];
     }
     
-    // If still empty, provide fallback properties
-    if (properties.length === 0) {
-      console.warn('[properties] No properties from API, using fallback');
-      properties = [
-        {
-          id: "BER",
-          name: "Berlin Property",
-          address: {
-            city: "Berlin",
-            country: "Germany"
-          }
-        },
-        {
-          id: "MUC",
-          name: "Munich Property",
-          address: {
-            city: "Munich",
-            country: "Germany"
-          }
-        }
-      ];
+    // Log the properties found
+    if (debug) {
+      console.log(`[properties] Found ${properties.length} properties from Apaleo:`, properties);
     }
     
+    // If properties array is empty but response indicates fallback was used
+    if (properties.length === 0 && response.data?.fallback) {
+      console.warn('[properties] Using fallback properties from backend');
+    }
+    
+    // Return properties (even if empty - let UI handle empty state)
     return {
       success: true,
       data: properties,
-      message: 'Properties fetched successfully',
+      count: properties.length,
+      isFallback: response.data?.fallback || false,
+      message: properties.length > 0 
+        ? `Found ${properties.length} properties` 
+        : 'No properties available',
     };
   } catch (err) {
-    if (debug) console.error('[properties] error', err?.response?.data || err?.message);
+    if (debug) console.error('[properties] API error:', err?.response?.data || err?.message);
     
     // On error, return fallback properties so kiosk can still be configured
     console.warn('[properties] API error, using fallback properties');
@@ -75,7 +68,8 @@ export const getProperties = async () => {
           }
         }
       ],
-      message: 'Using fallback properties',
+      isFallback: true,
+      message: 'Using fallback properties due to API error',
     };
   }
 };
