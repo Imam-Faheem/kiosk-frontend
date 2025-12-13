@@ -104,6 +104,17 @@ export const api = {
     revenue: (params) => apiClient.get('/reports/revenue', { params }),
     guests: (params) => apiClient.get('/reports/guests', { params }),
   },
+
+  // Property endpoints
+  properties: {
+    getAll: () => apiClient.get('/properties'),
+    getById: (id) => apiClient.get(`/properties/${id}`),
+    getCapabilities: (propertyId, kioskId) => {
+      const params = { propertyId };
+      if (kioskId) params.kioskId = kioskId;
+      return apiClient.get('/kiosk/capabilities', { params });
+    },
+  },
 };
 
 export { apiClient };

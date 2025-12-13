@@ -14,6 +14,7 @@ import { IconCheck } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
+import usePropertyStore from "../stores/propertyStore";
 import UnoLogo from "../assets/uno.jpg";
 
 const languages = [
@@ -29,18 +30,27 @@ const WelcomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { language, setLanguage, initializeLanguage } = useLanguageStore();
+  const { isConfigured, propertyId } = usePropertyStore();
 
   // Ensure language is properly initialized
   useEffect(() => {
     initializeLanguage();
   }, [initializeLanguage]);
 
+  // Check property configuration on mount
+  useEffect(() => {
+    // Debug: Log property state
+    console.log('Property state:', { isConfigured, propertyId });
+  }, [isConfigured, propertyId]);
+
   const handleLanguageChange = (value) => {
     setLanguage(value);
   };
 
   const handleContinue = () => {
-    navigate("/home");
+    // Always navigate to property setup after language selection
+    // This ensures property is selected on first boot
+    navigate("/property-setup");
   };
 
 

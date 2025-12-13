@@ -18,6 +18,7 @@ import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
+import usePropertyStore from '../../stores/propertyStore';
 
 const RegenerateCardPage = () => {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ const RegenerateCardPage = () => {
           reservationId: guestData.reservationId || guestData.reservationNumber,
           roomNumber: guestData.roomNumber,
           guestName: guestData.guestName || `${guestData.firstName || ''} ${guestData.lastName || ''}`.trim(),
-          propertyId: guestData.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
+          propertyId: guestData.propertyId || usePropertyStore.getState().propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
         });
 
         if (result.success) {

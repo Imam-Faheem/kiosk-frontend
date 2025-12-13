@@ -1,6 +1,13 @@
 import { apiClient } from './api/apiClient';
+import usePropertyStore from '../stores/propertyStore';
 
 const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
+
+// Helper to get propertyId from store or fallback
+const getPropertyId = () => {
+  const propertyId = usePropertyStore.getState().propertyId;
+  return propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
+};
 
 /**
  * Validate reservation by ID and last name
@@ -48,7 +55,7 @@ export const validateReservation = async (data) => {
       unitGroup: reservation.unitGroup,
       roomType: reservation.unitGroup?.name || 'Standard Room',
       roomNumber: reservation.unitGroup?.name || 'TBD', // Room number might not be assigned yet
-      propertyId: reservation.property?.id || 'BER',
+      propertyId: reservation.property?.id || getPropertyId(),
       guestName: `${reservation.primaryGuest?.firstName || ''} ${reservation.primaryGuest?.lastName || ''}`.trim(),
       // Include full reservation for check-in API
       _apaleoReservation: reservation,
@@ -84,7 +91,7 @@ export const performCheckIn = async (data) => {
   try {
     const response = await apiClient.post('/apaleo-check-in', {
       reservation_id: data.reservation_id || data.reservationId,
-      property_id: data.property_id || data.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
+      property_id: data.property_id || data.propertyId || getPropertyId(),
     });
     
     if (debug) console.log('[checkin] check-in response', response.data);

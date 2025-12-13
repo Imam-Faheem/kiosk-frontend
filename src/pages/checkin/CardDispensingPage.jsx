@@ -19,6 +19,7 @@ import { useCardMutation } from '../../hooks/useCardMutation';
 import { performCheckIn } from '../../services/checkinService';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
+import usePropertyStore from '../../stores/propertyStore';
 
 const CardDispensingPage = () => {
   const navigate = useNavigate();
@@ -68,7 +69,7 @@ const CardDispensingPage = () => {
           // Call Apaleo check-in API
           const checkInResult = await performCheckIn({
             reservation_id: reservation.reservationId || reservation.id,
-            property_id: reservation.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
+            property_id: reservation.propertyId || usePropertyStore.getState().propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
           });
           
           if (!checkInResult.success && !checkInResult.already_checked_in) {
