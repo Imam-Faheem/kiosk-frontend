@@ -66,8 +66,9 @@ const AppRoutes = () => {
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
           {/* Main kiosk flow */}
-          <Route path="/" element={<WelcomePage />} />
+          <Route path="/" element={<PropertySelectionPage />} />
           <Route path="/property-setup" element={<PropertySelectionPage />} />
+          <Route path="/welcome" element={<WelcomePage />} />
           <Route path="/home" element={<MainMenuPage />} />
           
           {/* Check-in flow */}

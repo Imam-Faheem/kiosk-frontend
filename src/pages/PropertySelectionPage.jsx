@@ -131,8 +131,8 @@ const PropertySelectionPage = () => {
         propertyData: selectedProperty,
       });
 
-      // Navigate to home
-      navigate("/home");
+      // Navigate to language selection page
+      navigate("/welcome");
     } catch (err) {
       console.error("Failed to save property selection:", err);
       setError(err.message || "Failed to save property selection. Please try again.");

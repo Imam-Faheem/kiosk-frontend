@@ -9,12 +9,14 @@ import {
   Grid,
   Image,
   Card,
+  Group,
 } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
 import usePropertyStore from "../stores/propertyStore";
+import BackButton from "../components/BackButton";
 import UnoLogo from "../assets/uno.jpg";
 
 const languages = [
@@ -47,10 +49,14 @@ const WelcomePage = () => {
     setLanguage(value);
   };
 
+  const handleBack = () => {
+    // Navigate back to property setup
+    navigate("/");
+  };
+
   const handleContinue = () => {
-    // Always navigate to property setup after language selection
-    // This ensures property is selected on first boot
-    navigate("/property-setup");
+    // Navigate to home after language selection
+    navigate("/home");
   };
 
 
@@ -216,7 +222,7 @@ const WelcomePage = () => {
         </Box>
 
         {/* ✅ Continue Button */}
-        <Box ta="center">
+        <Box ta="center" mb="xl">
           <Button
             size="xl"
             onClick={handleContinue}
@@ -248,6 +254,11 @@ const WelcomePage = () => {
             {t("welcome.continue") || "Continue"}
           </Button>
         </Box>
+
+        {/* Back Button */}
+        <Group justify="flex-start" style={{ marginTop: "20px" }}>
+          <BackButton onClick={handleBack} text={t("common.back") || "Back"} />
+        </Group>
       </Paper>
     </Container>
   );

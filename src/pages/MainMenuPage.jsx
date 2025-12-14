@@ -22,7 +22,7 @@ const MainMenuPage = () => {
   // Redirect to property setup if property is not configured
   useEffect(() => {
     if (!isConfigured || !propertyId) {
-      navigate('/property-setup', { replace: true });
+      navigate('/', { replace: true });
     }
   }, [isConfigured, propertyId, navigate]);
 
