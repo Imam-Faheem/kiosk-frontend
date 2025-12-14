@@ -123,7 +123,17 @@ const PropertySelectionPage = () => {
         finalCapabilities = await getKioskCapabilities(selectedPropertyId, kioskId || null);
       }
 
-      // Configure property in store
+      // Save to localStorage: {propertyId, kioskId, capabilities}
+      const propertyConfig = {
+        propertyId: selectedPropertyId,
+        kioskId: kioskId || null,
+        capabilities: finalCapabilities,
+      };
+      
+      // Save to localStorage explicitly
+      localStorage.setItem('property-config', JSON.stringify(propertyConfig));
+
+      // Configure property in store (also saves to localStorage via Zustand persist)
       configureProperty({
         propertyId: selectedPropertyId,
         kioskId: kioskId || null,
@@ -131,7 +141,7 @@ const PropertySelectionPage = () => {
         propertyData: selectedProperty,
       });
 
-      // Navigate to language selection page
+      // Navigate to WelcomePage
       navigate("/welcome");
     } catch (err) {
       console.error("Failed to save property selection:", err);
