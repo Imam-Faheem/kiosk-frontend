@@ -6,13 +6,13 @@ import {
   Text,
   Stack,
   Box,
-  Grid,
-  Card,
   Loader,
   Alert,
   Title,
+  Select,
+  TextInput,
 } from "@mantine/core";
-import { IconCheck, IconAlertCircle } from "@tabler/icons-react";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import usePropertyStore from "../stores/propertyStore";
@@ -22,13 +22,37 @@ import UnoLogo from "../assets/uno.jpg";
 const PropertySelectionPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { setProperty, configureProperty, propertyId: currentPropertyId } = usePropertyStore();
+  const { configureProperty, propertyId: currentPropertyId, kioskId: currentKioskId } = usePropertyStore();
   
   const [properties, setProperties] = useState([]);
-  const [selectedPropertyId, setSelectedPropertyId] = useState(currentPropertyId);
+  const [selectedPropertyId, setSelectedPropertyId] = useState(currentPropertyId || null);
+  const [kioskId, setKioskId] = useState(currentKioskId || "");
+  const [capabilities, setCapabilities] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [loadingCapabilities, setLoadingCapabilities] = useState(false);
+
+  const fetchCapabilities = async (propertyId, kioskIdValue) => {
+    if (!propertyId) return;
+    
+    try {
+      setLoadingCapabilities(true);
+      const caps = await getKioskCapabilities(propertyId, kioskIdValue || null);
+      setCapabilities(caps || {});
+    } catch (err) {
+      console.error("Failed to fetch capabilities:", err);
+      // Use default capabilities on error
+      setCapabilities({
+        checkIn: true,
+        reservations: true,
+        cardIssuance: true,
+        lostCard: true,
+      });
+    } finally {
+      setLoadingCapabilities(false);
+    }
+  };
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -36,13 +60,18 @@ const PropertySelectionPage = () => {
         setLoading(true);
         setError(null);
         const response = await getProperties();
-        // getProperties now always returns { success: true, data: [...] }
-        const properties = response.data || [];
-        setProperties(properties);
+        // getProperties now always returns { success: true, data: [...] } 
+        const propertiesData = response.data || [];
+        setProperties(propertiesData);
         
-        // If properties exist, pre-select the first one if no property is currently configured
-        if (properties.length > 0 && !currentPropertyId) {
-          setSelectedPropertyId(properties[0].id);
+        // If properties exist and a property is already selected, fetch its capabilities
+        if (propertiesData.length > 0 && currentPropertyId) {
+          await fetchCapabilities(currentPropertyId, currentKioskId);
+        } else if (propertiesData.length > 0 && !currentPropertyId) {
+          // Pre-select the first one if no property is currently configured
+          const firstPropertyId = propertiesData[0].id;
+          setSelectedPropertyId(firstPropertyId);
+          await fetchCapabilities(firstPropertyId, null);
         }
       } catch (err) {
         console.error("Failed to fetch properties:", err);
@@ -54,10 +83,21 @@ const PropertySelectionPage = () => {
     };
 
     fetchProperties();
-  }, [currentPropertyId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPropertyId, currentKioskId]);
 
-  const handlePropertySelect = (property) => {
-    setSelectedPropertyId(property.id);
+  const handlePropertySelect = async (propertyId) => {
+    setSelectedPropertyId(propertyId);
+    // Fetch capabilities for the selected property
+    await fetchCapabilities(propertyId, kioskId || null);
+  };
+
+  const handleKioskIdChange = async (value) => {
+    setKioskId(value);
+    // If a property is selected, refetch capabilities with the new kiosk ID
+    if (selectedPropertyId) {
+      await fetchCapabilities(selectedPropertyId, value || null);
+    }
   };
 
   const handleContinue = async () => {
@@ -77,14 +117,17 @@ const PropertySelectionPage = () => {
         throw new Error("Selected property not found");
       }
 
-      // Fetch capabilities (optional, uses defaults if endpoint doesn't exist)
-      const capabilities = await getKioskCapabilities(selectedPropertyId);
+      // Use already fetched capabilities or fetch them if not available
+      let finalCapabilities = capabilities;
+      if (!finalCapabilities || Object.keys(finalCapabilities).length === 0) {
+        finalCapabilities = await getKioskCapabilities(selectedPropertyId, kioskId || null);
+      }
 
       // Configure property in store
       configureProperty({
         propertyId: selectedPropertyId,
-        kioskId: null, // Can be set later if needed
-        capabilities,
+        kioskId: kioskId || null,
+        capabilities: finalCapabilities,
         propertyData: selectedProperty,
       });
 
@@ -201,7 +244,7 @@ const PropertySelectionPage = () => {
             fontWeight: "500",
           }}
         >
-          Select Property
+          Property Setup
         </Title>
 
         {/* Error Alert */}
@@ -217,103 +260,138 @@ const PropertySelectionPage = () => {
           </Alert>
         )}
 
-        {/* Property Selection - Grid */}
-        {properties.length > 0 ? (
-          <Box
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              width: "100%",
-              marginBottom: "2rem",
-            }}
-          >
-            <Grid gutter="lg" style={{ maxWidth: "600px", width: "100%" }}>
-              {properties.map((property) => (
-                <Grid.Col span={properties.length === 1 ? 12 : 6} key={property.id}>
-                  <Card
-                    withBorder
-                    p="lg"
-                    radius="lg"
-                    style={{
-                      cursor: "pointer",
-                      transition: "all 0.3s ease",
-                      border:
-                        selectedPropertyId === property.id
-                          ? "3px solid #C8653D"
-                          : "2px solid #F2F2F2",
-                      backgroundColor:
-                        selectedPropertyId === property.id ? "#FFF8F5" : "#FFFFFF",
-                      borderRadius: "16px",
-                      boxShadow:
-                        selectedPropertyId === property.id
-                          ? "0 6px 16px rgba(200, 101, 61, 0.2)"
-                          : "0 4px 10px rgba(0, 0, 0, 0.08)",
-                      minHeight: "200px",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                    onClick={() => handlePropertySelect(property)}
-                  >
-                    <Stack align="center" gap="md">
-                      <Box style={{ position: "relative" }}>
-                        {selectedPropertyId === property.id && (
-                          <Box
-                            style={{
-                              position: "absolute",
-                              top: "-5px",
-                              right: "-5px",
-                              width: "24px",
-                              height: "24px",
-                              backgroundColor: "#C8653D",
-                              borderRadius: "50%",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "white",
-                              zIndex: 1,
-                            }}
-                          >
-                            <IconCheck size={14} />
-                          </Box>
-                        )}
-                      </Box>
+        {/* Property Selection - Dropdown */}
+        <Box
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.5rem",
+            maxWidth: "600px",
+            margin: "0 auto 2rem",
+            width: "100%",
+          }}
+        >
+          {properties.length > 0 ? (
+            <>
+              <Select
+                label="Select Property"
+                placeholder="Choose a property"
+                data={properties.map((property) => {
+                  const currency = property.currency || property.defaultCurrency || "N/A";
+                  const caps = selectedPropertyId === property.id ? capabilities : {};
+                  const capsText = Object.keys(caps).length > 0
+                    ? Object.entries(caps)
+                        .filter(([_, enabled]) => enabled)
+                        .map(([key]) => key)
+                        .join(", ") || "None"
+                    : "Loading...";
+                  
+                  return {
+                    value: property.id,
+                    label: `${property.name || property.id} (${property.id})`,
+                    description: `Currency: ${currency} | Capabilities: ${capsText}`,
+                  };
+                })}
+                value={selectedPropertyId}
+                onChange={handlePropertySelect}
+                searchable
+                size="lg"
+                styles={{
+                  input: {
+                    borderRadius: "12px",
+                    fontSize: "16px",
+                    padding: "16px",
+                  },
+                  label: {
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    marginBottom: "8px",
+                  },
+                }}
+              />
 
-                      <Text
-                        size="lg"
-                        fw={700}
-                        c={selectedPropertyId === property.id ? "#C8653D" : "#0B152A"}
-                        ta="center"
-                      >
-                        {property.name || property.id}
-                      </Text>
+              {/* Property Details Display */}
+              {selectedPropertyId && (
+                <Box
+                  style={{
+                    padding: "16px",
+                    backgroundColor: "#F8F9FA",
+                    borderRadius: "12px",
+                    border: "1px solid #E9ECEF",
+                  }}
+                >
+                  <Stack gap="xs">
+                    {(() => {
+                      const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
+                      if (!selectedProperty) return null;
+                      
+                      const currency = selectedProperty.currency || selectedProperty.defaultCurrency || "N/A";
+                      
+                      return (
+                        <>
+                          <Text size="sm" fw={600}>
+                            Property Details:
+                          </Text>
+                          <Text size="sm" c="dimmed">
+                            <strong>ID:</strong> {selectedProperty.id}
+                          </Text>
+                          <Text size="sm" c="dimmed">
+                            <strong>Name:</strong> {selectedProperty.name || selectedProperty.id}
+                          </Text>
+                          <Text size="sm" c="dimmed">
+                            <strong>Currency:</strong> {currency}
+                          </Text>
+                          {loadingCapabilities ? (
+                            <Text size="sm" c="dimmed">
+                              <strong>Capabilities:</strong> Loading...
+                            </Text>
+                          ) : (
+                            <Text size="sm" c="dimmed">
+                              <strong>Capabilities:</strong>{" "}
+                              {Object.keys(capabilities).length > 0
+                                ? Object.entries(capabilities)
+                                    .filter(([_, enabled]) => enabled)
+                                    .map(([key]) => key)
+                                    .join(", ") || "None"
+                                : "None"}
+                            </Text>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </Stack>
+                </Box>
+              )}
 
-                      {property.address && (
-                        <Text size="sm" c="dimmed" ta="center">
-                          {property.address.city || property.address.country || ""}
-                        </Text>
-                      )}
-
-                      {property.id && (
-                        <Text size="xs" c="dimmed" ta="center">
-                          ID: {property.id}
-                        </Text>
-                      )}
-                    </Stack>
-                  </Card>
-                </Grid.Col>
-              ))}
-            </Grid>
-          </Box>
-        ) : (
-          <Box mb="xl">
-            <Text c="dimmed" ta="center">
-              No properties available. Please contact support.
-            </Text>
-          </Box>
-        )}
+              {/* Optional Kiosk ID Input */}
+              <TextInput
+                label="Kiosk ID (Optional)"
+                placeholder="Enter kiosk ID"
+                value={kioskId}
+                onChange={(e) => handleKioskIdChange(e.target.value)}
+                size="lg"
+                styles={{
+                  input: {
+                    borderRadius: "12px",
+                    fontSize: "16px",
+                    padding: "16px",
+                  },
+                  label: {
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    marginBottom: "8px",
+                  },
+                }}
+              />
+            </>
+          ) : (
+            <Box mb="xl">
+              <Text c="dimmed" ta="center">
+                No properties available. Please contact support.
+              </Text>
+            </Box>
+          )}
+        </Box>
 
         {/* Continue Button */}
         <Box ta="center">
