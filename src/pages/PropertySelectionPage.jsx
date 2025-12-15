@@ -157,14 +157,20 @@ const PropertySelectionPage = () => {
   if (loading) {
     return (
       <Container size="lg" pos="relative" style={{ minHeight: "100vh" }} bg="gray.0">
-        <Center h="100vh" p={40}>
-          <Paper withBorder shadow="md" p={40} radius="xl" w="100%" maw={850}>
+        <Center style={{ minHeight: "100vh", padding: 40 }}>
+          <Paper
+            withBorder
+            shadow="md"
+            p={40}
+            radius="xl"
+            w="100%"
+            maw={850}
+            style={{ borderRadius: 24 }}
+          >
             <Center>
-              <Stack align="center" gap="md" pt={100}>
+              <Stack align="center" gap="md" pt={60}>
                 <Loader size="lg" color="#C8653D" />
-                <Text c="dimmed">
-                  Loading properties...
-                </Text>
+                <Text c="dimmed">Loading properties...</Text>
               </Stack>
             </Center>
           </Paper>
@@ -175,7 +181,7 @@ const PropertySelectionPage = () => {
 
   return (
     <Container size="lg" pos="relative" style={{ minHeight: "100vh" }} bg="gray.0">
-      <Center h="100vh" p={40}>
+      <Center style={{ minHeight: "100vh", padding: 40 }}>
         <Paper
           withBorder
           shadow="md"
@@ -184,197 +190,213 @@ const PropertySelectionPage = () => {
           w="100%"
           maw={850}
           pos="relative"
-          style={{ borderRadius: "24px", paddingTop: "100px" }}
+          style={{ borderRadius: 24, paddingTop: 100 }}
         >
           {/* Top-left hotel name */}
-          <Box pos="absolute" top={20} left={30} style={{ fontSize: "30px", color: "#222", fontWeight: 600, letterSpacing: "1px", marginLeft: "-9px" }}>
-            <Text fw={600} size="xl">UNO HOTELS</Text>
-          </Box>
-
-        {/* Centered Logo */}
-        <Center>
-          <Box mb="md">
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{ width: "110px", height: "auto", borderRadius: "8px" }}
-            />
-          </Box>
-        </Center>
-
-        {/* Main heading */}
-        <Title order={3} c="dark" mb="xl" fw={500} style={{ fontSize: "22px" }}>
-          Property Setup
-        </Title>
-
-        {/* Error Alert */}
-        {error && (
-          <Box maw={600} mx="auto" mb="xl">
-            <Alert
-              icon={<IconAlertCircle size={16} />}
-              title="Error"
-              color="red"
-            >
-              {error}
-            </Alert>
-          </Box>
-        )}
-
-        {/* Property Selection - Dropdown */}
-        <Stack gap="lg" maw={600} mx="auto" mb="xl" w="100%">
-          {properties.length > 0 ? (
-            <>
-              <Select
-                label="Select Property"
-                placeholder="Choose a property"
-                data={properties.map((property) => {
-                  const currency = property.currency || property.defaultCurrency || "N/A";
-                  const caps = selectedPropertyId === property.id ? capabilities : {};
-                  const capsText = Object.keys(caps).length > 0
-                    ? Object.entries(caps)
-                        .filter(([_, enabled]) => enabled)
-                        .map(([key]) => key)
-                        .join(", ") || "None"
-                    : "Loading...";
-                  
-                  return {
-                    value: property.id,
-                    label: `${property.name || property.id} (${property.id})`,
-                    description: `Currency: ${currency} | Capabilities: ${capsText}`,
-                  };
-                })}
-                value={selectedPropertyId}
-                onChange={handlePropertySelect}
-                searchable
-                size="lg"
-                styles={{
-                  input: {
-                    borderRadius: "12px",
-                    fontSize: "16px",
-                    padding: "16px",
-                  },
-                  label: {
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    marginBottom: "8px",
-                  },
-                }}
-              />
-
-              {/* Property Details Display */}
-              {selectedPropertyId && (
-                <Box p="md" bg="gray.0" style={{ borderRadius: "12px", border: "1px solid #E9ECEF" }}>
-                  <Stack gap="xs">
-                    {(() => {
-                      const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
-                      if (!selectedProperty) return null;
-                      
-                      const currency = selectedProperty.currency || selectedProperty.defaultCurrency || "N/A";
-                      
-                      return (
-                        <>
-                          <Text size="sm" fw={600}>
-                            Property Details:
-                          </Text>
-                          <Text size="sm" c="dimmed">
-                            <strong>ID:</strong> {selectedProperty.id}
-                          </Text>
-                          <Text size="sm" c="dimmed">
-                            <strong>Name:</strong> {selectedProperty.name || selectedProperty.id}
-                          </Text>
-                          <Text size="sm" c="dimmed">
-                            <strong>Currency:</strong> {currency}
-                          </Text>
-                          {loadingCapabilities ? (
-                            <Text size="sm" c="dimmed">
-                              <strong>Capabilities:</strong> Loading...
-                            </Text>
-                          ) : (
-                            <Text size="sm" c="dimmed">
-                              <strong>Capabilities:</strong>{" "}
-                              {Object.keys(capabilities).length > 0
-                                ? Object.entries(capabilities)
-                                    .filter(([_, enabled]) => enabled)
-                                    .map(([key]) => key)
-                                    .join(", ") || "None"
-                                : "None"}
-                            </Text>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </Stack>
-                </Box>
-              )}
-
-              {/* Optional Kiosk ID Input */}
-              <TextInput
-                label="Kiosk ID (Optional)"
-                placeholder="Enter kiosk ID"
-                value={kioskId}
-                onChange={(e) => handleKioskIdChange(e.target.value)}
-                size="lg"
-                styles={{
-                  input: {
-                    borderRadius: "12px",
-                    fontSize: "16px",
-                    padding: "16px",
-                  },
-                  label: {
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    marginBottom: "8px",
-                  },
-                }}
-              />
-            </>
-          ) : (
-            <Box mb="xl">
-              <Text c="dimmed" ta="center">
-                No properties available. Please contact support.
-              </Text>
-            </Box>
-          )}
-        </Stack>
-
-        {/* Continue Button */}
-        <Center>
-          <Button
-            size="xl"
-            onClick={handleContinue}
-            disabled={!selectedPropertyId || saving}
-            loading={saving}
-            fw={700}
-            tt="uppercase"
+          <Box
+            pos="absolute"
+            top={24}
+            left={32}
             style={{
-              backgroundColor: "#C8653D",
-              color: "#FFFFFF",
-              borderRadius: "20px",
-              padding: "20px 80px",
-              fontSize: "18px",
-              boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
-              transition: "all 0.3s ease",
-              border: "none",
-            }}
-            onMouseEnter={(e) => {
-              if (!e.currentTarget.disabled) {
-                e.currentTarget.style.transform = "scale(1.02)";
-                e.currentTarget.style.boxShadow = "0 6px 15px rgba(0, 0, 0, 0.2)";
-                e.currentTarget.style.backgroundColor = "#B8552F";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!e.currentTarget.disabled) {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.15)";
-                e.currentTarget.style.backgroundColor = "#C8653D";
-              }
+              fontSize: 28,
+              color: "#222",
+              fontWeight: 600,
+              letterSpacing: "1px",
             }}
           >
-            {saving ? "Saving..." : "Save"}
-          </Button>
-        </Center>
-      </Paper>
+            <Text fw={600} size="xl">
+              UNO HOTELS
+            </Text>
+          </Box>
+
+          {/* Centered Logo */}
+          <Center>
+            <Box mb="md">
+              <img
+                src={UnoLogo}
+                alt="UNO Hotel Logo"
+                style={{ width: 110, height: "auto", borderRadius: 8 }}
+              />
+            </Box>
+          </Center>
+
+          {/* Main heading */}
+          <Title order={3} c="dark" mb="xl" fw={500} style={{ fontSize: 22 }} ta="center">
+            Property Setup
+          </Title>
+
+          {/* Error Alert */}
+          {error && (
+            <Box maw={600} mx="auto" mb="xl">
+              <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+                {error}
+              </Alert>
+            </Box>
+          )}
+
+          {/* Property Selection - Dropdown */}
+          <Stack gap="lg" maw={600} mx="auto" mb="xl" w="100%">
+            {properties.length > 0 ? (
+              <>
+                <Select
+                  label="Select Property"
+                  placeholder="Choose a property"
+                  data={properties.map((property) => {
+                    const currency = property.currency || property.defaultCurrency || "N/A";
+                    const caps = selectedPropertyId === property.id ? capabilities : {};
+                    const capsText =
+                      Object.keys(caps).length > 0
+                        ? Object.entries(caps)
+                            .filter(([_, enabled]) => enabled)
+                            .map(([key]) => key)
+                            .join(", ") || "None"
+                        : "Loading...";
+
+                    return {
+                      value: property.id,
+                      label: `${property.name || property.id} (${property.id})`,
+                      description: `Currency: ${currency} | Capabilities: ${capsText}`,
+                    };
+                  })}
+                  value={selectedPropertyId}
+                  onChange={handlePropertySelect}
+                  searchable
+                  size="lg"
+                  styles={{
+                    input: {
+                      borderRadius: 12,
+                      fontSize: 16,
+                      padding: 16,
+                    },
+                    label: {
+                      fontSize: 14,
+                      fontWeight: 600,
+                      marginBottom: 8,
+                    },
+                  }}
+                />
+
+                {/* Property Details Display */}
+                {selectedPropertyId && (
+                  <Box
+                    p="md"
+                    bg="gray.0"
+                    style={{ borderRadius: 12, border: "1px solid #E9ECEF" }}
+                  >
+                    <Stack gap="xs">
+                      {(() => {
+                        const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
+                        if (!selectedProperty) return null;
+
+                        const currency =
+                          selectedProperty.currency || selectedProperty.defaultCurrency || "N/A";
+
+                        return (
+                          <>
+                            <Text size="sm" fw={600}>
+                              Property Details:
+                            </Text>
+                            <Text size="sm" c="dimmed">
+                              <strong>ID:</strong> {selectedProperty.id}
+                            </Text>
+                            <Text size="sm" c="dimmed">
+                              <strong>Name:</strong> {selectedProperty.name || selectedProperty.id}
+                            </Text>
+                            <Text size="sm" c="dimmed">
+                              <strong>Currency:</strong> {currency}
+                            </Text>
+                            {loadingCapabilities ? (
+                              <Text size="sm" c="dimmed">
+                                <strong>Capabilities:</strong> Loading...
+                              </Text>
+                            ) : (
+                              <Text size="sm" c="dimmed">
+                                <strong>Capabilities:</strong>{" "}
+                                {Object.keys(capabilities).length > 0
+                                  ? Object.entries(capabilities)
+                                      .filter(([_, enabled]) => enabled)
+                                      .map(([key]) => key)
+                                      .join(", ") || "None"
+                                  : "None"}
+                              </Text>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </Stack>
+                  </Box>
+                )}
+
+                {/* Optional Kiosk ID Input */}
+                <TextInput
+                  label="Kiosk ID (Optional)"
+                  placeholder="Enter kiosk ID"
+                  value={kioskId}
+                  onChange={(e) => handleKioskIdChange(e.target.value)}
+                  size="lg"
+                  styles={{
+                    input: {
+                      borderRadius: 12,
+                      fontSize: 16,
+                      padding: 16,
+                    },
+                    label: {
+                      fontSize: 14,
+                      fontWeight: 600,
+                      marginBottom: 8,
+                    },
+                  }}
+                />
+              </>
+            ) : (
+              <Box mb="xl">
+                <Text c="dimmed" ta="center">
+                  No properties available. Please contact support.
+                </Text>
+              </Box>
+            )}
+          </Stack>
+
+          {/* Continue Button */}
+          <Center>
+            <Button
+              size="xl"
+              onClick={handleContinue}
+              disabled={!selectedPropertyId || saving}
+              loading={saving}
+              fw={700}
+              tt="uppercase"
+              radius="xl"
+              px={80}
+              py={20}
+              styles={(theme) => ({
+                root: {
+                  backgroundColor: "#C8653D",
+                  color: theme.white,
+                  borderRadius: 20,
+                  fontSize: 18,
+                  border: "none",
+                  boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
+                  transition:
+                    "transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease",
+                  "&:hover": {
+                    backgroundColor: "#B8552F",
+                    boxShadow: "0 6px 15px rgba(0, 0, 0, 0.2)",
+                    transform: "scale(1.02)",
+                  },
+                  "&:disabled, &[data-disabled]": {
+                    backgroundColor: theme.colors.gray[4],
+                    color: theme.colors.gray[6],
+                    transform: "none",
+                    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
+                  },
+                },
+              })}
+            >
+              {saving ? "Saving..." : "Save"}
+            </Button>
+          </Center>
+        </Paper>
       </Center>
     </Container>
   );
