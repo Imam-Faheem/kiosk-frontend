@@ -11,8 +11,11 @@ import {
   Title,
   Select,
   TextInput,
+  Modal,
+  PasswordInput,
+  Group,
 } from "@mantine/core";
-import { IconAlertCircle } from "@tabler/icons-react";
+import { IconAlertCircle, IconSettings } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import usePropertyStore from "../stores/propertyStore";
@@ -22,7 +25,7 @@ import UnoLogo from "../assets/uno.jpg";
 const PropertySelectionPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { configureProperty, propertyId: currentPropertyId, kioskId: currentKioskId } = usePropertyStore();
+  const { configureProperty, clearProperty, propertyId: currentPropertyId, kioskId: currentKioskId } = usePropertyStore();
   
   const [properties, setProperties] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(currentPropertyId || null);
@@ -32,6 +35,10 @@ const PropertySelectionPage = () => {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
+  const [pinModalOpen, setPinModalOpen] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [showChangeProperty, setShowChangeProperty] = useState(false);
 
   const fetchCapabilities = async (propertyId, kioskIdValue) => {
     if (!propertyId) return;
@@ -100,15 +107,30 @@ const PropertySelectionPage = () => {
     }
   };
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     if (!selectedPropertyId) {
       setError("Please select a property to continue");
       return;
     }
+    // Open PIN confirmation modal
+    setPinModalOpen(true);
+    setPin("");
+    setPinError("");
+  };
 
+  const handlePinConfirm = async () => {
+    // Validate PIN (simple 4-6 digit PIN)
+    if (!pin || pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
+      setPinError("Please enter a valid PIN (4-6 digits)");
+      return;
+    }
+
+    // PIN validation passed, proceed with save
     try {
       setSaving(true);
       setError(null);
+      setPinError("");
+      setPinModalOpen(false);
 
       // Find the selected property object
       const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
@@ -141,13 +163,24 @@ const PropertySelectionPage = () => {
         propertyData: selectedProperty,
       });
 
-      // Navigate to WelcomePage
+      // Navigate to WelcomePage on success
       navigate("/welcome");
     } catch (err) {
       console.error("Failed to save property selection:", err);
       setError(err.message || "Failed to save property selection. Please try again.");
       setSaving(false);
     }
+  };
+
+  const handleChangeProperty = () => {
+    // Clear current configuration
+    clearProperty();
+    localStorage.removeItem('property-config');
+    // Reset form
+    setSelectedPropertyId(null);
+    setKioskId("");
+    setCapabilities({});
+    setShowChangeProperty(false);
   };
 
   if (loading) {
@@ -231,6 +264,57 @@ const PropertySelectionPage = () => {
         >
           UNO HOTELS
         </h2>
+
+        {/* Top-right Change Property admin entry */}
+        {currentPropertyId && (
+          <Box
+            style={{
+              position: "absolute",
+              top: "20px",
+              right: "30px",
+            }}
+          >
+            <Button
+              variant="subtle"
+              leftSection={<IconSettings size={18} />}
+              onClick={() => setShowChangeProperty(!showChangeProperty)}
+              style={{
+                color: "#C8653D",
+                fontSize: "14px",
+                fontWeight: 600,
+              }}
+            >
+              Change Property
+            </Button>
+            {showChangeProperty && (
+              <Paper
+                shadow="md"
+                p="md"
+                style={{
+                  position: "absolute",
+                  top: "40px",
+                  right: "0",
+                  zIndex: 1000,
+                  minWidth: "200px",
+                  border: "1px solid #E9ECEF",
+                }}
+              >
+                <Stack gap="xs">
+                  <Text size="sm" fw={600}>Admin Actions</Text>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    color="red"
+                    onClick={handleChangeProperty}
+                    fullWidth
+                  >
+                    Clear Configuration
+                  </Button>
+                </Stack>
+              </Paper>
+            )}
+          </Box>
+        )}
 
         {/* Centered Logo */}
         <img
@@ -437,10 +521,75 @@ const PropertySelectionPage = () => {
               }
             }}
           >
-            {saving ? "Saving..." : "Continue"}
+            {saving ? "Saving..." : "Save"}
           </Button>
         </Box>
       </Paper>
+
+      {/* PIN Confirmation Modal */}
+      <Modal
+        opened={pinModalOpen}
+        onClose={() => {
+          setPinModalOpen(false);
+          setPin("");
+          setPinError("");
+        }}
+        title="Confirm Save"
+        centered
+        styles={{
+          title: {
+            fontSize: "20px",
+            fontWeight: 600,
+          },
+        }}
+      >
+        <Stack gap="md">
+          <Text size="sm" c="dimmed">
+            Please enter your PIN to confirm saving the property configuration.
+          </Text>
+          <PasswordInput
+            label="PIN"
+            placeholder="Enter PIN (4-6 digits)"
+            value={pin}
+            onChange={(e) => {
+              setPin(e.target.value);
+              setPinError("");
+            }}
+            error={pinError}
+            maxLength={6}
+            styles={{
+              input: {
+                fontSize: "18px",
+                textAlign: "center",
+                letterSpacing: "4px",
+              },
+            }}
+            autoFocus
+          />
+          <Group justify="flex-end" mt="md">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPinModalOpen(false);
+                setPin("");
+                setPinError("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handlePinConfirm}
+              disabled={!pin || pin.length < 4}
+              loading={saving}
+              style={{
+                backgroundColor: "#C8653D",
+              }}
+            >
+              Confirm
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Container>
   );
 };
