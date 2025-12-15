@@ -11,11 +11,9 @@ import {
   Title,
   Select,
   TextInput,
-  Modal,
-  PasswordInput,
-  Group,
+  Center,
 } from "@mantine/core";
-import { IconAlertCircle, IconSettings } from "@tabler/icons-react";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import usePropertyStore from "../stores/propertyStore";
@@ -25,7 +23,7 @@ import UnoLogo from "../assets/uno.jpg";
 const PropertySelectionPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { configureProperty, clearProperty, propertyId: currentPropertyId, kioskId: currentKioskId } = usePropertyStore();
+  const { configureProperty, propertyId: currentPropertyId, kioskId: currentKioskId } = usePropertyStore();
   
   const [properties, setProperties] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(currentPropertyId || null);
@@ -35,10 +33,6 @@ const PropertySelectionPage = () => {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
-  const [pinModalOpen, setPinModalOpen] = useState(false);
-  const [pin, setPin] = useState("");
-  const [pinError, setPinError] = useState("");
-  const [showChangeProperty, setShowChangeProperty] = useState(false);
 
   const fetchCapabilities = async (propertyId, kioskIdValue) => {
     if (!propertyId) return;
@@ -107,30 +101,15 @@ const PropertySelectionPage = () => {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!selectedPropertyId) {
       setError("Please select a property to continue");
       return;
     }
-    // Open PIN confirmation modal
-    setPinModalOpen(true);
-    setPin("");
-    setPinError("");
-  };
 
-  const handlePinConfirm = async () => {
-    // Validate PIN (simple 4-6 digit PIN)
-    if (!pin || pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
-      setPinError("Please enter a valid PIN (4-6 digits)");
-      return;
-    }
-
-    // PIN validation passed, proceed with save
     try {
       setSaving(true);
       setError(null);
-      setPinError("");
-      setPinModalOpen(false);
 
       // Find the selected property object
       const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
@@ -163,6 +142,9 @@ const PropertySelectionPage = () => {
         propertyData: selectedProperty,
       });
 
+      // Reset saving state before navigation
+      setSaving(false);
+
       // Navigate to WelcomePage on success
       navigate("/welcome");
     } catch (err) {
@@ -172,199 +154,74 @@ const PropertySelectionPage = () => {
     }
   };
 
-  const handleChangeProperty = () => {
-    // Clear current configuration
-    clearProperty();
-    localStorage.removeItem('property-config');
-    // Reset form
-    setSelectedPropertyId(null);
-    setKioskId("");
-    setCapabilities({});
-    setShowChangeProperty(false);
-  };
-
   if (loading) {
     return (
-      <Container
-        size="lg"
-        style={{
-          position: "relative",
-          minHeight: "100vh",
-          backgroundColor: "#f9f9f9",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: "40px",
-        }}
-      >
-        <Paper
-          withBorder
-          shadow="md"
-          p={40}
-          radius="xl"
-          style={{
-            width: "100%",
-            maxWidth: "850px",
-            backgroundColor: "#ffffff",
-            textAlign: "center",
-            paddingTop: "100px",
-          }}
-        >
-          <Loader size="lg" color="#C8653D" />
-          <Text mt="md" c="dimmed">
-            Loading properties...
-          </Text>
-        </Paper>
+      <Container size="lg" pos="relative" style={{ minHeight: "100vh" }} bg="gray.0">
+        <Center h="100vh" p={40}>
+          <Paper withBorder shadow="md" p={40} radius="xl" w="100%" maw={850}>
+            <Center>
+              <Stack align="center" gap="md" pt={100}>
+                <Loader size="lg" color="#C8653D" />
+                <Text c="dimmed">
+                  Loading properties...
+                </Text>
+              </Stack>
+            </Center>
+          </Paper>
+        </Center>
       </Container>
     );
   }
 
   return (
-    <Container
-      size="lg"
-      style={{
-        position: "relative",
-        minHeight: "100vh",
-        backgroundColor: "#f9f9f9",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "40px",
-      }}
-    >
-      <Paper
-        withBorder
-        shadow="md"
-        p={40}
-        radius="xl"
-        style={{
-          width: "100%",
-          maxWidth: "850px",
-          backgroundColor: "#ffffff",
-          border: "1px solid #f0f0f0",
-          boxShadow: "0 6px 18px rgba(0, 0, 0, 0.1)",
-          borderRadius: "24px",
-          position: "relative",
-          textAlign: "center",
-          paddingTop: "100px",
-        }}
-      >
-        {/* Top-left hotel name */}
-        <h2
-          style={{
-            position: "absolute",
-            top: "20px",
-            left: "30px",
-            fontSize: "30px !important",
-            color: "#222",
-            fontWeight: "600",
-            letterSpacing: "1px",
-            marginLeft: "-9px",
-          }}
+    <Container size="lg" pos="relative" style={{ minHeight: "100vh" }} bg="gray.0">
+      <Center h="100vh" p={40}>
+        <Paper
+          withBorder
+          shadow="md"
+          p={40}
+          radius="xl"
+          w="100%"
+          maw={850}
+          pos="relative"
+          style={{ borderRadius: "24px", paddingTop: "100px" }}
         >
-          UNO HOTELS
-        </h2>
-
-        {/* Top-right Change Property admin entry */}
-        {currentPropertyId && (
-          <Box
-            style={{
-              position: "absolute",
-              top: "20px",
-              right: "30px",
-            }}
-          >
-            <Button
-              variant="subtle"
-              leftSection={<IconSettings size={18} />}
-              onClick={() => setShowChangeProperty(!showChangeProperty)}
-              style={{
-                color: "#C8653D",
-                fontSize: "14px",
-                fontWeight: 600,
-              }}
-            >
-              Change Property
-            </Button>
-            {showChangeProperty && (
-              <Paper
-                shadow="md"
-                p="md"
-                style={{
-                  position: "absolute",
-                  top: "40px",
-                  right: "0",
-                  zIndex: 1000,
-                  minWidth: "200px",
-                  border: "1px solid #E9ECEF",
-                }}
-              >
-                <Stack gap="xs">
-                  <Text size="sm" fw={600}>Admin Actions</Text>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    color="red"
-                    onClick={handleChangeProperty}
-                    fullWidth
-                  >
-                    Clear Configuration
-                  </Button>
-                </Stack>
-              </Paper>
-            )}
+          {/* Top-left hotel name */}
+          <Box pos="absolute" top={20} left={30} style={{ fontSize: "30px", color: "#222", fontWeight: 600, letterSpacing: "1px", marginLeft: "-9px" }}>
+            <Text fw={600} size="xl">UNO HOTELS</Text>
           </Box>
-        )}
 
         {/* Centered Logo */}
-        <img
-          src={UnoLogo}
-          alt="UNO Hotel Logo"
-          style={{
-            width: "110px",
-            height: "auto",
-            borderRadius: "8px",
-            marginBottom: "20px",
-          }}
-        />
+        <Center>
+          <Box mb="md">
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
+              style={{ width: "110px", height: "auto", borderRadius: "8px" }}
+            />
+          </Box>
+        </Center>
 
         {/* Main heading */}
-        <Title
-          order={3}
-          style={{
-            color: "#333",
-            fontSize: "22px",
-            marginBottom: "40px",
-            fontWeight: "500",
-          }}
-        >
+        <Title order={3} c="dark" mb="xl" fw={500} style={{ fontSize: "22px" }}>
           Property Setup
         </Title>
 
         {/* Error Alert */}
         {error && (
-          <Alert
-            icon={<IconAlertCircle size={16} />}
-            title="Error"
-            color="red"
-            mb="xl"
-            style={{ maxWidth: "600px", margin: "0 auto 2rem" }}
-          >
-            {error}
-          </Alert>
+          <Box maw={600} mx="auto" mb="xl">
+            <Alert
+              icon={<IconAlertCircle size={16} />}
+              title="Error"
+              color="red"
+            >
+              {error}
+            </Alert>
+          </Box>
         )}
 
         {/* Property Selection - Dropdown */}
-        <Box
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.5rem",
-            maxWidth: "600px",
-            margin: "0 auto 2rem",
-            width: "100%",
-          }}
-        >
+        <Stack gap="lg" maw={600} mx="auto" mb="xl" w="100%">
           {properties.length > 0 ? (
             <>
               <Select
@@ -406,14 +263,7 @@ const PropertySelectionPage = () => {
 
               {/* Property Details Display */}
               {selectedPropertyId && (
-                <Box
-                  style={{
-                    padding: "16px",
-                    backgroundColor: "#F8F9FA",
-                    borderRadius: "12px",
-                    border: "1px solid #E9ECEF",
-                  }}
-                >
+                <Box p="md" bg="gray.0" style={{ borderRadius: "12px", border: "1px solid #E9ECEF" }}>
                   <Stack gap="xs">
                     {(() => {
                       const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
@@ -485,23 +335,23 @@ const PropertySelectionPage = () => {
               </Text>
             </Box>
           )}
-        </Box>
+        </Stack>
 
         {/* Continue Button */}
-        <Box ta="center">
+        <Center>
           <Button
             size="xl"
             onClick={handleContinue}
             disabled={!selectedPropertyId || saving}
             loading={saving}
+            fw={700}
+            tt="uppercase"
             style={{
               backgroundColor: "#C8653D",
               color: "#FFFFFF",
               borderRadius: "20px",
               padding: "20px 80px",
-              fontWeight: "bold",
               fontSize: "18px",
-              textTransform: "uppercase",
               boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
               transition: "all 0.3s ease",
               border: "none",
@@ -523,73 +373,9 @@ const PropertySelectionPage = () => {
           >
             {saving ? "Saving..." : "Save"}
           </Button>
-        </Box>
+        </Center>
       </Paper>
-
-      {/* PIN Confirmation Modal */}
-      <Modal
-        opened={pinModalOpen}
-        onClose={() => {
-          setPinModalOpen(false);
-          setPin("");
-          setPinError("");
-        }}
-        title="Confirm Save"
-        centered
-        styles={{
-          title: {
-            fontSize: "20px",
-            fontWeight: 600,
-          },
-        }}
-      >
-        <Stack gap="md">
-          <Text size="sm" c="dimmed">
-            Please enter your PIN to confirm saving the property configuration.
-          </Text>
-          <PasswordInput
-            label="PIN"
-            placeholder="Enter PIN (4-6 digits)"
-            value={pin}
-            onChange={(e) => {
-              setPin(e.target.value);
-              setPinError("");
-            }}
-            error={pinError}
-            maxLength={6}
-            styles={{
-              input: {
-                fontSize: "18px",
-                textAlign: "center",
-                letterSpacing: "4px",
-              },
-            }}
-            autoFocus
-          />
-          <Group justify="flex-end" mt="md">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setPinModalOpen(false);
-                setPin("");
-                setPinError("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handlePinConfirm}
-              disabled={!pin || pin.length < 4}
-              loading={saving}
-              style={{
-                backgroundColor: "#C8653D",
-              }}
-            >
-              Confirm
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+      </Center>
     </Container>
   );
 };
