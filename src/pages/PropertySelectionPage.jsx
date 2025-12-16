@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Container,
   Paper,
@@ -18,7 +18,115 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import usePropertyStore from "../stores/propertyStore";
 import { getProperties, getKioskCapabilities } from "../services/propertyService";
+import {
+  formatCapabilitiesText,
+  getPropertyCurrency,
+  createCapabilitiesCacheKey,
+  getDefaultCapabilities,
+  formatPropertyLabel,
+  formatPropertyDescription,
+  findPropertyById,
+} from "../lib/propertyUtils";
+import { getPrimaryButtonStyles, getInputStyles } from "../constants/style.constants";
 import UnoLogo from "../assets/uno.jpg";
+
+// Memoized Property Select Component
+const PropertySelect = React.memo(({ properties, selectedPropertyId, capabilities, onPropertySelect }) => {
+  const selectData = useMemo(() => {
+    return properties.map((property) => {
+      const caps = selectedPropertyId === property.id ? capabilities : {};
+      return {
+        value: property.id,
+        label: formatPropertyLabel(property),
+        description: formatPropertyDescription(property, caps),
+      };
+    });
+  }, [properties, selectedPropertyId, capabilities]);
+
+  return (
+    <Select
+      label="Select Property"
+      placeholder="Choose a property"
+      data={selectData}
+      value={selectedPropertyId}
+      onChange={onPropertySelect}
+      searchable
+      size="lg"
+      styles={getInputStyles()}
+    />
+  );
+});
+
+PropertySelect.displayName = 'PropertySelect';
+
+// Memoized Property Details Component
+const PropertyDetails = React.memo(({ properties, selectedPropertyId, capabilities, loadingCapabilities }) => {
+  const selectedProperty = useMemo(() => {
+    return findPropertyById(properties, selectedPropertyId);
+  }, [properties, selectedPropertyId]);
+
+  const currency = useMemo(() => {
+    return getPropertyCurrency(selectedProperty);
+  }, [selectedProperty]);
+
+  const capabilitiesText = useMemo(() => {
+    return formatCapabilitiesText(capabilities);
+  }, [capabilities]);
+
+  if (!selectedPropertyId || !selectedProperty) return null;
+
+  return (
+    <Box
+      p="md"
+      bg="gray.0"
+      style={{ borderRadius: 12, border: "1px solid #E9ECEF" }}
+    >
+      <Stack gap="xs">
+        <Text size="sm" fw={600}>
+          Property Details:
+        </Text>
+        <Text size="sm" c="dimmed">
+          <strong>ID:</strong> {selectedProperty.id}
+        </Text>
+        <Text size="sm" c="dimmed">
+          <strong>Name:</strong> {selectedProperty.name || selectedProperty.id}
+        </Text>
+        <Text size="sm" c="dimmed">
+          <strong>Currency:</strong> {currency}
+        </Text>
+        <Text size="sm" c="dimmed">
+          <strong>Capabilities:</strong> {loadingCapabilities ? "Loading..." : capabilitiesText}
+        </Text>
+      </Stack>
+    </Box>
+  );
+});
+
+PropertyDetails.displayName = 'PropertyDetails';
+
+// Memoized Continue Button Component
+const ContinueButton = React.memo(({ onClick, disabled, loading }) => {
+  const buttonStyles = useMemo(() => getPrimaryButtonStyles, []);
+
+  return (
+    <Button
+      size="xl"
+      onClick={onClick}
+      disabled={disabled}
+      loading={loading}
+      fw={700}
+      tt="uppercase"
+      radius="xl"
+      px={80}
+      py={20}
+      styles={buttonStyles}
+    >
+      {loading ? "Saving..." : "Save"}
+    </Button>
+  );
+});
+
+ContinueButton.displayName = 'ContinueButton';
 
 const PropertySelectionPage = () => {
   const navigate = useNavigate();
@@ -29,31 +137,42 @@ const PropertySelectionPage = () => {
   const [selectedPropertyId, setSelectedPropertyId] = useState(currentPropertyId || null);
   const [kioskId, setKioskId] = useState(currentKioskId || "");
   const [capabilities, setCapabilities] = useState({});
+  const capabilitiesCacheRef = React.useRef(new Map()); // Use ref for cache to avoid dependency issues
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
 
-  const fetchCapabilities = async (propertyId, kioskIdValue) => {
+  const fetchCapabilities = useCallback(async (propertyId, kioskIdValue) => {
     if (!propertyId) return;
+    
+    // Create cache key
+    const cacheKey = createCapabilitiesCacheKey(propertyId, kioskIdValue);
+    
+    // Check cache first
+    if (capabilitiesCacheRef.current.has(cacheKey)) {
+      setCapabilities(capabilitiesCacheRef.current.get(cacheKey));
+      return;
+    }
     
     try {
       setLoadingCapabilities(true);
       const caps = await getKioskCapabilities(propertyId, kioskIdValue || null);
-      setCapabilities(caps || {});
+      const capabilitiesData = caps || getDefaultCapabilities();
+      
+      // Update cache and state
+      capabilitiesCacheRef.current.set(cacheKey, capabilitiesData);
+      setCapabilities(capabilitiesData);
     } catch (err) {
       console.error("Failed to fetch capabilities:", err);
       // Use default capabilities on error
-      setCapabilities({
-        checkIn: true,
-        reservations: true,
-        cardIssuance: true,
-        lostCard: true,
-      });
+      const defaultCaps = getDefaultCapabilities();
+      capabilitiesCacheRef.current.set(cacheKey, defaultCaps);
+      setCapabilities(defaultCaps);
     } finally {
       setLoadingCapabilities(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -84,24 +203,23 @@ const PropertySelectionPage = () => {
     };
 
     fetchProperties();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPropertyId, currentKioskId]);
+  }, [currentPropertyId, currentKioskId, fetchCapabilities]);
 
-  const handlePropertySelect = async (propertyId) => {
+  const handlePropertySelect = useCallback(async (propertyId) => {
     setSelectedPropertyId(propertyId);
     // Fetch capabilities for the selected property
     await fetchCapabilities(propertyId, kioskId || null);
-  };
+  }, [fetchCapabilities, kioskId]);
 
-  const handleKioskIdChange = async (value) => {
+  const handleKioskIdChange = useCallback(async (value) => {
     setKioskId(value);
     // If a property is selected, refetch capabilities with the new kiosk ID
     if (selectedPropertyId) {
       await fetchCapabilities(selectedPropertyId, value || null);
     }
-  };
+  }, [selectedPropertyId, fetchCapabilities]);
 
-  const handleContinue = async () => {
+  const handleContinue = useCallback(async () => {
     if (!selectedPropertyId) {
       setError("Please select a property to continue");
       return;
@@ -112,7 +230,7 @@ const PropertySelectionPage = () => {
       setError(null);
 
       // Find the selected property object
-      const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
+      const selectedProperty = findPropertyById(properties, selectedPropertyId);
       
       if (!selectedProperty) {
         throw new Error("Selected property not found");
@@ -121,7 +239,13 @@ const PropertySelectionPage = () => {
       // Use already fetched capabilities or fetch them if not available
       let finalCapabilities = capabilities;
       if (!finalCapabilities || Object.keys(finalCapabilities).length === 0) {
-        finalCapabilities = await getKioskCapabilities(selectedPropertyId, kioskId || null);
+        const cacheKey = createCapabilitiesCacheKey(selectedPropertyId, kioskId);
+        if (capabilitiesCacheRef.current.has(cacheKey)) {
+          finalCapabilities = capabilitiesCacheRef.current.get(cacheKey);
+        } else {
+          finalCapabilities = await getKioskCapabilities(selectedPropertyId, kioskId || null);
+          capabilitiesCacheRef.current.set(cacheKey, finalCapabilities);
+        }
       }
 
       // Save to localStorage: {propertyId, kioskId, capabilities}
@@ -152,7 +276,7 @@ const PropertySelectionPage = () => {
       setError(err.message || "Failed to save property selection. Please try again.");
       setSaving(false);
     }
-  };
+  }, [selectedPropertyId, properties, capabilities, kioskId, configureProperty, navigate]);
 
   if (loading) {
     return (
@@ -238,94 +362,20 @@ const PropertySelectionPage = () => {
           <Stack gap="lg" maw={600} mx="auto" mb="xl" w="100%">
             {properties.length > 0 ? (
               <>
-                <Select
-                  label="Select Property"
-                  placeholder="Choose a property"
-                  data={properties.map((property) => {
-                    const currency = property.currency || property.defaultCurrency || "N/A";
-                    const caps = selectedPropertyId === property.id ? capabilities : {};
-                    const capsText =
-                      Object.keys(caps).length > 0
-                        ? Object.entries(caps)
-                            .filter(([_, enabled]) => enabled)
-                            .map(([key]) => key)
-                            .join(", ") || "None"
-                        : "Loading...";
-
-                    return {
-                      value: property.id,
-                      label: `${property.name || property.id} (${property.id})`,
-                      description: `Currency: ${currency} | Capabilities: ${capsText}`,
-                    };
-                  })}
-                  value={selectedPropertyId}
-                  onChange={handlePropertySelect}
-                  searchable
-                  size="lg"
-                  styles={{
-                    input: {
-                      borderRadius: 12,
-                      fontSize: 16,
-                      padding: 16,
-                    },
-                    label: {
-                      fontSize: 14,
-                      fontWeight: 600,
-                      marginBottom: 8,
-                    },
-                  }}
+                <PropertySelect
+                  properties={properties}
+                  selectedPropertyId={selectedPropertyId}
+                  capabilities={capabilities}
+                  onPropertySelect={handlePropertySelect}
                 />
 
                 {/* Property Details Display */}
-                {selectedPropertyId && (
-                  <Box
-                    p="md"
-                    bg="gray.0"
-                    style={{ borderRadius: 12, border: "1px solid #E9ECEF" }}
-                  >
-                    <Stack gap="xs">
-                      {(() => {
-                        const selectedProperty = properties.find((p) => p.id === selectedPropertyId);
-                        if (!selectedProperty) return null;
-
-                        const currency =
-                          selectedProperty.currency || selectedProperty.defaultCurrency || "N/A";
-
-                        return (
-                          <>
-                            <Text size="sm" fw={600}>
-                              Property Details:
-                            </Text>
-                            <Text size="sm" c="dimmed">
-                              <strong>ID:</strong> {selectedProperty.id}
-                            </Text>
-                            <Text size="sm" c="dimmed">
-                              <strong>Name:</strong> {selectedProperty.name || selectedProperty.id}
-                            </Text>
-                            <Text size="sm" c="dimmed">
-                              <strong>Currency:</strong> {currency}
-                            </Text>
-                            {loadingCapabilities ? (
-                              <Text size="sm" c="dimmed">
-                                <strong>Capabilities:</strong> Loading...
-                              </Text>
-                            ) : (
-                              <Text size="sm" c="dimmed">
-                                <strong>Capabilities:</strong>{" "}
-                                {Object.keys(capabilities).length > 0
-                                  ? Object.entries(capabilities)
-                                      .filter(([_, enabled]) => enabled)
-                                      .map(([key]) => key)
-                                      .join(", ") || "None"
-                                  : "None"}
-                              </Text>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </Stack>
-                  </Box>
-                )}
+                <PropertyDetails
+                  properties={properties}
+                  selectedPropertyId={selectedPropertyId}
+                  capabilities={capabilities}
+                  loadingCapabilities={loadingCapabilities}
+                />
 
                 {/* Optional Kiosk ID Input */}
                 <TextInput
@@ -334,18 +384,7 @@ const PropertySelectionPage = () => {
                   value={kioskId}
                   onChange={(e) => handleKioskIdChange(e.target.value)}
                   size="lg"
-                  styles={{
-                    input: {
-                      borderRadius: 12,
-                      fontSize: 16,
-                      padding: 16,
-                    },
-                    label: {
-                      fontSize: 14,
-                      fontWeight: 600,
-                      marginBottom: 8,
-                    },
-                  }}
+                  styles={getInputStyles()}
                 />
               </>
             ) : (
@@ -359,42 +398,11 @@ const PropertySelectionPage = () => {
 
           {/* Continue Button */}
           <Center>
-            <Button
-              size="xl"
+            <ContinueButton
               onClick={handleContinue}
               disabled={!selectedPropertyId || saving}
               loading={saving}
-              fw={700}
-              tt="uppercase"
-              radius="xl"
-              px={80}
-              py={20}
-              styles={(theme) => ({
-                root: {
-                  backgroundColor: "#C8653D",
-                  color: theme.white,
-                  borderRadius: 20,
-                  fontSize: 18,
-                  border: "none",
-                  boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
-                  transition:
-                    "transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease",
-                  "&:hover": {
-                    backgroundColor: "#B8552F",
-                    boxShadow: "0 6px 15px rgba(0, 0, 0, 0.2)",
-                    transform: "scale(1.02)",
-                  },
-                  "&:disabled, &[data-disabled]": {
-                    backgroundColor: theme.colors.gray[4],
-                    color: theme.colors.gray[6],
-                    transform: "none",
-                    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
-                  },
-                },
-              })}
-            >
-              {saving ? "Saving..." : "Save"}
-            </Button>
+            />
           </Center>
         </Paper>
       </Center>

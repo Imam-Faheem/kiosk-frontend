@@ -1,11 +1,8 @@
 import { apiClient } from './api/apiClient';
+import { getDefaultCapabilities } from '../lib/propertyUtils';
 
 const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
 
-/**
- * Fetch all properties from Apaleo API
- * @returns {Promise<Object>} Properties response with data array
- */
 export const getProperties = async () => {
   if (debug) console.log('[properties] fetching properties from Apaleo');
   
@@ -74,12 +71,6 @@ export const getProperties = async () => {
   }
 };
 
-/**
- * Fetch kiosk capabilities for a property and kiosk
- * @param {string} propertyId - Property ID
- * @param {string} kioskId - Kiosk ID (optional)
- * @returns {Promise<Object>} Capabilities object
- */
 export const getKioskCapabilities = async (propertyId, kioskId = null) => {
   if (debug) console.log('[properties] fetching capabilities', { propertyId, kioskId });
   
@@ -98,31 +89,16 @@ export const getKioskCapabilities = async (propertyId, kioskId = null) => {
     } catch (err) {
       // If endpoint doesn't exist, return default capabilities
       if (debug) console.warn('[properties] capabilities endpoint not found, using defaults');
-      return {
-        checkIn: true,
-        reservations: true,
-        cardIssuance: true,
-        lostCard: true,
-      };
+      return getDefaultCapabilities();
     }
   } catch (err) {
     if (debug) console.error('[properties] capabilities error', err?.response?.data || err?.message);
     
     // Return default capabilities on error
-    return {
-      checkIn: true,
-      reservations: true,
-      cardIssuance: true,
-      lostCard: true,
-    };
+    return getDefaultCapabilities();
   }
 };
 
-/**
- * Get property details by ID
- * @param {string} propertyId - Property ID
- * @returns {Promise<Object>} Property details
- */
 export const getPropertyById = async (propertyId) => {
   if (debug) console.log('[properties] fetching property by ID', propertyId);
   
