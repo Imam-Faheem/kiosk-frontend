@@ -11,12 +11,19 @@ import {
   Alert,
 } from '@mantine/core';
 import { IconAlertCircle, IconHome, IconClock } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { formatTime } from '../../lib/timeUtils';
 import { buttonStyles } from '../../constants/style.constants';
-import { EARLY_ARRIVAL_CONFIG, EARLY_ARRIVAL_STYLES } from '../../config/constants';
+import { EARLY_ARRIVAL_CONFIG, EARLY_ARRIVAL_STYLES, EARLY_ARRIVAL_FLOW_CONFIGS } from '../../config/constants';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
+
+const getFlowTypeFromPath = (pathname) => {
+  if (pathname.includes('/checkin/early-arrival')) return 'checkin';
+  if (pathname.includes('/reservation/early-arrival')) return 'reservation';
+  if (pathname.includes('/lost-card/early-arrival')) return 'lost-card';
+  return 'checkin';
+};
 
 const WarningIcon = React.memo(() => (
   <Box style={EARLY_ARRIVAL_STYLES.WARNING_ICON}>
@@ -48,8 +55,22 @@ const CountdownDisplay = React.memo(({ countdown }) => (
 ));
 CountdownDisplay.displayName = 'CountdownDisplay';
 
-const EarlyArrivalPage = ({ flowType }) => {
+const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, returnPath = '/home' }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const detectedFlowType = useMemo(() => {
+    return propFlowType || getFlowTypeFromPath(location.pathname);
+  }, [propFlowType, location.pathname]);
+  
+  const flowConfig = useMemo(() => {
+    return EARLY_ARRIVAL_FLOW_CONFIGS[detectedFlowType] || EARLY_ARRIVAL_FLOW_CONFIGS.checkin;
+  }, [detectedFlowType]);
+  
+  const pageTitle = title || flowConfig.title;
+  const pageMessage = message || flowConfig.message;
+  const defaultBackPath = backPath || flowConfig.backPath;
+  
   const [currentTime, setCurrentTime] = useState(() => formatTime());
   const [countdown, setCountdown] = useState(EARLY_ARRIVAL_CONFIG.COUNTDOWN_DURATION);
   const countdownIntervalRef = useRef(null);
@@ -72,8 +93,8 @@ const EarlyArrivalPage = ({ flowType }) => {
 
   const handleCountdownComplete = useCallback(() => {
     clearAllIntervals();
-    navigate('/home');
-  }, [navigate, clearAllIntervals]);
+    navigate(returnPath);
+  }, [navigate, clearAllIntervals, returnPath]);
 
   useEffect(() => {
     timeIntervalRef.current = setInterval(updateTime, EARLY_ARRIVAL_CONFIG.TIME_UPDATE_INTERVAL);
@@ -93,13 +114,13 @@ const EarlyArrivalPage = ({ flowType }) => {
 
   const handleReturnToMenu = useCallback(() => {
     clearAllIntervals();
-    navigate('/home');
-  }, [navigate, clearAllIntervals]);
+    navigate(returnPath);
+  }, [navigate, clearAllIntervals, returnPath]);
 
   const handleBack = useCallback(() => {
     clearAllIntervals();
-    navigate('/home');
-  }, [navigate, clearAllIntervals]);
+    navigate(defaultBackPath);
+  }, [navigate, clearAllIntervals, defaultBackPath]);
 
   const buttonStyle = useMemo(() => ({
     backgroundColor: buttonStyles.base.backgroundColor,
@@ -138,7 +159,7 @@ const EarlyArrivalPage = ({ flowType }) => {
           <Group>
             <img src={UnoLogo} alt="UNO Hotel Logo" style={EARLY_ARRIVAL_STYLES.LOGO} />
             <Title order={1} c="#0B152A" fw={700} style={titleStyle}>
-              Early Arrival
+              {pageTitle}
             </Title>
           </Group>
         </Group>
@@ -148,13 +169,13 @@ const EarlyArrivalPage = ({ flowType }) => {
 
           <Alert
             icon={<IconClock size={32} />}
-            title="Early Arrival"
+            title={pageTitle}
             color="orange"
             variant="filled"
             style={EARLY_ARRIVAL_STYLES.ALERT}
           >
             <Text size="xl" fw={600} c="white" style={alertTextStyle}>
-              Card cannot be given before 2pm. Please return after 2pm.
+              {pageMessage}
             </Text>
           </Alert>
 

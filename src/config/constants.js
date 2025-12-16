@@ -145,6 +145,25 @@ export const EARLY_ARRIVAL_STYLES = {
   },
 };
 
+// Early Arrival Flow Configurations
+export const EARLY_ARRIVAL_FLOW_CONFIGS = {
+  checkin: {
+    title: 'Early Arrival',
+    message: 'Card cannot be given before 2pm. Please return after 2pm.',
+    backPath: '/checkin',
+  },
+  reservation: {
+    title: 'Early Arrival',
+    message: 'Room cards cannot be issued before 2pm. Please return after 2pm.',
+    backPath: '/reservation/search',
+  },
+  'lost-card': {
+    title: 'Early Arrival',
+    message: 'Card replacement cannot be done before 2pm. Please return after 2pm.',
+    backPath: '/lost-card',
+  },
+};
+
 // Date Formats
 export const DATE_FORMATS = {
   DISPLAY: 'MMM DD, YYYY',
