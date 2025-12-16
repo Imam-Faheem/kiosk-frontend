@@ -176,7 +176,7 @@ const EarlyArrivalPage = ({ flowType }) => {
             Return to Menu
           </Button>
 
-          <Group justify="center">
+          <Group justify="flex-start">
             <BackButton onClick={handleBack} />
           </Group>
         </Stack>

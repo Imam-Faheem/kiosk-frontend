@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -16,6 +16,8 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
 import { checkinValidationSchema, checkinInitialValues } from '../../schemas/checkin.schema';
+import { isBeforeTargetTime } from '../../lib/timeUtils';
+import { EARLY_ARRIVAL_CONFIG } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
@@ -24,6 +26,12 @@ const CheckInPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+      navigate('/checkin/early-arrival');
+    }
+  }, [navigate]);
   
   const validateReservation = useReservationMutation('validate', {
     onSuccess: (result) => {

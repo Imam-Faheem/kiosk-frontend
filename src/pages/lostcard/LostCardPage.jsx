@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -13,6 +13,8 @@ import {
 } from '@mantine/core';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
+import { isBeforeTargetTime } from '../../lib/timeUtils';
+import { EARLY_ARRIVAL_CONFIG } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import { useForm } from '@mantine/form';
@@ -24,6 +26,12 @@ const LostCardPage = () => {
   const { t } = useLanguage();
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+      navigate('/lost-card/early-arrival');
+    }
+  }, [navigate]);
 
   const form = useForm({
     initialValues: {

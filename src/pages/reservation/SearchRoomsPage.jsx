@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -21,6 +21,8 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useRoomMutation } from '../../hooks/useRoomMutation';
 import { roomSearchValidationSchema, roomSearchInitialValues } from '../../schemas/reservation.schema';
+import { isBeforeTargetTime } from '../../lib/timeUtils';
+import { EARLY_ARRIVAL_CONFIG } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
@@ -31,7 +33,12 @@ const SearchRoomsPage = () => {
   const [searchResults, setSearchResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-  
+
+  useEffect(() => {
+    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+      navigate('/reservation/early-arrival');
+    }
+  }, [navigate]);
 
   const searchAvailability = useRoomMutation('searchAvailability', {
     onSuccess: (result) => {

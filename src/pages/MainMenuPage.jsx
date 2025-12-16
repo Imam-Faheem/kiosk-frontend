@@ -9,6 +9,8 @@ import {
 } from '@mantine/core';
 import { IconKey, IconCalendar, IconCreditCardOff } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
+import { isBeforeTargetTime } from '../lib/timeUtils';
+import { EARLY_ARRIVAL_CONFIG } from '../config/constants';
 import useLanguage from '../hooks/useLanguage';
 import UnoLogo from '../assets/uno.jpg';
 import BackButton from '../components/BackButton';
@@ -23,15 +25,27 @@ const MainMenuPage = () => {
   };
 
   const handleCheckIn = () => {
-    navigate('/checkin');
+    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+      navigate('/checkin/early-arrival');
+    } else {
+      navigate('/checkin');
+    }
   };
 
   const handleNewReservation = () => {
-    navigate('/reservation/search');
+    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+      navigate('/reservation/early-arrival');
+    } else {
+      navigate('/reservation/search');
+    }
   };
 
   const handleLostCard = () => {
-    navigate('/lost-card');
+    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+      navigate('/lost-card/early-arrival');
+    } else {
+      navigate('/lost-card');
+    }
   };
 
   const baseButtonStyle = {

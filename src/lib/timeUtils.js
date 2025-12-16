@@ -19,3 +19,12 @@ export const getTimeUntilTarget = (targetTime) => {
   return Math.max(0, Math.floor((target - now) / 1000));
 };
 
+export const isBeforeTargetTime = (targetTime = "2:00 PM") => {
+  const now = new Date();
+  const [time, period] = targetTime.split(' ');
+  const [hours, minutes] = time.split(':').map(Number);
+  const target = new Date();
+  target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
+  return now < target;
+};
+
