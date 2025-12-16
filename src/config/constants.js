@@ -87,6 +87,64 @@ export const UI_CONFIG = {
   },
 };
 
+// Early Arrival Page Constants
+export const EARLY_ARRIVAL_CONFIG = {
+  COUNTDOWN_DURATION: 15,
+  TARGET_TIME: "2:00 PM",
+  TIME_UPDATE_INTERVAL: 1000,
+  COUNTDOWN_INTERVAL: 1000,
+};
+
+// Early Arrival Page Styles
+export const EARLY_ARRIVAL_STYLES = {
+  CONTAINER: {
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '20px',
+    backgroundColor: '#FFFFFF',
+  },
+  PAPER: {
+    width: '100%',
+    maxWidth: '600px',
+    backgroundColor: '#ffffff',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    borderRadius: '20px',
+  },
+  LOGO: {
+    width: '50px',
+    height: '50px',
+    borderRadius: '8px',
+    marginRight: '0px',
+    objectFit: 'cover',
+  },
+  WARNING_ICON: {
+    fontSize: '80px',
+    textAlign: 'center',
+    marginBottom: '20px',
+    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))',
+  },
+  ALERT: {
+    width: '100%',
+    borderRadius: '16px',
+    border: '2px solid #FF6B35',
+  },
+  TIME_CARD: {
+    backgroundColor: '#fff5f0',
+    width: '100%',
+    border: '2px solid #FF6B35',
+  },
+  COUNTDOWN_BOX: {
+    padding: '16px 24px',
+    backgroundColor: '#FF6B35',
+    borderRadius: '12px',
+    minWidth: '200px',
+    textAlign: 'center',
+  },
+};
+
 // Date Formats
 export const DATE_FORMATS = {
   DISPLAY: 'MMM DD, YYYY',

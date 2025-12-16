@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import {
   Container,
   Paper,
@@ -12,196 +12,155 @@ import {
 } from '@mantine/core';
 import { IconAlertCircle, IconHome, IconClock } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
+import { formatTime } from '../../lib/timeUtils';
+import { buttonStyles } from '../../constants/style.constants';
+import { EARLY_ARRIVAL_CONFIG, EARLY_ARRIVAL_STYLES } from '../../config/constants';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
 
+const WarningIcon = React.memo(() => (
+  <Box style={EARLY_ARRIVAL_STYLES.WARNING_ICON}>
+    <IconAlertCircle size={80} color="#FF6B35" />
+  </Box>
+));
+WarningIcon.displayName = 'WarningIcon';
+
+const TimeInfoCard = React.memo(({ currentTime }) => (
+  <Paper withBorder p="lg" radius="md" style={EARLY_ARRIVAL_STYLES.TIME_CARD}>
+    <Stack gap="md" align="center">
+      <Text size="lg" fw={600} c="#0B152A">
+        Current time: {currentTime}
+      </Text>
+      <Text size="lg" fw={600} c="#0B152A">
+        Cards available after: {EARLY_ARRIVAL_CONFIG.TARGET_TIME}
+      </Text>
+    </Stack>
+  </Paper>
+));
+TimeInfoCard.displayName = 'TimeInfoCard';
+
+const CountdownDisplay = React.memo(({ countdown }) => (
+  <Box style={EARLY_ARRIVAL_STYLES.COUNTDOWN_BOX}>
+    <Text size="md" fw={600} c="white">
+      Returning to menu in: {countdown}...
+    </Text>
+  </Box>
+));
+CountdownDisplay.displayName = 'CountdownDisplay';
+
 const EarlyArrivalPage = ({ flowType }) => {
   const navigate = useNavigate();
-  const [currentTime, setCurrentTime] = useState('');
-  const [countdown, setCountdown] = useState(15);
-  const targetTime = "2:00 PM";
+  const [currentTime, setCurrentTime] = useState(() => formatTime());
+  const [countdown, setCountdown] = useState(EARLY_ARRIVAL_CONFIG.COUNTDOWN_DURATION);
   const countdownIntervalRef = useRef(null);
   const timeIntervalRef = useRef(null);
 
+  const updateTime = useCallback(() => {
+    setCurrentTime(formatTime());
+  }, []);
+
+  const clearAllIntervals = useCallback(() => {
+    if (timeIntervalRef.current) {
+      clearInterval(timeIntervalRef.current);
+      timeIntervalRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+  }, []);
+
+  const handleCountdownComplete = useCallback(() => {
+    clearAllIntervals();
+    navigate('/home');
+  }, [navigate, clearAllIntervals]);
+
   useEffect(() => {
-    // Initialize current time immediately
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentTime(now.toLocaleTimeString('en-US', { 
-        hour: 'numeric', 
-        minute: '2-digit',
-        hour12: true 
-      }));
-    };
-    
-    updateTime(); // Set initial time
+    timeIntervalRef.current = setInterval(updateTime, EARLY_ARRIVAL_CONFIG.TIME_UPDATE_INTERVAL);
 
-    // Update current time every second
-    timeIntervalRef.current = setInterval(updateTime, 1000);
-
-    // Countdown timer
     countdownIntervalRef.current = setInterval(() => {
       setCountdown(prev => {
         if (prev <= 1) {
-          if (countdownIntervalRef.current) {
-            clearInterval(countdownIntervalRef.current);
-          }
-          navigate('/home');
+          handleCountdownComplete();
           return 0;
         }
         return prev - 1;
       });
-    }, 1000);
+    }, EARLY_ARRIVAL_CONFIG.COUNTDOWN_INTERVAL);
 
-    return () => {
-      if (timeIntervalRef.current) {
-        clearInterval(timeIntervalRef.current);
-      }
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-      }
-    };
-  }, [navigate]);
+    return clearAllIntervals;
+  }, [updateTime, handleCountdownComplete, clearAllIntervals]);
 
-  const handleReturnToMenu = () => {
-    // Clear intervals before navigation
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-    }
-    if (timeIntervalRef.current) {
-      clearInterval(timeIntervalRef.current);
-    }
+  const handleReturnToMenu = useCallback(() => {
+    clearAllIntervals();
     navigate('/home');
-  };
+  }, [navigate, clearAllIntervals]);
 
-  const handleBack = () => {
-    // Clear intervals before navigation
-    if (countdownIntervalRef.current) {
-      clearInterval(countdownIntervalRef.current);
-    }
-    if (timeIntervalRef.current) {
-      clearInterval(timeIntervalRef.current);
-    }
+  const handleBack = useCallback(() => {
+    clearAllIntervals();
     navigate('/home');
-  };
+  }, [navigate, clearAllIntervals]);
+
+  const buttonStyle = useMemo(() => ({
+    backgroundColor: buttonStyles.base.backgroundColor,
+    color: buttonStyles.base.color,
+    borderRadius: '12px',
+    fontWeight: 'bold',
+    fontSize: '18px',
+    minHeight: '60px',
+    transition: 'all 0.3s ease',
+  }), []);
+
+  const handleButtonHover = useCallback((e, isEntering) => {
+    if (isEntering) {
+      e.currentTarget.style.backgroundColor = buttonStyles.hover.backgroundColor;
+      e.currentTarget.style.transform = buttonStyles.hover.transform;
+    } else {
+      e.currentTarget.style.backgroundColor = buttonStyles.base.backgroundColor;
+      e.currentTarget.style.transform = buttonStyles.normal.transform;
+    }
+  }, []);
+
+  const alertTextStyle = useMemo(() => ({
+    fontSize: '24px',
+    lineHeight: '1.5',
+  }), []);
+
+  const titleStyle = useMemo(() => ({
+    textTransform: 'uppercase',
+    fontSize: '32px',
+  }), []);
 
   return (
-    <Container
-      size="lg"
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '20px',
-        backgroundColor: '#FFFFFF',
-      }}
-    >
-      <Paper
-        withBorder
-        shadow="md"
-        p={40}
-        radius="xl"
-        style={{
-          width: '100%',
-          maxWidth: '600px',
-          backgroundColor: '#ffffff',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
-        }}
-      >
-        {/* Header */}
+    <Container size="lg" style={EARLY_ARRIVAL_STYLES.CONTAINER}>
+      <Paper withBorder shadow="md" p={40} radius="xl" style={EARLY_ARRIVAL_STYLES.PAPER}>
         <Group justify="space-between" mb="xl">
           <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title order={1} c="#0B152A" fw={700} style={{ textTransform: 'uppercase', fontSize: '32px' }}>
+            <img src={UnoLogo} alt="UNO Hotel Logo" style={EARLY_ARRIVAL_STYLES.LOGO} />
+            <Title order={1} c="#0B152A" fw={700} style={titleStyle}>
               Early Arrival
             </Title>
           </Group>
         </Group>
 
-        {/* Warning Content */}
         <Stack gap="xl" align="center" mb="xl">
-          {/* Warning Icon */}
-          <Box
-            style={{
-              fontSize: '80px',
-              textAlign: 'center',
-              marginBottom: '20px',
-              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))',
-            }}
-          >
-            <IconAlertCircle size={80} color="#FF6B35" />
-          </Box>
+          <WarningIcon />
 
-          {/* Warning Alert */}
           <Alert
             icon={<IconClock size={32} />}
             title="Early Arrival"
             color="orange"
             variant="filled"
-            style={{
-              width: '100%',
-              borderRadius: '16px',
-              border: '2px solid #FF6B35',
-            }}
+            style={EARLY_ARRIVAL_STYLES.ALERT}
           >
-            <Text 
-              size="xl" 
-              fw={600} 
-              c="white"
-              style={{ fontSize: '24px', lineHeight: '1.5' }}
-            >
+            <Text size="xl" fw={600} c="white" style={alertTextStyle}>
               Card cannot be given before 2pm. Please return after 2pm.
             </Text>
           </Alert>
 
-          {/* Time Information Card */}
-          <Paper
-            withBorder
-            p="lg"
-            radius="md"
-            style={{
-              backgroundColor: '#fff5f0',
-              width: '100%',
-              border: '2px solid #FF6B35',
-            }}
-          >
-            <Stack gap="md" align="center">
-              <Text size="lg" fw={600} c="#0B152A">
-                Current time: {currentTime || 'Loading...'}
-              </Text>
-              <Text size="lg" fw={600} c="#0B152A">
-                Cards available after: {targetTime}
-              </Text>
-            </Stack>
-          </Paper>
+          <TimeInfoCard currentTime={currentTime} />
 
-          {/* Countdown Display */}
-          <Box
-            style={{
-              padding: '16px 24px',
-              backgroundColor: '#FF6B35',
-              borderRadius: '12px',
-              minWidth: '200px',
-              textAlign: 'center',
-            }}
-          >
-            <Text size="md" fw={600} c="white">
-              Returning to menu in: {countdown}...
-            </Text>
-          </Box>
+          <CountdownDisplay countdown={countdown} />
         </Stack>
 
         {/* Action Buttons */}
@@ -210,23 +169,9 @@ const EarlyArrivalPage = ({ flowType }) => {
             size="xl"
             leftSection={<IconHome size={24} />}
             onClick={handleReturnToMenu}
-            style={{
-              backgroundColor: '#C8653D',
-              color: '#FFFFFF',
-              borderRadius: '12px',
-              fontWeight: 'bold',
-              fontSize: '18px',
-              minHeight: '60px',
-              transition: 'all 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#B8552F';
-              e.currentTarget.style.transform = 'scale(1.02)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#C8653D';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
+            style={buttonStyle}
+            onMouseEnter={(e) => handleButtonHover(e, true)}
+            onMouseLeave={(e) => handleButtonHover(e, false)}
           >
             Return to Menu
           </Button>
