@@ -28,19 +28,23 @@ import {
   findPropertyById,
 } from "../lib/propertyUtils";
 import { getPrimaryButtonStyles, getInputStyles } from "../constants/style.constants";
+import { STORAGE_KEYS } from "../config/constants";
 import UnoLogo from "../assets/uno.jpg";
 
 // Memoized Property Select Component
 const PropertySelect = React.memo(({ properties, selectedPropertyId, capabilities, onPropertySelect }) => {
   const selectData = useMemo(() => {
-    return properties.map((property) => {
-      const caps = selectedPropertyId === property.id ? capabilities : {};
-      return {
-        value: property.id,
-        label: formatPropertyLabel(property),
-        description: formatPropertyDescription(property, caps),
-      };
-    });
+    return properties
+      .filter((property) => property.id || property.property_id) // Filter out invalid properties
+      .map((property) => {
+        const propertyId = property.id || property.property_id; // Use id or fallback to property_id
+        const caps = selectedPropertyId === propertyId ? capabilities : {};
+        return {
+          value: propertyId, // Ensure value is always present
+          label: formatPropertyLabel(property),
+          description: formatPropertyDescription(property, caps),
+        };
+      });
   }, [properties, selectedPropertyId, capabilities]);
 
   return (
@@ -128,6 +132,26 @@ const ContinueButton = React.memo(({ onClick, disabled, loading }) => {
 
 ContinueButton.displayName = 'ContinueButton';
 
+// Helper function to convert capabilities array to object format
+const convertCapabilitiesArrayToObject = (capabilitiesArray) => {
+  if (!Array.isArray(capabilitiesArray)) {
+    return getDefaultCapabilities();
+  }
+  
+  // Convert array like ["check-in", "check-out", "key-management"] to object
+  const capabilitiesObj = {
+    checkIn: capabilitiesArray.includes('check-in') || capabilitiesArray.includes('checkIn'),
+    checkOut: capabilitiesArray.includes('check-out') || capabilitiesArray.includes('checkOut'),
+    keyManagement: capabilitiesArray.includes('key-management') || capabilitiesArray.includes('keyManagement'),
+    reservations: capabilitiesArray.includes('reservations') || capabilitiesArray.includes('reservation'),
+    cardIssuance: capabilitiesArray.includes('card-issuance') || capabilitiesArray.includes('cardIssuance'),
+    lostCard: capabilitiesArray.includes('lost-card') || capabilitiesArray.includes('lostCard'),
+    roomService: capabilitiesArray.includes('room-service') || capabilitiesArray.includes('roomService'),
+  };
+  
+  return capabilitiesObj;
+};
+
 const PropertySelectionPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -142,6 +166,23 @@ const PropertySelectionPage = () => {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loadingCapabilities, setLoadingCapabilities] = useState(false);
+
+  // Check localStorage on mount for existing property selection
+  useEffect(() => {
+    try {
+      const storedProperty = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
+      if (storedProperty) {
+        const propertyData = JSON.parse(storedProperty);
+        if (propertyData.propertyId) {
+          // If property is already selected, redirect to welcome page
+          navigate("/welcome", { replace: true });
+          return;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to parse stored property data:", err);
+    }
+  }, [navigate]);
 
   const fetchCapabilities = useCallback(async (propertyId, kioskIdValue) => {
     if (!propertyId) return;
@@ -180,7 +221,7 @@ const PropertySelectionPage = () => {
         setLoading(true);
         setError(null);
         const response = await getProperties();
-        // getProperties now always returns { success: true, data: [...] } 
+        // getProperties returns { success: true, data: [...] } 
         const propertiesData = response.data || [];
         setProperties(propertiesData);
         
@@ -191,11 +232,17 @@ const PropertySelectionPage = () => {
           // Pre-select the first one if no property is currently configured
           const firstPropertyId = propertiesData[0].id;
           setSelectedPropertyId(firstPropertyId);
-          await fetchCapabilities(firstPropertyId, null);
+          // Use capabilities from API response if available
+          const firstProperty = propertiesData[0];
+          if (firstProperty.capabilities && Array.isArray(firstProperty.capabilities)) {
+            const capsObj = convertCapabilitiesArrayToObject(firstProperty.capabilities);
+            setCapabilities(capsObj);
+          } else {
+            await fetchCapabilities(firstPropertyId, null);
+          }
         }
       } catch (err) {
         console.error("Failed to fetch properties:", err);
-        // Even on error, getProperties returns fallback properties, so this shouldn't happen
         setError(err.message || "Failed to load properties. Please try again.");
       } finally {
         setLoading(false);
@@ -207,9 +254,17 @@ const PropertySelectionPage = () => {
 
   const handlePropertySelect = useCallback(async (propertyId) => {
     setSelectedPropertyId(propertyId);
-    // Fetch capabilities for the selected property
-    await fetchCapabilities(propertyId, kioskId || null);
-  }, [fetchCapabilities, kioskId]);
+    
+    // Check if property has capabilities in the response
+    const selectedProperty = findPropertyById(properties, propertyId);
+    if (selectedProperty?.capabilities && Array.isArray(selectedProperty.capabilities)) {
+      const capsObj = convertCapabilitiesArrayToObject(selectedProperty.capabilities);
+      setCapabilities(capsObj);
+    } else {
+      // Fetch capabilities for the selected property
+      await fetchCapabilities(propertyId, kioskId || null);
+    }
+  }, [fetchCapabilities, kioskId, properties]);
 
   const handleKioskIdChange = useCallback(async (value) => {
     setKioskId(value);
@@ -239,30 +294,66 @@ const PropertySelectionPage = () => {
       // Use already fetched capabilities or fetch them if not available
       let finalCapabilities = capabilities;
       if (!finalCapabilities || Object.keys(finalCapabilities).length === 0) {
-        const cacheKey = createCapabilitiesCacheKey(selectedPropertyId, kioskId);
-        if (capabilitiesCacheRef.current.has(cacheKey)) {
-          finalCapabilities = capabilitiesCacheRef.current.get(cacheKey);
+        // Check if property has capabilities in the response
+        if (selectedProperty.capabilities && Array.isArray(selectedProperty.capabilities)) {
+          finalCapabilities = convertCapabilitiesArrayToObject(selectedProperty.capabilities);
         } else {
-          finalCapabilities = await getKioskCapabilities(selectedPropertyId, kioskId || null);
-          capabilitiesCacheRef.current.set(cacheKey, finalCapabilities);
+          const cacheKey = createCapabilitiesCacheKey(selectedPropertyId, kioskId);
+          if (capabilitiesCacheRef.current.has(cacheKey)) {
+            finalCapabilities = capabilitiesCacheRef.current.get(cacheKey);
+          } else {
+            const fetchedCaps = await getKioskCapabilities(selectedPropertyId, kioskId || null);
+            // Convert if it's an array
+            if (Array.isArray(fetchedCaps)) {
+              finalCapabilities = convertCapabilitiesArrayToObject(fetchedCaps);
+            } else {
+              finalCapabilities = fetchedCaps || getDefaultCapabilities();
+            }
+            capabilitiesCacheRef.current.set(cacheKey, finalCapabilities);
+          }
         }
       }
 
-      // Save to localStorage: {propertyId, kioskId, capabilities}
+      // Get currency from property
+      const currency = selectedProperty.currency || 'USD';
+      
+      // Convert capabilities object back to array format for localStorage
+      // API expects array format like ["check-in", "check-out", "key-management"]
+      const capabilitiesArray = selectedProperty.capabilities && Array.isArray(selectedProperty.capabilities)
+        ? selectedProperty.capabilities
+        : Object.entries(finalCapabilities)
+            .filter(([_, enabled]) => enabled)
+            .map(([key]) => {
+              // Convert object keys to API format
+              const keyMap = {
+                checkIn: 'check-in',
+                checkOut: 'check-out',
+                keyManagement: 'key-management',
+                reservations: 'reservations',
+                cardIssuance: 'card-issuance',
+                lostCard: 'lost-card',
+                roomService: 'room-service',
+              };
+              return keyMap[key] || key;
+            });
+      
+      // Save to localStorage with new format: {propertyId, kioskId, capabilities, propertyName, currency}
       const propertyConfig = {
         propertyId: selectedPropertyId,
         kioskId: kioskId || null,
-        capabilities: finalCapabilities,
+        capabilities: capabilitiesArray, // Store as array format as per API docs
+        propertyName: selectedProperty.name || '',
+        currency: currency,
       };
       
-      // Save to localStorage explicitly
-      localStorage.setItem('property-config', JSON.stringify(propertyConfig));
+      // Save to localStorage with key 'kioskProperty' as specified in API docs
+      localStorage.setItem(STORAGE_KEYS.KIOSK_PROPERTY, JSON.stringify(propertyConfig));
 
       // Configure property in store (also saves to localStorage via Zustand persist)
       configureProperty({
         propertyId: selectedPropertyId,
         kioskId: kioskId || null,
-        capabilities: finalCapabilities,
+        capabilities: finalCapabilities, // Store as object for internal use
         propertyData: selectedProperty,
       });
 

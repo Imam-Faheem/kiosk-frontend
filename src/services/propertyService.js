@@ -4,14 +4,21 @@ import { getDefaultCapabilities } from '../lib/propertyUtils';
 const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
 
 export const getProperties = async () => {
-  if (debug) console.log('[properties] fetching properties from Apaleo');
+  if (debug) console.log('[properties] fetching properties from API (public endpoint, no auth)');
   
   try {
-    const response = await apiClient.get('/properties');
+    // Use new Kong Gateway endpoint - this is a public endpoint, no auth required
+    // Make request without any auth headers
+    const response = await apiClient.get('/api/kiosk/v1/properties', {
+      headers: {
+        'Content-Type': 'application/json',
+        // Explicitly do not include Authorization header
+      }
+    });
     
     if (debug) console.log('[properties] API response:', response.data);
     
-    // Backend returns { data: [...], count: number } format
+    // New API returns { success: true, data: [...] } format
     let properties = response.data?.data || [];
     
     // Ensure it's an array
@@ -20,54 +27,40 @@ export const getProperties = async () => {
       properties = [];
     }
     
+    // Normalize property data: map property_id to id, add currency and capabilities if missing
+    const normalizedProperties = properties.map((property) => ({
+      id: property.property_id || property.id, // Use property_id from API, fallback to id
+      property_id: property.property_id, // Keep original property_id
+      name: property.name || '',
+      currency: property.currency || 'USD', // Default to USD if not provided
+      capabilities: property.capabilities || [], // Default to empty array if not provided
+      organization_id: property.organization_id,
+      pms_type: property.pms_type,
+      apaleo_external_property_id: property.apaleo_external_property_id,
+      status: property.status,
+      ...property, // Include any other fields
+    }));
+    
     // Log the properties found
     if (debug) {
-      console.log(`[properties] Found ${properties.length} properties from Apaleo:`, properties);
-    }
-    
-    // If properties array is empty but response indicates fallback was used
-    if (properties.length === 0 && response.data?.fallback) {
-      console.warn('[properties] Using fallback properties from backend');
+      console.log(`[properties] Found ${normalizedProperties.length} properties:`, normalizedProperties);
     }
     
     // Return properties (even if empty - let UI handle empty state)
     return {
       success: true,
-      data: properties,
-      count: properties.length,
-      isFallback: response.data?.fallback || false,
-      message: properties.length > 0 
-        ? `Found ${properties.length} properties` 
+      data: normalizedProperties,
+      count: normalizedProperties.length,
+      message: normalizedProperties.length > 0 
+        ? `Found ${normalizedProperties.length} properties` 
         : 'No properties available',
     };
   } catch (err) {
     if (debug) console.error('[properties] API error:', err?.response?.data || err?.message);
     
-    // On error, return fallback properties so kiosk can still be configured
-    console.warn('[properties] API error, using fallback properties');
-    return {
-      success: true,
-      data: [
-        {
-          id: "BER",
-          name: "Berlin Property",
-          address: {
-            city: "Berlin",
-            country: "Germany"
-          }
-        },
-        {
-          id: "MUC",
-          name: "Munich Property",
-          address: {
-            city: "Munich",
-            country: "Germany"
-          }
-        }
-      ],
-      isFallback: true,
-      message: 'Using fallback properties due to API error',
-    };
+    // On error, return empty array and let UI handle the error
+    console.error('[properties] Failed to fetch properties:', err);
+    throw new Error(err?.response?.data?.message || err?.message || 'Failed to load properties. Please try again.');
   }
 };
 

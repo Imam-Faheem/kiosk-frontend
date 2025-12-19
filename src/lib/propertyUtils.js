@@ -37,6 +37,6 @@ export const formatPropertyDescription = (property, capabilities = {}) => {
 
 export const findPropertyById = (properties, propertyId) => {
   if (!Array.isArray(properties) || !propertyId) return null;
-  return properties.find((p) => p.id === propertyId) || null;
+  return properties.find((p) => p.id === propertyId || p.property_id === propertyId) || null;
 };
 

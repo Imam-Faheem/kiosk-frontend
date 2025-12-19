@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
 import usePropertyStore from "../stores/propertyStore";
+import { STORAGE_KEYS } from "../config/constants";
 import BackButton from "../components/BackButton";
 import UnoLogo from "../assets/uno.jpg";
 
@@ -41,9 +42,27 @@ const WelcomePage = () => {
 
   // Check property configuration on mount
   useEffect(() => {
-    // Debug: Log property state
-    console.log('Property state:', { isConfigured, propertyId });
-  }, [isConfigured, propertyId]);
+    // Check localStorage for property selection
+    try {
+      const storedProperty = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
+      if (!storedProperty) {
+        // No property selected, redirect to property selector
+        navigate("/property-selector", { replace: true });
+        return;
+      }
+      
+      const propertyData = JSON.parse(storedProperty);
+      if (!propertyData.propertyId) {
+        // Invalid property data, redirect to property selector
+        navigate("/property-selector", { replace: true });
+        return;
+      }
+    } catch (err) {
+      console.error("Failed to parse stored property data:", err);
+      // On error, redirect to property selector
+      navigate("/property-selector", { replace: true });
+    }
+  }, [navigate]);
 
   const handleLanguageChange = (value) => {
     setLanguage(value);

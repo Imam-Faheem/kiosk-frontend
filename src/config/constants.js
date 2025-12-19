@@ -1,7 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
-  TIMEOUT: 10000,
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000',
+  TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,
 };
 
@@ -20,6 +20,7 @@ export const STORAGE_KEYS = {
   USER_DATA: 'user_data',
   LANGUAGE: 'language',
   THEME: 'theme',
+  KIOSK_PROPERTY: 'kioskProperty', // Property selection data
 };
 
 // API Endpoints
