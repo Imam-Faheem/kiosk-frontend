@@ -13,6 +13,16 @@ export const APP_CONFIG = {
   DEFAULT_LANGUAGE: 'en',
 };
 
+// Language Options for Welcome Page
+export const LANGUAGE_OPTIONS = [
+  { value: "de", label: "Deutsch", flag: "/flags/de.png" },
+  { value: "en", label: "English", flag: "/flags/gb.png" },
+  { value: "es", label: "Español", flag: "/flags/es.png" },
+  { value: "fr", label: "Français", flag: "/flags/fr.png" },
+  { value: "it", label: "Italiano", flag: "/flags/it.png" },
+  { value: "pt", label: "Português", flag: "/flags/pt.png" },
+];
+
 // Storage Keys
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',
@@ -161,6 +171,202 @@ export const EARLY_ARRIVAL_FLOW_CONFIGS = {
     title: 'Early Arrival',
     message: 'Card replacement cannot be done before 2pm. Please return after 2pm.',
     backPath: '/lost-card',
+  },
+};
+
+// Main Menu Button Styles
+export const MAIN_MENU_BUTTON_STYLES = {
+  base: {
+    root: {
+      width: '100%',
+      maxWidth: '560px',
+      height: '96px',
+      backgroundColor: '#C8653D',
+      color: '#FFFFFF',
+      borderRadius: '8px',
+      fontWeight: 800,
+      fontSize: '22px',
+      letterSpacing: '1px',
+      textTransform: 'uppercase',
+      fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
+      padding: '24px 100px',
+      border: 'none',
+      transition: 'transform 200ms ease, box-shadow 200ms ease, background-color 200ms ease',
+      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)',
+      '&:hover': {
+        transform: 'scale(1.02)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+        backgroundColor: '#B8552F',
+      },
+    },
+  },
+  checkIn: {
+    root: {
+      width: '100%',
+      maxWidth: '560px',
+      height: '96px',
+      backgroundColor: '#C8653D',
+      color: '#FFFFFF',
+      borderRadius: '8px',
+      fontWeight: 800,
+      fontSize: '22px',
+      letterSpacing: '1px',
+      textTransform: 'uppercase',
+      fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
+      padding: '26px 100px',
+      border: 'none',
+      transition: 'transform 200ms ease, box-shadow 200ms ease, background-color 200ms ease',
+      boxShadow: '0 6px 18px rgba(0, 0, 0, 0.45)',
+      '&:hover': {
+        transform: 'scale(1.02)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+        backgroundColor: '#B8552F',
+      },
+    },
+  },
+};
+
+// Common Button Styles
+export const BUTTON_STYLES = {
+  primary: {
+    root: {
+      backgroundColor: '#C8653D',
+      color: '#FFFFFF',
+      borderRadius: '12px',
+      fontWeight: 'bold',
+      fontSize: '16px',
+      transition: 'all 0.3s ease',
+      '&:hover': {
+        backgroundColor: '#B8552F',
+        transform: 'scale(1.02)',
+      },
+      '&:disabled': {
+        backgroundColor: '#C8653D',
+        opacity: 0.6,
+      },
+    },
+  },
+  primaryRounded: {
+    root: {
+      backgroundColor: '#C8653D',
+      color: '#FFFFFF',
+      borderRadius: '20px',
+      fontWeight: 'bold',
+      fontSize: '18px',
+      textTransform: 'uppercase',
+      padding: '20px 80px',
+      boxShadow: '0 4px 10px rgba(0, 0, 0, 0.15)',
+      transition: 'all 0.3s ease',
+      border: 'none',
+      '&:hover': {
+        transform: 'scale(1.02)',
+        boxShadow: '0 6px 15px rgba(0, 0, 0, 0.2)',
+        backgroundColor: '#B8552F',
+      },
+    },
+  },
+  primarySmall: {
+    root: {
+      backgroundColor: '#C8653D',
+      color: '#FFFFFF',
+      borderRadius: '8px',
+      fontWeight: 'bold',
+      fontSize: '16px',
+      transition: 'all 0.3s ease',
+      '&:hover': {
+        backgroundColor: '#B8552F',
+        transform: 'scale(1.02)',
+      },
+    },
+  },
+};
+
+// Form Input Styles
+export const FORM_INPUT_STYLES = {
+  dateInput: {
+    input: {
+      borderRadius: '12px',
+      border: '2px solid #E0E0E0',
+      '&:focus': {
+        borderColor: '#C8653D',
+      },
+    },
+  },
+  select: {
+    input: {
+      borderRadius: '12px',
+      border: '2px solid #E0E0E0',
+      '&:focus': {
+        borderColor: '#C8653D',
+      },
+    },
+  },
+  textInput: {
+    input: {
+      borderRadius: '12px',
+      border: '2px solid #E0E0E0',
+      '&:focus': {
+        borderColor: '#C8653D',
+      },
+    },
+  },
+};
+
+// Container Styles
+export const CONTAINER_STYLES = {
+  centered: {
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '20px',
+    backgroundColor: '#FFFFFF',
+  },
+  centeredWithPadding: {
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '24px',
+    backgroundColor: '#FFFFFF',
+  },
+};
+
+// Paper Styles
+export const PAPER_STYLES = {
+  default: {
+    width: '100%',
+    maxWidth: '820px',
+    backgroundColor: '#ffffff',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    borderRadius: '20px',
+  },
+  medium: {
+    width: '100%',
+    maxWidth: '600px',
+    backgroundColor: '#ffffff',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    borderRadius: '20px',
+  },
+  large: {
+    width: '100%',
+    maxWidth: '1000px',
+    backgroundColor: '#ffffff',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    borderRadius: '20px',
+  },
+  welcome: {
+    width: '100%',
+    maxWidth: '850px',
+    backgroundColor: '#ffffff',
+    border: '1px solid #f0f0f0',
+    boxShadow: '0 6px 18px rgba(0, 0, 0, 0.1)',
+    borderRadius: '24px',
+    position: 'relative',
+    textAlign: 'center',
+    paddingTop: '100px',
   },
 };
 

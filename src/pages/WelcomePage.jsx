@@ -15,15 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
 import UnoLogo from "../assets/uno.jpg";
-
-const languages = [
-  { value: "de", label: "Deutsch", flag: "/flags/de.png" },
-  { value: "en", label: "English", flag: "/flags/gb.png" },
-  { value: "es", label: "Español", flag: "/flags/es.png" },
-  { value: "fr", label: "Français", flag: "/flags/fr.png" },
-  { value: "it", label: "Italiano", flag: "/flags/it.png" },
-  { value: "pt", label: "Português", flag: "/flags/pt.png" },
-];
+import { BUTTON_STYLES, LANGUAGE_OPTIONS } from "../config/constants";
 
 const WelcomePage = () => {
   const navigate = useNavigate();
@@ -131,7 +123,7 @@ const WelcomePage = () => {
           }}
         >
           <Grid gutter="lg" style={{ maxWidth: '600px', width: '100%' }}>
-            {languages.map((lang) => (
+            {LANGUAGE_OPTIONS.map((lang) => (
               <Grid.Col span={6} key={lang.value}>
                 <Card
                 withBorder
@@ -210,30 +202,9 @@ const WelcomePage = () => {
           <Button
             size="xl"
             onClick={handleContinue}
-            style={{
-              backgroundColor: "#C8653D",
-              color: "#FFFFFF",
-              borderRadius: "20px",
-              padding: "20px 80px",
-              fontWeight: "bold",
-              fontSize: "18px",
-              textTransform: "uppercase",
-              boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
-              transition: "all 0.3s ease",
-              border: "none",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.02)";
-              e.currentTarget.style.boxShadow =
-                "0 6px 15px rgba(0, 0, 0, 0.2)";
-              e.currentTarget.style.backgroundColor = "#B8552F";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 10px rgba(0, 0, 0, 0.15)";
-              e.currentTarget.style.backgroundColor = "#C8653D";
-            }}
+            styles={BUTTON_STYLES.primaryRounded}
+            uppercase
+            radius="xl"
           >
             {t("welcome.continue") || "Continue"}
           </Button>

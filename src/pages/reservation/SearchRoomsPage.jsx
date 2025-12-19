@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Container,
   Paper,
@@ -21,9 +21,8 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useRoomMutation } from '../../hooks/useRoomMutation';
 import { roomSearchValidationSchema, roomSearchInitialValues } from '../../schemas/reservation.schema';
-import { isBeforeTargetTime } from '../../lib/timeUtils';
-import { EARLY_ARRIVAL_CONFIG } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
+import { BUTTON_STYLES, FORM_INPUT_STYLES } from '../../config/constants';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
 
@@ -33,12 +32,6 @@ const SearchRoomsPage = () => {
   const [searchResults, setSearchResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-
-  useEffect(() => {
-    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
-      navigate('/reservation/early-arrival');
-    }
-  }, [navigate]);
 
   const searchAvailability = useRoomMutation('searchAvailability', {
     onSuccess: (result) => {
@@ -181,15 +174,7 @@ const SearchRoomsPage = () => {
                   {...form.getInputProps('checkIn')}
                   minDate={new Date()}
                   popoverProps={{ withinPortal: true, position: 'bottom-start', shadow: 'md', zIndex: 300 }}
-                  styles={{
-                    input: {
-                      borderRadius: '12px',
-                      border: '2px solid #E0E0E0',
-                      '&:focus': {
-                        borderColor: '#C8653D',
-                      }
-                    }
-                  }}
+                  styles={FORM_INPUT_STYLES.dateInput}
                 />
               </Grid.Col>
               <Grid.Col span={4}>
@@ -202,15 +187,7 @@ const SearchRoomsPage = () => {
                   {...form.getInputProps('checkOut')}
                   minDate={form.values.checkIn ? new Date(form.values.checkIn) : new Date()}
                   popoverProps={{ withinPortal: true, position: 'bottom-start', shadow: 'md', zIndex: 300 }}
-                  styles={{
-                    input: {
-                      borderRadius: '12px',
-                      border: '2px solid #E0E0E0',
-                      '&:focus': {
-                        borderColor: '#C8653D',
-                      }
-                    }
-                  }}
+                  styles={FORM_INPUT_STYLES.dateInput}
                 />
               </Grid.Col>
               <Grid.Col span={4}>
@@ -220,15 +197,7 @@ const SearchRoomsPage = () => {
                   required
                   size="lg"
                   {...form.getInputProps('guests')}
-                  styles={{
-                    input: {
-                      borderRadius: '12px',
-                      border: '2px solid #E0E0E0',
-                      '&:focus': {
-                        borderColor: '#C8653D',
-                      }
-                    }
-                  }}
+                  styles={FORM_INPUT_STYLES.select}
                 />
               </Grid.Col>
             </Grid>
@@ -238,22 +207,8 @@ const SearchRoomsPage = () => {
               size="lg"
               leftSection={<IconSearch size={20} />}
               loading={loading}
-              style={{
-                backgroundColor: '#C8653D',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8552F';
-                e.currentTarget.style.transform = 'scale(1.02)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
+              styles={BUTTON_STYLES.primary}
+              radius="md"
             >
               {loading ? t('searchRooms.loading') : t('searchRooms.search')}
             </Button>

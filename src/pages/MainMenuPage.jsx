@@ -10,7 +10,7 @@ import {
 import { IconKey, IconCalendar, IconCreditCardOff } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { isBeforeTargetTime } from '../lib/timeUtils';
-import { EARLY_ARRIVAL_CONFIG } from '../config/constants';
+import { EARLY_ARRIVAL_CONFIG, MAIN_MENU_BUTTON_STYLES, CONTAINER_STYLES, PAPER_STYLES } from '../config/constants';
 import useLanguage from '../hooks/useLanguage';
 import UnoLogo from '../assets/uno.jpg';
 import BackButton from '../components/BackButton';
@@ -33,64 +33,24 @@ const MainMenuPage = () => {
   };
 
   const handleNewReservation = () => {
-    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
-      navigate('/reservation/early-arrival');
-    } else {
-      navigate('/reservation/search');
-    }
+    navigate('/reservation/search');
   };
 
   const handleLostCard = () => {
-    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
-      navigate('/lost-card/early-arrival');
-    } else {
-      navigate('/lost-card');
-    }
-  };
-
-  const baseButtonStyle = {
-    width: '100%',
-    maxWidth: '560px',
-    height: '96px',
-    backgroundColor: '#C8653D',
-    color: '#FFFFFF',
-    borderRadius: '8px',
-    fontWeight: 800,
-    fontSize: '22px',
-    letterSpacing: '1px',
-    textTransform: 'uppercase',
-    fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif',
-    padding: '24px 100px',
-    border: 'none',
-    transition: 'transform 200ms ease, box-shadow 200ms ease, background-color 200ms ease',
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)',
+    navigate('/lost-card');
   };
 
   return (
     <Container
       size="lg"
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '24px',
-        backgroundColor: '#FFFFFF',
-      }}
+      style={CONTAINER_STYLES.centeredWithPadding}
     >
       <Paper
         withBorder
         shadow="md"
         p={40}
         radius="xl"
-        style={{
-          width: '100%',
-          maxWidth: '820px',
-          backgroundColor: '#ffffff',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
-        }}
+        style={PAPER_STYLES.default}
       >
         {/* Header */}
         <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
@@ -127,64 +87,39 @@ const MainMenuPage = () => {
         <Stack gap="xl" mb="xl" align="center" style={{ minHeight: '420px', justifyContent: 'center', gap: '32px' }}>
           <Button
             size="xl"
-            p="xl"
+            fullWidth
             leftSection={<IconKey size={28} />}
             onClick={handleCheckIn}
-            style={{
-              ...baseButtonStyle,
-              padding: '26px 100px',
-              boxShadow: '0 6px 18px rgba(0, 0, 0, 0.45)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.02)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.5)';
-              e.currentTarget.style.backgroundColor = '#B8552F';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,0,0,0.45)';
-              e.currentTarget.style.backgroundColor = '#C8653D';
-            }}
+            styles={MAIN_MENU_BUTTON_STYLES.checkIn}
+            uppercase
+            fw={800}
+            radius="md"
           >
             {t('mainMenu.checkIn')}
           </Button>
 
           <Button
             size="xl"
-            p="xl"
+            fullWidth
             leftSection={<IconCalendar size={28} />}
             onClick={handleNewReservation}
-            style={baseButtonStyle}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.02)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.5)';
-              e.currentTarget.style.backgroundColor = '#B8552F';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.4)';
-              e.currentTarget.style.backgroundColor = '#C8653D';
-            }}
+            styles={MAIN_MENU_BUTTON_STYLES.base}
+            uppercase
+            fw={800}
+            radius="md"
           >
             {t('mainMenu.newReservation')}
           </Button>
 
           <Button
             size="xl"
-            p="xl"
+            fullWidth
             leftSection={<IconCreditCardOff size={28} />}
             onClick={handleLostCard}
-            style={baseButtonStyle}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.02)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.5)';
-              e.currentTarget.style.backgroundColor = '#B8552F';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.4)';
-              e.currentTarget.style.backgroundColor = '#C8653D';
-            }}
+            styles={MAIN_MENU_BUTTON_STYLES.base}
+            uppercase
+            fw={800}
+            radius="md"
           >
             {t('mainMenu.lostCard')}
           </Button>
