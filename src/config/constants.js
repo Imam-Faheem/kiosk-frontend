@@ -1,8 +1,14 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
-  TIMEOUT: 10000,
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000',
+  KIOSK_API_BASE: process.env.REACT_APP_KIOSK_API_BASE || 'http://localhost:8000/api/kiosk/v1',
+  TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,
+  // Test Credentials
+  DEFAULT_PROPERTY_ID: '0ujsszwN8NRY24YaXiTIE2VWDTJ',
+  DEFAULT_ORGANIZATION_ID: '0ujsszwN8NRY24YaXiTIE2VWDTS',
+  DEFAULT_RESERVATION_ID: '0ujssxh0YyPaqWxqM0kOmoXxY6',
+  DEFAULT_LOCK_ID: '0ujssxh0YyPaqWxqM0kOmoXxY9',
 };
 
 // Application Constants
@@ -20,6 +26,7 @@ export const STORAGE_KEYS = {
   USER_DATA: 'user_data',
   LANGUAGE: 'language',
   THEME: 'theme',
+  KIOSK_PROPERTY: 'kioskProperty', // Property selection data
 };
 
 // API Endpoints
@@ -42,17 +49,24 @@ export const API_ENDPOINTS = {
     AVAILABLE: '/rooms/available',
   },
   CHECKIN: {
-    BASE: '/checkin',
-    STATUS: '/checkin/:id/status',
+    BASE: '/api/kiosk/v1/check-in',
+    STATUS: '/api/kiosk/v1/check-in/:id/status',
   },
   CHECKOUT: {
-    BASE: '/checkout',
-    STATUS: '/checkout/:id/status',
+    BASE: '/api/kiosk/v1/checkout',
+    STATUS: '/api/kiosk/v1/checkout/:id/status',
+  },
+  DIGITAL_KEY: {
+    ISSUE: '/api/kiosk/v1/key/issue',
+    GET: '/api/kiosk/v1/key/:id',
+    REVOKE: '/api/kiosk/v1/key/:id',
+    REGENERATE: '/api/kiosk/v1/key/:id/regenerate',
   },
   PAYMENTS: {
-    BASE: '/payments',
-    HISTORY: '/payments/history',
-    REFUND: '/payments/:id/refund',
+    BASE: '/api/kiosk/v1/payment',
+    STATUS: '/api/kiosk/v1/payment/status/:id',
+    HISTORY: '/api/kiosk/v1/payment/history',
+    REFUND: '/api/kiosk/v1/payment/:id/refund',
   },
   REPORTS: {
     OCCUPANCY: '/reports/occupancy',

@@ -16,7 +16,7 @@ import { IconCreditCard, IconCheck, IconMail } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
-import { performCheckIn } from '../../services/checkinService';
+import { processCheckIn } from '../../services/checkinService';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
 
@@ -59,25 +59,36 @@ const CardDispensingPage = () => {
     }
 
     const processCard = async () => {
+      let checkInResult = null;
+      
       try {
-        // Step 1: Perform Apaleo check-in
+        // Step 1: Perform check-in
         setCurrentStep(0);
         setCardStatus('preparing');
         
         try {
-          // Call Apaleo check-in API
-          const checkInResult = await performCheckIn({
+          // Call check-in API with full reservation data
+          checkInResult = await processCheckIn({
             reservation_id: reservation.reservationId || reservation.id,
-            property_id: reservation.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
+            guest_email: reservation.email || reservation.guestEmail,
+            guest_phone: reservation.phone || reservation.guestPhone,
+            guest_name: {
+              first_name: reservation.firstName || reservation.guest_name?.first_name || '',
+              last_name: reservation.lastName || reservation.guest_name?.last_name || '',
+            },
+            check_in_date: reservation.checkIn || reservation.check_in_date || new Date().toISOString(),
+            check_out_date: reservation.checkOut || reservation.check_out_date,
+            room_number: reservation.roomNumber || reservation.room_number,
+            confirmation_code: reservation.confirmationCode || reservation.confirmation_code,
           });
           
-          if (!checkInResult.success && !checkInResult.already_checked_in) {
+          if (!checkInResult.success && !checkInResult.data?.already_checked_in) {
             throw new Error(checkInResult.message || 'Check-in failed');
           }
           
-          console.log('Apaleo check-in successful:', checkInResult);
+          console.log('Check-in successful:', checkInResult);
         } catch (checkInErr) {
-          console.error('Apaleo check-in error:', checkInErr);
+          console.error('Check-in error:', checkInErr);
           // Continue with card issuance even if check-in fails (might already be checked in)
           // The backend will handle this gracefully
         }
@@ -90,9 +101,9 @@ const CardDispensingPage = () => {
         
         const result = await issueCard.mutateAsync({
           reservationId: reservation.reservationId || reservation.id,
-          roomNumber: reservation.roomNumber || reservation.roomType || 'TBD',
+          roomNumber: checkInResult?.data?.room_number || reservation.roomNumber || reservation.room_number || reservation.roomType || 'TBD',
           guestName: reservation.guestName || `${reservation.firstName || ''} ${reservation.lastName || ''}`.trim() || 'Guest',
-          email: reservation.email
+          email: reservation.email || reservation.guest_email
         });
 
         if (result.success) {
@@ -113,7 +124,8 @@ const CardDispensingPage = () => {
               state: { 
                 reservation, 
                 paymentStatus,
-                cardData: result.data
+                cardData: result.data,
+                checkInResult: checkInResult // Pass check-in result
               }
             });
           }, 5000);
