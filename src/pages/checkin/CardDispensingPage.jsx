@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Paper,
@@ -42,6 +42,7 @@ const CardDispensingPage = () => {
   const [cardStatus, setCardStatus] = useState('preparing');
   const [cardData, setCardData] = useState(null);
   const [error, setError] = useState(null);
+  const hasProcessedRef = useRef(false);
 
   const reservation = location.state?.reservation;
   const paymentStatus = location.state?.paymentStatus;
@@ -52,11 +53,18 @@ const CardDispensingPage = () => {
     { label: t('cardDispensing.steps.sending'), description: 'Sending details to your email' },
   ];
 
+  // Process card only once on mount
   useEffect(() => {
     if (!reservation) {
       navigate('/checkin');
       return;
     }
+
+    // Prevent multiple executions
+    if (hasProcessedRef.current) {
+      return;
+    }
+    hasProcessedRef.current = true;
 
     const processCard = async () => {
       let checkInResult = null;
@@ -139,7 +147,8 @@ const CardDispensingPage = () => {
     };
 
     processCard();
-  }, [reservation, navigate, issueCard, t, paymentStatus]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const handleBack = () => {
     navigate('/checkin');
