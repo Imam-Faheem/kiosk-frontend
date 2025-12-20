@@ -142,6 +142,9 @@ export const api = {
   checkin: {
     process: (data) => apiClient.post('/api/kiosk/v1/check-in', data),
     getStatus: (reservationId) => apiClient.get(`/api/kiosk/v1/check-in/${reservationId}/status`),
+    validateReservation: (reservationId, lastName) => apiClient.get(`/api/kiosk/v1/reservations/${reservationId}`, {
+      params: { lastName }
+    }),
   },
 
   checkout: {

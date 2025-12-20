@@ -22,19 +22,24 @@ export const processCheckIn = async (data) => {
   if (debug) console.log('[checkin] processing check-in', data);
   
   try {
-    const response = await apiClient.post('/api/kiosk/v1/check-in', {
+    // Prepare request payload - use snake_case as expected by backend
+    const payload = {
       reservation_id: data.reservation_id || data.reservationId,
       guest_email: data.guest_email || data.guestEmail,
       guest_phone: data.guest_phone || data.guestPhone,
       guest_name: {
-        first_name: data.guest_name?.first_name || data.guestName?.firstName || data.firstName,
-        last_name: data.guest_name?.last_name || data.guestName?.lastName || data.lastName,
+        first_name: data.guest_name?.first_name || data.firstName || '',
+        last_name: data.guest_name?.last_name || data.lastName || '',
       },
-      check_in_date: data.check_in_date || data.checkInDate,
+      check_in_date: data.check_in_date || data.checkInDate || new Date().toISOString(),
       check_out_date: data.check_out_date || data.checkOutDate,
       room_number: data.room_number || data.roomNumber,
       confirmation_code: data.confirmation_code || data.confirmationCode,
-    });
+    };
+
+    if (debug) console.log('[checkin] check-in request payload', payload);
+
+    const response = await apiClient.post('/api/kiosk/v1/check-in', payload);
     
     if (debug) console.log('[checkin] check-in response', response.data);
     
@@ -87,7 +92,7 @@ export const getCheckInStatus = async (reservationId) => {
 /**
  * Validate reservation before check-in
  * @param {Object} data - Validation data
- * @param {string} data.reservationId - Reservation ID
+ * @param {string} data.reservationId - Reservation ID (KSUID)
  * @param {string} data.lastName - Guest's last name
  * @returns {Promise<Object>} Reservation details
  */
@@ -95,21 +100,50 @@ export const validateReservation = async (data) => {
   if (debug) console.log('[checkin] validating reservation', data);
   
   try {
-    // This would typically call a reservation validation endpoint
-    // For now, we'll return the data structure expected
+    const reservationId = data.reservationId || data.reservation_id;
+    const lastName = data.lastName || data.last_name;
+    
+    if (!reservationId) {
+      throw new Error('Reservation ID is required');
+    }
+    
+    if (!lastName) {
+      throw new Error('Last name is required');
+    }
+    
+    const response = await apiClient.get(`/api/kiosk/v1/reservations/${reservationId}`, {
+      params: { lastName }
+    });
+    
+    if (debug) console.log('[checkin] validation response', response.data);
+    
+    const reservationData = response.data.data || response.data;
+    
+    // Validate that we actually got reservation data
+    if (!reservationData || !reservationData.reservation_id && !reservationData.id) {
+      throw new Error('Invalid reservation data received from server');
+    }
+    
     return {
       success: true,
-      data: {
-        reservationId: data.reservationId,
-        lastName: data.lastName,
-        validated: true,
-      },
-      message: 'Reservation validated successfully',
+      data: reservationData,
+      message: response.data.message || 'Reservation validated successfully',
     };
   } catch (err) {
     if (debug) console.error('[checkin] validation error', err?.response?.data || err?.message);
     
-    const errorMessage = err?.response?.data?.message || err?.message || 'Failed to validate reservation';
+    if (err?.response?.status === 404) {
+      throw new Error('Reservation not found. Please check your reservation ID and last name.');
+    }
+    
+    if (err?.response?.status === 403) {
+      throw new Error('Invalid last name. Please verify your information.');
+    }
+    
+    const errorMessage = err?.response?.data?.message || 
+                         err?.response?.data?.error || 
+                         err?.message || 
+                         'Failed to validate reservation';
     throw new Error(errorMessage);
   }
 };

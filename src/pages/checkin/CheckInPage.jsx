@@ -26,13 +26,6 @@ const CheckInPage = () => {
   const [error, setError] = useState(null);
   
   const validateReservation = useReservationMutation('validate', {
-    onSuccess: (result) => {
-      if (result.success) {
-        navigate('/checkin/payment-check', {
-          state: { reservation: result.data },
-        });
-      }
-    },
     onError: (err) => {
       setError(err.message || t('error.reservationNotFound'));
     },
@@ -50,14 +43,24 @@ const CheckInPage = () => {
     setError(null);
     
     try {
-      // Call backend API to validate reservation with Apaleo
+      // Call backend API to validate reservation
       const result = await validateReservation.mutateAsync(values);
       
-      if (result.success) {
-        // Navigate to payment check page with real reservation data
+      // Only proceed if validation was successful AND we have valid reservation data
+      if (result.success && result.data) {
+        // Verify we have essential reservation data
+        const reservationId = result.data.reservation_id || result.data.id;
+        if (!reservationId) {
+          setError('Invalid reservation data. Please try again.');
+          return;
+        }
+        
+        // Navigate to payment check page with validated reservation data
         navigate('/checkin/payment-check', {
           state: { reservation: result.data },
         });
+      } else {
+        setError('Reservation validation failed. Please check your credentials.');
       }
     } catch (err) {
       setError(err.message || t('error.reservationNotFound'));

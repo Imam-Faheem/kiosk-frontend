@@ -51,6 +51,7 @@ export const API_ENDPOINTS = {
   CHECKIN: {
     BASE: '/api/kiosk/v1/check-in',
     STATUS: '/api/kiosk/v1/check-in/:id/status',
+    VALIDATE_RESERVATION: '/api/kiosk/v1/reservations/:reservationId',
   },
   CHECKOUT: {
     BASE: '/api/kiosk/v1/checkout',
