@@ -3,6 +3,7 @@ export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000',
   TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,
+  ORGANIZATION_ID: process.env.REACT_APP_ORGANIZATION_ID || '0ujsszwN8NRY24YaXiTIE2VWDTS',
 };
 
 // Application Constants

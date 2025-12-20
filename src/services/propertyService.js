@@ -1,5 +1,6 @@
 import { apiClient } from './api/apiClient';
 import { getDefaultCapabilities } from '../lib/propertyUtils';
+import { API_CONFIG } from '../config/constants';
 
 const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
 
@@ -7,9 +8,14 @@ export const getProperties = async () => {
   if (debug) console.log('[properties] fetching properties from API (public endpoint, no auth)');
   
   try {
-    // Use new Kong Gateway endpoint - this is a public endpoint, no auth required
+    // Use organization-specific endpoint - this is a public endpoint, no auth required
+    const organizationId = API_CONFIG.ORGANIZATION_ID;
+    const endpoint = `/api/core/v1/organizations/${organizationId}/apaleo/properties`;
+    
+    if (debug) console.log('[properties] Fetching from endpoint:', endpoint);
+    
     // Make request without any auth headers
-    const response = await apiClient.get('/api/kiosk/v1/properties', {
+    const response = await apiClient.get(endpoint, {
       headers: {
         'Content-Type': 'application/json',
         // Explicitly do not include Authorization header

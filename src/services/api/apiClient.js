@@ -13,10 +13,13 @@ const apiClient = axios.create({
 // Request interceptor to add auth token and X-Property-ID
 apiClient.interceptors.request.use(
   (config) => {
-    // Check if this is the public property list endpoint (no auth required)
+    // Check if this is a public property list endpoint (no auth required)
     const url = config.url || '';
     const method = config.method?.toLowerCase() || '';
-    const isPublicPropertyEndpoint = url.includes('/api/kiosk/v1/properties') && method === 'get';
+    const isPublicPropertyEndpoint = (
+      url.includes('/api/kiosk/v1/properties') || 
+      (url.includes('/api/core/v1/organizations') && url.includes('/apaleo/properties'))
+    ) && method === 'get';
     
     // For public endpoint, explicitly ensure no Authorization header is sent
     if (isPublicPropertyEndpoint) {
