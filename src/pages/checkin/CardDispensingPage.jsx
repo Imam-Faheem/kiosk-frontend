@@ -37,13 +37,6 @@ const CardDispensingPage = () => {
   const location = useLocation();
   const { t } = useLanguage();
   const issueCard = useCardMutation('issue', {
-    onSuccess: (result) => {
-      if (result.success) {
-        setCardData(result.data);
-        setCardStatus('completed');
-        setCurrentStep(3);
-      }
-    },
     onError: (err) => {
       setError(err.message || t('error.cardIssuanceFailed'));
       setCardStatus('error');
@@ -51,7 +44,6 @@ const CardDispensingPage = () => {
   });
   const [currentStep, setCurrentStep] = useState(0);
   const [cardStatus, setCardStatus] = useState('preparing');
-  const [cardData, setCardData] = useState(null);
   const [error, setError] = useState(null);
   const hasProcessedRef = useRef(false);
 
@@ -119,20 +111,19 @@ const CardDispensingPage = () => {
           return;
         }
 
-          setCardData(result.data);
-          await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Step 3: Sending
-          setCurrentStep(2);
-          setCardStatus('sending');
-          await new Promise(resolve => setTimeout(resolve, 2000));
+        setCurrentStep(2);
+        setCardStatus('sending');
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-          setCardStatus('completed');
-          setTimeout(() => {
-            navigate('/checkin/complete', {
+        setCardStatus('completed');
+        setTimeout(() => {
+          navigate('/checkin/complete', {
             state: { reservation, paymentStatus, cardData: result.data, checkInResult }
-            });
-          }, 5000);
+          });
+        }, 5000);
       } catch (err) {
         setError(err.message || t('error.cardDispenserError'));
       }

@@ -67,19 +67,28 @@ const ReservationCompletePage = () => {
     <>
       <Container
         size="lg"
-        h="100vh"
-        style={{ display: 'flex', flexDirection: 'column' }}
-        p="md"
-        bg="white"
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '20px',
+          backgroundColor: '#FFFFFF',
+        }}
       >
         <Paper
           withBorder
           shadow="md"
           p={40}
           radius="xl"
-          w="100%"
-          maw={600}
-          bg="white"
+          style={{
+            width: '100%',
+            maxWidth: '600px',
+            backgroundColor: '#ffffff',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            borderRadius: '20px',
+          }}
         >
         <Group justify="space-between" mb="xl" pb="md" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>

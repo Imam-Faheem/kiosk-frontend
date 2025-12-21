@@ -18,7 +18,6 @@ import {
   IconCreditCard,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import useLanguage from '../../hooks/useLanguage';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../services/api/apiClient';
 import { getCheckInStatus } from '../../services/checkinService';
@@ -29,7 +28,6 @@ import '../../styles/animations.css';
 const CheckInCompletePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useLanguage();
   const [countdown, setCountdown] = useState(15);
   const [loading, setLoading] = useState(false);
   const [checkInData, setCheckInData] = useState(null);
@@ -93,6 +91,7 @@ const CheckInCompletePage = () => {
     };
 
     fetchCheckInDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
   // Log completion and setup countdown
@@ -167,19 +166,28 @@ const CheckInCompletePage = () => {
     <>
       <Container
         size="lg"
-        h="100vh"
-        style={{ display: 'flex', flexDirection: 'column' }}
-        p="md"
-        bg="white"
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '24px',
+          backgroundColor: '#FFFFFF',
+        }}
       >
         <Paper
           withBorder
           shadow="md"
           p={40}
           radius="xl"
-          w="100%"
-          maw={720}
-          bg="white"
+          style={{
+            width: '100%',
+            maxWidth: '720px',
+            backgroundColor: '#ffffff',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            borderRadius: '20px',
+          }}
         >
           {/* Header */}
           <Group justify="space-between" mb="xl" pb="md" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
