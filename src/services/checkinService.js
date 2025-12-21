@@ -3,17 +3,17 @@ import { mockData, shouldUseMock } from './mockData';
 
 // Helper to normalize data fields
 const normalizeData = (data) => ({
-  reservation_id: data.reservation_id || data.reservationId,
-  guest_email: data.guest_email || data.guestEmail,
-  guest_phone: data.guest_phone || data.guestPhone,
+  reservation_id: data.reservation_id ?? data.reservationId,
+  guest_email: data.guest_email ?? data.guestEmail,
+  guest_phone: data.guest_phone ?? data.guestPhone,
   guest_name: {
-    first_name: data.guest_name?.first_name || data.firstName || '',
-    last_name: data.guest_name?.last_name || data.lastName || '',
+    first_name: data.guest_name?.first_name ?? data.firstName ?? '',
+    last_name: data.guest_name?.last_name ?? data.lastName ?? '',
   },
-  check_in_date: data.check_in_date || data.checkInDate || new Date().toISOString(),
-  check_out_date: data.check_out_date || data.checkOutDate,
-  room_number: data.room_number || data.roomNumber,
-  confirmation_code: data.confirmation_code || data.confirmationCode,
+  check_in_date: data.check_in_date ?? data.checkInDate ?? new Date().toISOString(),
+  check_out_date: data.check_out_date ?? data.checkOutDate,
+  room_number: data.room_number ?? data.roomNumber,
+  confirmation_code: data.confirmation_code ?? data.confirmationCode,
 });
 
 /**
@@ -29,8 +29,8 @@ export const processCheckIn = async (data) => {
     
     return {
       success: true,
-      data: response.data.data || response.data,
-      message: response.data.message || 'Check-in completed successfully',
+      data: response.data.data ?? response.data,
+      message: response.data.message ?? 'Check-in completed successfully',
     };
   } catch (err) {
     // Use mock data if network error
@@ -38,9 +38,9 @@ export const processCheckIn = async (data) => {
       return mockData.checkIn(data);
     }
     
-    const errorMessage = err?.response?.data?.message || 
-                         err?.response?.data?.error || 
-                         err?.message || 
+    const errorMessage = err?.response?.data?.message ?? 
+                         err?.response?.data?.error ?? 
+                         err?.message ?? 
                          'Failed to process check-in';
     throw new Error(errorMessage);
   }
@@ -57,7 +57,7 @@ export const getCheckInStatus = async (reservationId) => {
     
     return {
       success: true,
-      data: response.data.data || response.data,
+      data: response.data.data ?? response.data,
       message: 'Check-in status retrieved successfully',
     };
   } catch (err) {
@@ -70,7 +70,7 @@ export const getCheckInStatus = async (reservationId) => {
       throw new Error('Check-in not found');
     }
     
-    const errorMessage = err?.response?.data?.message || err?.message || 'Failed to fetch check-in status';
+    const errorMessage = err?.response?.data?.message ?? err?.message ?? 'Failed to fetch check-in status';
     throw new Error(errorMessage);
   }
 };
@@ -83,8 +83,8 @@ export const getCheckInStatus = async (reservationId) => {
  * @returns {Promise<Object>} Reservation details
  */
 export const validateReservation = async (data) => {
-  const reservationId = data.reservationId || data.reservation_id;
-  const lastName = data.lastName || data.last_name;
+  const reservationId = data.reservationId ?? data.reservation_id;
+  const lastName = data.lastName ?? data.last_name;
   
   if (!reservationId) throw new Error('Reservation ID is required');
   if (!lastName) throw new Error('Last name is required');
@@ -94,7 +94,7 @@ export const validateReservation = async (data) => {
       params: { lastName }
     });
     
-    const reservationData = response.data.data || response.data;
+    const reservationData = response.data.data ?? response.data;
     
     // Validate that we actually got reservation data
     if (!reservationData || (!reservationData.reservation_id && !reservationData.id)) {
@@ -104,7 +104,7 @@ export const validateReservation = async (data) => {
     return {
       success: true,
       data: reservationData,
-      message: response.data.message || 'Reservation validated successfully',
+      message: response.data.message ?? 'Reservation validated successfully',
     };
   } catch (err) {
     // Use mock data if network error (but not for 404/403 which are validation failures)
@@ -120,9 +120,9 @@ export const validateReservation = async (data) => {
       throw new Error('Invalid last name. Please verify your information.');
     }
     
-    const errorMessage = err?.response?.data?.message || 
-                         err?.response?.data?.error || 
-                         err?.message || 
+    const errorMessage = err?.response?.data?.message ?? 
+                         err?.response?.data?.error ?? 
+                         err?.message ?? 
                          'Failed to validate reservation';
     throw new Error(errorMessage);
   }

@@ -7,15 +7,15 @@ export const mockData = {
     success: true,
     data: {
       check_in_id: `checkin_${Date.now()}`,
-      reservation_id: data?.reservation_id || data?.reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
-      guest_name: data?.guest_name?.last_name || data?.lastName || 'Guest',
-      room_number: data?.room_number || data?.roomNumber || '101',
-      check_in_date: data?.check_in_date || data?.checkInDate || new Date().toISOString(),
-      check_out_date: data?.check_out_date || data?.checkOutDate || new Date(Date.now() + 86400000 * 2).toISOString(),
+      reservation_id: data?.reservation_id ?? data?.reservationId ?? API_CONFIG.DEFAULT_RESERVATION_ID,
+      guest_name: data?.guest_name?.last_name ?? data?.lastName ?? 'Guest',
+      room_number: data?.room_number ?? data?.roomNumber ?? '101',
+      check_in_date: data?.check_in_date ?? data?.checkInDate ?? new Date().toISOString(),
+      check_out_date: data?.check_out_date ?? data?.checkOutDate ?? new Date(Date.now() + 86400000 * 2).toISOString(),
       status: 'checked_in',
       checked_in_at: new Date().toISOString(),
-      guest_email: data?.guest_email || data?.guestEmail || 'guest@example.com',
-      guest_phone: data?.guest_phone || data?.guestPhone || '+1234567890',
+      guest_email: data?.guest_email ?? data?.guestEmail ?? 'guest@example.com',
+      guest_phone: data?.guest_phone ?? data?.guestPhone ?? '+1234567890',
     },
     message: 'Check-in completed successfully (mock)',
   }),
@@ -23,7 +23,7 @@ export const mockData = {
   checkInStatus: (reservationId) => ({
     success: true,
     data: {
-      reservation_id: reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      reservation_id: reservationId ?? API_CONFIG.DEFAULT_RESERVATION_ID,
       status: 'checked_in',
       checked_in_at: new Date().toISOString(),
       room_number: '101',
@@ -35,14 +35,14 @@ export const mockData = {
   reservation: (data) => ({
     success: true,
     data: {
-      reservation_id: data?.reservationId || data?.reservation_id || API_CONFIG.DEFAULT_RESERVATION_ID,
-      id: data?.reservationId || data?.reservation_id || API_CONFIG.DEFAULT_RESERVATION_ID,
+      reservation_id: data?.reservationId ?? data?.reservation_id ?? API_CONFIG.DEFAULT_RESERVATION_ID,
+      id: data?.reservationId ?? data?.reservation_id ?? API_CONFIG.DEFAULT_RESERVATION_ID,
       guest_name: {
         first_name: 'John',
-        last_name: data?.lastName || data?.last_name || 'Doe',
+        last_name: data?.lastName ?? data?.last_name ?? 'Doe',
       },
       firstName: 'John',
-      lastName: data?.lastName || data?.last_name || 'Doe',
+      lastName: data?.lastName ?? data?.last_name ?? 'Doe',
       guest_email: 'guest@example.com',
       guest_phone: '+1234567890',
       check_in_date: new Date().toISOString(),
@@ -62,11 +62,11 @@ export const mockData = {
     success: true,
     data: {
       checkout_id: `checkout_${Date.now()}`,
-      reservation_id: data?.reservation_id || data?.reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
-      room_number: data?.room_number || data?.roomNumber || '101',
-      final_bill_amount: data?.final_bill_amount || data?.finalBillAmount || 150.00,
-      payment_status: data?.payment_status || data?.paymentStatus || 'completed',
-      check_out_date: data?.check_out_date || data?.checkOutDate || new Date().toISOString(),
+      reservation_id: data?.reservation_id ?? data?.reservationId ?? API_CONFIG.DEFAULT_RESERVATION_ID,
+      room_number: data?.room_number ?? data?.roomNumber ?? '101',
+      final_bill_amount: data?.final_bill_amount ?? data?.finalBillAmount ?? 150.00,
+      payment_status: data?.payment_status ?? data?.paymentStatus ?? 'completed',
+      check_out_date: data?.check_out_date ?? data?.checkOutDate ?? new Date().toISOString(),
       checked_out_at: new Date().toISOString(),
       status: 'checked_out',
     },
@@ -76,7 +76,7 @@ export const mockData = {
   checkoutStatus: (reservationId) => ({
     success: true,
     data: {
-      reservation_id: reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      reservation_id: reservationId ?? API_CONFIG.DEFAULT_RESERVATION_ID,
       status: 'checked_out',
       checked_out_at: new Date().toISOString(),
       final_bill_amount: 150.00,
@@ -90,15 +90,15 @@ export const mockData = {
     success: true,
     data: {
       key_id: `key_${Date.now()}`,
-      reservation_id: data?.reservation_id || data?.reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
-      lock_id: data?.lock_id || data?.lockId || API_CONFIG.DEFAULT_LOCK_ID,
-      room_number: data?.room_number || data?.roomNumber || '101',
-      key_type: data?.key_type || data?.keyType || 2,
-      key_name: data?.key_name || data?.keyName || 'Guest Key',
+      reservation_id: data?.reservation_id ?? data?.reservationId ?? API_CONFIG.DEFAULT_RESERVATION_ID,
+      lock_id: data?.lock_id ?? data?.lockId ?? API_CONFIG.DEFAULT_LOCK_ID,
+      room_number: data?.room_number ?? data?.roomNumber ?? '101',
+      key_type: data?.key_type ?? data?.keyType ?? 2,
+      key_name: data?.key_name ?? data?.keyName ?? 'Guest Key',
       key_code: '12345678',
       qr_code: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-      start_date: data?.start_date || data?.startDate || new Date().toISOString(),
-      end_date: data?.end_date || data?.endDate || new Date(Date.now() + 86400000 * 2).toISOString(),
+      start_date: data?.start_date ?? data?.startDate ?? new Date().toISOString(),
+      end_date: data?.end_date ?? data?.endDate ?? new Date(Date.now() + 86400000 * 2).toISOString(),
       status: 'active',
       issued_at: new Date().toISOString(),
     },
@@ -108,7 +108,7 @@ export const mockData = {
   digitalKeyGet: (keyId) => ({
     success: true,
     data: {
-      key_id: keyId || `key_${Date.now()}`,
+      key_id: keyId ?? `key_${Date.now()}`,
       key_code: '12345678',
       qr_code: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
       status: 'active',
@@ -122,17 +122,17 @@ export const mockData = {
     success: true,
     data: {
       transaction_id: `txn_${Date.now()}`,
-      reservation_id: data?.reservation_id || data?.reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
-      amount: data?.amount || 150.00,
-      currency: data?.currency || 'USD',
+      reservation_id: data?.reservation_id ?? data?.reservationId ?? API_CONFIG.DEFAULT_RESERVATION_ID,
+      amount: data?.amount ?? 150.00,
+      currency: data?.currency ?? 'USD',
       payment_method: {
-        type: data?.payment_method?.type || data?.paymentMethod?.type || 'card',
-        card_last4: data?.payment_method?.card_last4 || data?.paymentMethod?.cardLast4 || '1234',
-        card_brand: data?.payment_method?.card_brand || data?.paymentMethod?.cardBrand || 'visa',
+        type: data?.payment_method?.type ?? data?.paymentMethod?.type ?? 'card',
+        card_last4: data?.payment_method?.card_last4 ?? data?.paymentMethod?.cardLast4 ?? '1234',
+        card_brand: data?.payment_method?.card_brand ?? data?.paymentMethod?.cardBrand ?? 'visa',
       },
       status: 'completed',
       processed_at: new Date().toISOString(),
-      description: data?.description || 'Room charges and taxes',
+      description: data?.description ?? 'Room charges and taxes',
     },
     message: 'Payment processed successfully (mock)',
   }),
@@ -140,7 +140,7 @@ export const mockData = {
   paymentStatus: (reservationId) => ({
     success: true,
     data: {
-      reservation_id: reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      reservation_id: reservationId ?? API_CONFIG.DEFAULT_RESERVATION_ID,
       status: 'completed',
       amount: 150.00,
       currency: 'USD',
@@ -158,7 +158,7 @@ export const mockData = {
     data: [
       {
         transaction_id: 'txn_1',
-        reservation_id: params?.reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+        reservation_id: params?.reservationId ?? API_CONFIG.DEFAULT_RESERVATION_ID,
         amount: 150.00,
         currency: 'USD',
         status: 'completed',
@@ -166,8 +166,8 @@ export const mockData = {
       },
     ],
     pagination: {
-      page: params?.page || 1,
-      limit: params?.limit || 10,
+      page: params?.page ?? 1,
+      limit: params?.limit ?? 10,
       total: 1,
     },
     message: 'Payment history retrieved successfully (mock)',
@@ -178,9 +178,9 @@ export const mockData = {
     data: {
       refund_id: `refund_${Date.now()}`,
       transaction_id: transactionId,
-      amount: data?.amount || 150.00,
-      currency: data?.currency || 'USD',
-      reason: data?.reason || 'Refund request',
+      amount: data?.amount ?? 150.00,
+      currency: data?.currency ?? 'USD',
+      reason: data?.reason ?? 'Refund request',
       status: 'completed',
       processed_at: new Date().toISOString(),
     },
@@ -189,9 +189,9 @@ export const mockData = {
 
   // Room availability mock data
   roomAvailability: (data) => {
-    const arrival = data?.checkIn || data?.arrival || new Date().toISOString().split('T')[0];
-    const departure = data?.checkOut || data?.departure || new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0];
-    const adults = Number(data?.guests || data?.adults || 1);
+    const arrival = data?.checkIn ?? data?.arrival ?? new Date().toISOString().split('T')[0];
+    const departure = data?.checkOut ?? data?.departure ?? new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0];
+    const adults = Number(data?.guests ?? data?.adults ?? 1);
     const nights = Math.max(1, Math.ceil((new Date(departure) - new Date(arrival)) / (1000 * 60 * 60 * 24)));
 
     const mockRooms = [
@@ -313,7 +313,7 @@ export const mockData = {
   roomDetails: (roomTypeId) => ({
     success: true,
     data: {
-      roomTypeId: roomTypeId || 'RT-001',
+      roomTypeId: roomTypeId ?? 'RT-001',
       name: 'Deluxe Room',
       description: 'Spacious room with city view, king-size bed, and modern amenities.',
       capacity: 2,
@@ -378,16 +378,16 @@ export const mockData = {
     success: true,
     data: {
       guestId: `GUEST-${Date.now()}`,
-      firstName: data?.firstName || 'John',
-      lastName: data?.lastName || 'Doe',
-      email: data?.email || 'guest@example.com',
-      phone: data?.phone || '+1234567890',
-      country: data?.country || 'US',
-      addressStreet: data?.addressStreet || '123 Main St',
-      addressCity: data?.addressCity || 'New York',
-      addressState: data?.addressState || 'NY',
-      addressPostal: data?.addressPostal || '10001',
-      propertyId: data?.propertyId || 'BER',
+      firstName: data?.firstName ?? 'John',
+      lastName: data?.lastName ?? 'Doe',
+      email: data?.email ?? 'guest@example.com',
+      phone: data?.phone ?? '+1234567890',
+      country: data?.country ?? 'US',
+      addressStreet: data?.addressStreet ?? '123 Main St',
+      addressCity: data?.addressCity ?? 'New York',
+      addressState: data?.addressState ?? 'NY',
+      addressPostal: data?.addressPostal ?? '10001',
+      propertyId: data?.propertyId ?? 'BER',
       createdAt: new Date().toISOString(),
     },
     message: 'Guest details saved successfully (mock)',
@@ -396,10 +396,10 @@ export const mockData = {
   getGuestDetails: (params) => ({
     success: true,
     data: {
-      guestId: params?.guestId || `GUEST-${Date.now()}`,
+      guestId: params?.guestId ?? `GUEST-${Date.now()}`,
       firstName: 'John',
       lastName: 'Doe',
-      email: params?.email || 'guest@example.com',
+      email: params?.email ?? 'guest@example.com',
       phone: '+1234567890',
       country: 'US',
       addressStreet: '123 Main St',
@@ -413,7 +413,7 @@ export const mockData = {
   updateApaleoReservationWithGuest: (reservationId, guestData) => ({
     success: true,
     data: {
-      reservationId: reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      reservationId: reservationId ?? API_CONFIG.DEFAULT_RESERVATION_ID,
       guestId: `GUEST-${Date.now()}`,
       ...guestData,
       updatedAt: new Date().toISOString(),
@@ -430,13 +430,13 @@ export const mockData = {
       reservation: {
         id: reservationId,
         status: 'confirmed',
-        arrival: data?.arrival || new Date().toISOString().split('T')[0],
-        departure: data?.departure || new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
-        propertyId: data?.propertyId || 'BER',
-        unitGroupId: data?.unitGroupId || 'RT-001',
-        ratePlanId: data?.ratePlanId || 'RP-001',
-        adults: data?.adults || 1,
-        primaryGuest: data?.primaryGuest || {
+        arrival: data?.arrival ?? new Date().toISOString().split('T')[0],
+        departure: data?.departure ?? new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+        propertyId: data?.propertyId ?? 'BER',
+        unitGroupId: data?.unitGroupId ?? 'RT-001',
+        ratePlanId: data?.ratePlanId ?? 'RP-001',
+        adults: data?.adults ?? 1,
+        primaryGuest: data?.primaryGuest ?? {
           firstName: 'John',
           lastName: 'Doe',
           email: 'guest@example.com',
@@ -455,8 +455,8 @@ export const mockData = {
   getReservation: (reservationId) => ({
     success: true,
     data: {
-      id: reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
-      reservationId: reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      id: reservationId ?? API_CONFIG.DEFAULT_RESERVATION_ID,
+      reservationId: reservationId ?? API_CONFIG.DEFAULT_RESERVATION_ID,
       status: 'confirmed',
       arrival: new Date().toISOString().split('T')[0],
       departure: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
@@ -478,14 +478,14 @@ export const mockData = {
   validateLostCardGuest: (data) => ({
     success: true,
     data: {
-      reservationId: data?.reservationNumber || API_CONFIG.DEFAULT_RESERVATION_ID,
-      reservationNumber: data?.reservationNumber || API_CONFIG.DEFAULT_RESERVATION_ID,
-      roomNumber: data?.roomNumber || data?.roomType || '101',
-      lastName: data?.lastName || 'Doe',
+      reservationId: data?.reservationNumber ?? API_CONFIG.DEFAULT_RESERVATION_ID,
+      reservationNumber: data?.reservationNumber ?? API_CONFIG.DEFAULT_RESERVATION_ID,
+      roomNumber: data?.roomNumber ?? data?.roomType ?? '101',
+      lastName: data?.lastName ?? 'Doe',
       firstName: 'John',
       email: 'guest@example.com',
       phone: '+1234567890',
-      guestName: `John ${data?.lastName || 'Doe'}`,
+      guestName: `John ${data?.lastName ?? 'Doe'}`,
       checkIn: new Date().toISOString().split('T')[0],
       checkOut: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
       propertyId: 'BER',
@@ -499,8 +499,8 @@ export const mockData = {
       cardId: `CARD-${Date.now()}`,
       accessCode: `AC-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
       status: 'active',
-      roomNumber: data?.roomNumber || '101',
-      reservationId: data?.reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      roomNumber: data?.roomNumber ?? '101',
+      reservationId: data?.reservationId ?? API_CONFIG.DEFAULT_RESERVATION_ID,
       oldCardDeactivated: true,
       passcode: `AC-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
     },
@@ -603,6 +603,6 @@ const isNetworkError = (error) => {
 
 // Helper to check if should use mock data
 export const shouldUseMock = (error, useMock = true) => {
-  const useMockEnv = String(process.env.REACT_APP_USE_MOCK || '').toLowerCase() === 'true';
+  const useMockEnv = String(process.env.REACT_APP_USE_MOCK ?? '').toLowerCase() === 'true';
   return useMock && (useMockEnv || isNetworkError(error));
 };

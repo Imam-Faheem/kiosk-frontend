@@ -1,18 +1,18 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock } from './mockData';
 
-const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-
 // Helper to normalize checkout data
 const normalizeCheckoutData = (data) => {
   const requestBody = {
-    reservation_id: data.reservation_id || data.reservationId,
-    room_number: data.room_number || data.roomNumber,
-    final_bill_amount: data.final_bill_amount || data.finalBillAmount,
-    payment_status: data.payment_status || data.paymentStatus || 'completed',
+    reservation_id: data.reservation_id ?? data.reservationId,
+    room_number: data.room_number ?? data.roomNumber,
+    final_bill_amount: data.final_bill_amount ?? data.finalBillAmount,
+    payment_status: data.payment_status ?? data.paymentStatus ?? 'completed',
   };
-  if (data.guest_email || data.guestEmail) requestBody.guest_email = data.guest_email || data.guestEmail;
-  if (data.check_out_date || data.checkOutDate) requestBody.check_out_date = data.check_out_date || data.checkOutDate;
+  const guestEmail = data.guest_email ?? data.guestEmail;
+  const checkOutDate = data.check_out_date ?? data.checkOutDate;
+  if (guestEmail) requestBody.guest_email = guestEmail;
+  if (checkOutDate) requestBody.check_out_date = checkOutDate;
   return requestBody;
 };
 
@@ -27,17 +27,17 @@ export const processCheckout = async (data) => {
     
     return {
       success: true,
-      data: response.data.data || response.data,
-      message: response.data.message || 'Checkout completed successfully',
+      data: response.data.data ?? response.data,
+      message: response.data.message ?? 'Checkout completed successfully',
     };
   } catch (err) {
     if (shouldUseMock(err)) {
       return mockData.checkout(data);
     }
     
-    const errorMessage = err?.response?.data?.message || 
-                         err?.response?.data?.error || 
-                         err?.message || 
+    const errorMessage = err?.response?.data?.message ?? 
+                         err?.response?.data?.error ?? 
+                         err?.message ?? 
                          'Failed to process checkout';
     throw new Error(errorMessage);
   }
@@ -54,7 +54,7 @@ export const getCheckoutStatus = async (reservationId) => {
     
     return {
       success: true,
-      data: response.data.data || response.data,
+      data: response.data.data ?? response.data,
       message: 'Checkout status retrieved successfully',
     };
   } catch (err) {
@@ -66,7 +66,7 @@ export const getCheckoutStatus = async (reservationId) => {
       throw new Error('Checkout not found');
     }
     
-    const errorMessage = err?.response?.data?.message || err?.message || 'Failed to fetch checkout status';
+    const errorMessage = err?.response?.data?.message ?? err?.message ?? 'Failed to fetch checkout status';
     throw new Error(errorMessage);
   }
 };
