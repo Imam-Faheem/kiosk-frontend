@@ -132,3 +132,48 @@ export const STATUS = {
     REFUNDED: 'refunded',
   },
 };
+
+// Card Dispensing Steps Configuration
+export const CARD_DISPENSING_STEPS = [
+  { 
+    key: 'preparing',
+    labelKey: 'cardDispensing.steps.preparing',
+    defaultLabel: 'Preparing Card', 
+    description: 'Preparing your access card',
+    iconKey: 'creditCard',
+  },
+  { 
+    key: 'encoding',
+    labelKey: 'cardDispensing.steps.encoding',
+    defaultLabel: 'Encoding Credentials', 
+    description: 'Securing your access credentials',
+    iconKey: 'lock',
+  },
+  { 
+    key: 'sending',
+    labelKey: 'cardDispensing.steps.sending',
+    defaultLabel: 'Sending Digital Key', 
+    description: 'Delivering to your email',
+    iconKey: 'mail',
+  },
+];
+
+// Status Messages Configuration
+export const CARD_STATUS_MESSAGES = {
+  preparing: {
+    title: 'Preparing Your Access Card',
+    description: 'Your personalized access card is being prepared. This usually takes about 10-15 seconds.',
+  },
+  encoding: {
+    title: 'Securing Your Credentials',
+    description: 'Encoding your access credentials with bank-level encryption. Almost ready...',
+  },
+  sending: {
+    title: 'Sending Digital Key',
+    description: 'Your digital key is being securely delivered to your email. You\'ll receive it within the next few moments.',
+  },
+  completed: {
+    title: 'Your Card is Ready',
+    description: 'Please take your access card from the slot. Your digital key has been sent to your email.',
+  },
+};

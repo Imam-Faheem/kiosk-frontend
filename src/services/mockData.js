@@ -1,209 +1,288 @@
-// Mock Apaleo PMS data for kiosk application
+import { API_CONFIG } from '../config/constants';
+
+// Mock data generators for fallback when API fails
+export const mockData = {
+  // Check-in mock data
+  checkIn: (data) => ({
+    success: true,
+    data: {
+      check_in_id: `checkin_${Date.now()}`,
+      reservation_id: data?.reservation_id || data?.reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      guest_name: data?.guest_name?.last_name || data?.lastName || 'Guest',
+      room_number: data?.room_number || data?.roomNumber || '101',
+      check_in_date: data?.check_in_date || data?.checkInDate || new Date().toISOString(),
+      check_out_date: data?.check_out_date || data?.checkOutDate || new Date(Date.now() + 86400000 * 2).toISOString(),
+      status: 'checked_in',
+      checked_in_at: new Date().toISOString(),
+      guest_email: data?.guest_email || data?.guestEmail || 'guest@example.com',
+      guest_phone: data?.guest_phone || data?.guestPhone || '+1234567890',
+    },
+    message: 'Check-in completed successfully (mock)',
+  }),
+
+  checkInStatus: (reservationId) => ({
+    success: true,
+    data: {
+      reservation_id: reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      status: 'checked_in',
+      checked_in_at: new Date().toISOString(),
+      room_number: '101',
+      guest_name: 'John Doe',
+    },
+    message: 'Check-in status retrieved successfully (mock)',
+  }),
+
+  reservation: (data) => ({
+    success: true,
+    data: {
+      reservation_id: data?.reservationId || data?.reservation_id || API_CONFIG.DEFAULT_RESERVATION_ID,
+      id: data?.reservationId || data?.reservation_id || API_CONFIG.DEFAULT_RESERVATION_ID,
+      guest_name: {
+        first_name: 'John',
+        last_name: data?.lastName || data?.last_name || 'Doe',
+      },
+      firstName: 'John',
+      lastName: data?.lastName || data?.last_name || 'Doe',
+      guest_email: 'guest@example.com',
+      guest_phone: '+1234567890',
+      check_in_date: new Date().toISOString(),
+      check_out_date: new Date(Date.now() + 86400000 * 2).toISOString(),
+      checkInDate: new Date().toISOString(),
+      checkOutDate: new Date(Date.now() + 86400000 * 2).toISOString(),
+      room_number: '101',
+    roomNumber: '101',
+      status: 'confirmed',
+      confirmation_code: 'CONF123',
+    },
+    message: 'Reservation validated successfully (mock)',
+  }),
+
+  // Checkout mock data
+  checkout: (data) => ({
+    success: true,
+    data: {
+      checkout_id: `checkout_${Date.now()}`,
+      reservation_id: data?.reservation_id || data?.reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      room_number: data?.room_number || data?.roomNumber || '101',
+      final_bill_amount: data?.final_bill_amount || data?.finalBillAmount || 150.00,
+      payment_status: data?.payment_status || data?.paymentStatus || 'completed',
+      check_out_date: data?.check_out_date || data?.checkOutDate || new Date().toISOString(),
+      checked_out_at: new Date().toISOString(),
+      status: 'checked_out',
+    },
+    message: 'Checkout completed successfully (mock)',
+  }),
+
+  checkoutStatus: (reservationId) => ({
+    success: true,
+    data: {
+      reservation_id: reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      status: 'checked_out',
+      checked_out_at: new Date().toISOString(),
+      final_bill_amount: 150.00,
+      payment_status: 'completed',
+    },
+    message: 'Checkout status retrieved successfully (mock)',
+  }),
+
+  // Digital key mock data
+  digitalKey: (data) => ({
+    success: true,
+    data: {
+      key_id: `key_${Date.now()}`,
+      reservation_id: data?.reservation_id || data?.reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      lock_id: data?.lock_id || data?.lockId || API_CONFIG.DEFAULT_LOCK_ID,
+      room_number: data?.room_number || data?.roomNumber || '101',
+      key_type: data?.key_type || data?.keyType || 2,
+      key_name: data?.key_name || data?.keyName || 'Guest Key',
+      key_code: '12345678',
+      qr_code: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      start_date: data?.start_date || data?.startDate || new Date().toISOString(),
+      end_date: data?.end_date || data?.endDate || new Date(Date.now() + 86400000 * 2).toISOString(),
+      status: 'active',
+      issued_at: new Date().toISOString(),
+    },
+    message: 'Digital key issued successfully (mock)',
+  }),
+
+  digitalKeyGet: (keyId) => ({
+    success: true,
+    data: {
+      key_id: keyId || `key_${Date.now()}`,
+      key_code: '12345678',
+      qr_code: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      status: 'active',
+      room_number: '101',
+    },
+    message: 'Digital key retrieved successfully (mock)',
+  }),
+
+  // Payment mock data
+  payment: (data) => ({
+    success: true,
+    data: {
+      transaction_id: `txn_${Date.now()}`,
+      reservation_id: data?.reservation_id || data?.reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      amount: data?.amount || 150.00,
+      currency: data?.currency || 'USD',
+      payment_method: {
+        type: data?.payment_method?.type || data?.paymentMethod?.type || 'card',
+        card_last4: data?.payment_method?.card_last4 || data?.paymentMethod?.cardLast4 || '1234',
+        card_brand: data?.payment_method?.card_brand || data?.paymentMethod?.cardBrand || 'visa',
+      },
+      status: 'completed',
+      processed_at: new Date().toISOString(),
+      description: data?.description || 'Room charges and taxes',
+    },
+    message: 'Payment processed successfully (mock)',
+  }),
+
+  paymentStatus: (reservationId) => ({
+    success: true,
+    data: {
+      reservation_id: reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      status: 'completed',
+      amount: 150.00,
+      currency: 'USD',
+      payment_method: {
+        type: 'card',
+        card_last4: '1234',
+        card_brand: 'visa',
+      },
+    },
+    message: 'Payment status retrieved successfully (mock)',
+  }),
+
+  paymentHistory: (params) => ({
+    success: true,
+    data: [
+      {
+        transaction_id: 'txn_1',
+        reservation_id: params?.reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+        amount: 150.00,
+        currency: 'USD',
+        status: 'completed',
+        processed_at: new Date().toISOString(),
+      },
+    ],
+    pagination: {
+      page: params?.page || 1,
+      limit: params?.limit || 10,
+      total: 1,
+    },
+    message: 'Payment history retrieved successfully (mock)',
+  }),
+
+  refund: (transactionId, data) => ({
+    success: true,
+    data: {
+      refund_id: `refund_${Date.now()}`,
+      transaction_id: transactionId,
+      amount: data?.amount || 150.00,
+      currency: data?.currency || 'USD',
+      reason: data?.reason || 'Refund request',
+      status: 'completed',
+      processed_at: new Date().toISOString(),
+    },
+    message: 'Refund processed successfully (mock)',
+  }),
+};
+
+// Utility functions for simulating delays
+export const simulateApiDelay = (ms = 500) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+export const simulateHardwareDelay = (ms = 1500) => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+// Mock reservations data
 export const mockReservations = [
   {
-    id: 'RES-001',
-    reservationId: 'RES-001',
-    guestName: 'John Smith',
-    lastName: 'Smith',
-    email: 'john.smith@email.com',
-    phone: '+1-555-0123',
-    checkIn: '2024-01-15',
-    checkOut: '2024-01-18',
+    reservationId: API_CONFIG.DEFAULT_RESERVATION_ID,
+    id: API_CONFIG.DEFAULT_RESERVATION_ID,
+    guest_name: { first_name: 'John', last_name: 'Doe' },
+    firstName: 'John',
+    lastName: 'Doe',
+    guest_email: 'john.doe@example.com',
+    guest_phone: '+1234567890',
+    check_in_date: new Date().toISOString(),
+    check_out_date: new Date(Date.now() + 86400000 * 2).toISOString(),
+    checkInDate: new Date().toISOString(),
+    checkOutDate: new Date(Date.now() + 86400000 * 2).toISOString(),
+    room_number: '101',
     roomNumber: '101',
-    roomType: 'Deluxe King',
     status: 'confirmed',
-    paymentStatus: 'paid',
-    totalAmount: 450.00,
-    currency: 'USD',
-    propertyId: 'PROP-001',
-    propertyName: 'Uno Hotels Downtown'
-  },
-  {
-    id: 'RES-002',
-    reservationId: 'RES-002',
-    guestName: 'Maria Garcia',
-    lastName: 'Garcia',
-    email: 'maria.garcia@email.com',
-    phone: '+34-555-0456',
-    checkIn: '2024-01-16',
-    checkOut: '2024-01-20',
-    roomNumber: '205',
-    roomType: 'Standard Twin',
-    status: 'confirmed',
+    confirmation_code: 'CONF123',
     paymentStatus: 'pending',
-    totalAmount: 320.00,
-    currency: 'EUR',
-    propertyId: 'PROP-001',
-    propertyName: 'Uno Hotels Downtown'
-  }
-];
-
-export const mockRooms = [
-  {
-    id: 'ROOM-001',
-    roomTypeId: 'RT-001',
-    name: 'Deluxe King Suite',
-    description: 'Spacious suite with king bed, city view, and modern amenities',
-    capacity: 2,
-    maxGuests: 3,
-    basePrice: 150.00,
-    currency: 'USD',
-    amenities: ['WiFi', 'Air Conditioning', 'Mini Bar', 'Safe', 'TV'],
-    images: [
-      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&h=600&fit=crop'
-    ],
-    available: true
+    createdAt: new Date().toISOString(),
   },
   {
-    id: 'ROOM-002',
-    roomTypeId: 'RT-002',
-    name: 'Standard Twin',
-    description: 'Comfortable room with two twin beds and essential amenities',
-    capacity: 2,
-    maxGuests: 2,
-    basePrice: 80.00,
-    currency: 'USD',
-    amenities: ['WiFi', 'Air Conditioning', 'TV'],
-    images: [
-      'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=800&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop'
-    ],
-    available: true
-  },
-  {
-    id: 'ROOM-003',
-    roomTypeId: 'RT-003',
-    name: 'Executive Suite',
-    description: 'Premium suite with separate living area and business amenities',
-    capacity: 2,
-    maxGuests: 4,
-    basePrice: 200.00,
-    currency: 'USD',
-    amenities: ['WiFi', 'Air Conditioning', 'Mini Bar', 'Safe', 'TV', 'Work Desk', 'Sofa'],
-    images: [
-      'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800&h=600&fit=crop',
-      'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop'
-    ],
-    available: true
-  }
-];
-
-export const mockPaymentTransactions = [
-  {
-    id: 'TXN-001',
-    reservationId: 'RES-001',
-    amount: 450.00,
-    currency: 'USD',
-    status: 'completed',
-    method: 'card',
-    transactionId: 'TXN-001',
-    timestamp: '2024-01-10T10:30:00Z',
-    lastFourDigits: '1234'
-  },
-  {
-    id: 'TXN-002',
     reservationId: 'RES-002',
-    amount: 320.00,
-    currency: 'EUR',
-    status: 'pending',
-    method: 'card',
-    transactionId: 'TXN-002',
-    timestamp: null,
-    lastFourDigits: null
-  }
+    id: 'RES-002',
+    guest_name: { first_name: 'Jane', last_name: 'Smith' },
+    firstName: 'Jane',
+    lastName: 'Smith',
+    guest_email: 'jane.smith@example.com',
+    guest_phone: '+1234567891',
+    check_in_date: new Date(Date.now() + 86400000).toISOString(),
+    check_out_date: new Date(Date.now() + 86400000 * 3).toISOString(),
+    checkInDate: new Date(Date.now() + 86400000).toISOString(),
+    checkOutDate: new Date(Date.now() + 86400000 * 3).toISOString(),
+    room_number: '202',
+    roomNumber: '202',
+    status: 'confirmed',
+    confirmation_code: 'CONF456',
+    paymentStatus: 'completed',
+    createdAt: new Date().toISOString(),
+  },
 ];
-
-export const mockCardOperations = [
-  {
-    id: 'CARD-001',
-    reservationId: 'RES-001',
-    roomNumber: '101',
-    status: 'active',
-    cardNumber: '****1234',
-    accessCode: 'AC-001',
-    issuedAt: '2024-01-15T14:00:00Z',
-    expiresAt: '2024-01-18T11:00:00Z'
-  }
-];
-
-// Mock API delay simulation - minimal delay for better UX
-export const simulateApiDelay = (min = 50, max = 150) => {
-  const delay = Math.random() * (max - min) + min;
-  return new Promise(resolve => setTimeout(resolve, delay));
-};
-
-// Mock hardware operations delay
-export const simulateHardwareDelay = (min = 3000, max = 8000) => {
-  const delay = Math.random() * (max - min) + min;
-  return new Promise(resolve => setTimeout(resolve, delay));
-};
-
-// Mock error responses
-export const mockErrors = {
-  RESERVATION_NOT_FOUND: {
-    code: 'RESERVATION_NOT_FOUND',
-    message: 'Reservation not found',
-    details: 'No reservation found with the provided ID and last name'
-  },
-  PAYMENT_FAILED: {
-    code: 'PAYMENT_FAILED',
-    message: 'Payment processing failed',
-    details: 'Card was declined or payment terminal error'
-  },
-  CARD_DISPENSER_ERROR: {
-    code: 'CARD_DISPENSER_ERROR',
-    message: 'Card dispenser error',
-    details: 'Hardware error occurred while dispensing card'
-  },
-  ROOM_NOT_AVAILABLE: {
-    code: 'ROOM_NOT_AVAILABLE',
-    message: 'No rooms available',
-    details: 'No rooms available for the selected dates'
-  },
-  GUEST_VALIDATION_FAILED: {
-    code: 'GUEST_VALIDATION_FAILED',
-    message: 'Guest validation failed',
-    details: 'Room number, reservation number, and last name do not match'
-  }
-};
 
 // Mock success responses
 export const mockSuccessResponses = {
-  RESERVATION_VALIDATED: {
-    success: true,
-    data: mockReservations[0],
-    message: 'Reservation validated successfully'
-  },
-  PAYMENT_INITIATED: {
+  cardIssue: {
     success: true,
     data: {
-      transactionId: 'TXN-NEW-001',
-      status: 'processing',
-      amount: 320.00,
-      currency: 'EUR'
+      cardId: `CARD-${Date.now()}`,
+      accessCode: `AC-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+      status: 'active',
     },
-    message: 'Payment initiated successfully'
+    message: 'Card issued successfully',
   },
-  CARD_ISSUED: {
+  reservationCreate: {
     success: true,
     data: {
-      cardId: 'CARD-NEW-001',
-      accessCode: 'AC-NEW-001',
-      status: 'active'
+      id: `RES-${Date.now()}`,
+      status: 'confirmed',
     },
-    message: 'Card issued successfully'
+    message: 'Reservation created successfully',
   },
-  RESERVATION_CREATED: {
-    success: true,
-    data: {
-      reservationId: 'RES-NEW-001',
-      confirmationNumber: 'CONF-001',
-      status: 'confirmed'
-    },
-    message: 'Reservation created successfully'
-  }
+};
+
+// Mock errors
+export const mockErrors = {
+  notFound: {
+    status: 404,
+    message: 'Resource not found',
+  },
+  unauthorized: {
+    status: 401,
+    message: 'Unauthorized access',
+  },
+  serverError: {
+    status: 500,
+    message: 'Internal server error',
+  },
+};
+
+// Helper to check if error is network-related (should use mock)
+const isNetworkError = (error) => {
+  return !error?.response || error?.code === 'ECONNABORTED' || error?.code === 'ERR_NETWORK';
+};
+
+// Helper to check if should use mock data
+export const shouldUseMock = (error, useMock = true) => {
+  const useMockEnv = String(process.env.REACT_APP_USE_MOCK || '').toLowerCase() === 'true';
+  return useMock && (useMockEnv || isNetworkError(error));
 };

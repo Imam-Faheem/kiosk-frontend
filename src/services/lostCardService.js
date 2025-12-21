@@ -12,16 +12,12 @@ const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 't
  * @returns {Promise<Object>} Validation result with guest data
  */
 export const validateLostCardGuest = async (data) => {
-  if (debug) console.log('[lostCard] validating guest', data);
-  
   try {
     const { reservationNumber, roomNumber, lastName } = data;
     
     // First, fetch the reservation from Apaleo
     const reservationResponse = await apiClient.get(`/reservation/${reservationNumber}`);
     const reservation = reservationResponse.data;
-    
-    if (debug) console.log('[lostCard] reservation response', reservation);
     
     // Validate last name matches (case-insensitive)
     const lastNameLower = lastName?.trim().toLowerCase();
@@ -61,8 +57,6 @@ export const validateLostCardGuest = async (data) => {
       message: 'Guest validated successfully',
     };
   } catch (err) {
-    if (debug) console.error('[lostCard] validation error', err?.response?.data || err?.message);
-    
     if (err?.response?.status === 404) {
       throw new Error('Reservation not found. Please check your reservation number.');
     }
@@ -82,8 +76,6 @@ export const validateLostCardGuest = async (data) => {
  * @returns {Promise<Object>} New card/passcode data
  */
 export const regenerateLostCard = async (data) => {
-  if (debug) console.log('[lostCard] regenerating card', data);
-  
   try {
     const { reservationId, roomNumber, propertyId } = data;
     const property = propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
@@ -99,8 +91,6 @@ export const regenerateLostCard = async (data) => {
       room_number: roomNumber,
     });
     
-    if (debug) console.log('[lostCard] regenerate response', response.data);
-    
     return {
       success: true,
       data: {
@@ -115,8 +105,6 @@ export const regenerateLostCard = async (data) => {
       message: response.data.message || 'Card regenerated successfully',
     };
   } catch (err) {
-    if (debug) console.error('[lostCard] regenerate error', err?.response?.data || err?.message);
-    
     const errorMessage = err?.response?.data?.message || 
                          err?.response?.data?.error || 
                          err?.message || 

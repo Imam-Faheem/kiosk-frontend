@@ -1,5 +1,5 @@
 import { apiClient } from './api/apiClient';
-import { simulateHardwareDelay, simulateApiDelay, mockSuccessResponses, mockErrors } from './mockData';
+import { simulateHardwareDelay, simulateApiDelay } from './mockData';
 
 // Issue new card
 export const issueCard = async (data) => {
@@ -7,8 +7,8 @@ export const issueCard = async (data) => {
     await simulateHardwareDelay();
     
     // Mock implementation - in real app, this would call your backend
-    const mockResponse = await apiClient.post('/cards/issue', data);
-    return mockResponse.data;
+    const response = await apiClient.post('/cards/issue', data);
+    return response.data;
   } catch (error) {
     // Fallback to mock data if API fails
     return {
@@ -27,10 +27,6 @@ export const issueCard = async (data) => {
 
 // Validate guest for lost card using Apaleo API
 export const validateGuest = async (data) => {
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-  
-  if (debug) console.log('[card] validating guest for lost card', data);
-  
   try {
     const response = await apiClient.post('/lost-card/validate', {
       reservationNumber: data.reservationNumber,
@@ -38,12 +34,8 @@ export const validateGuest = async (data) => {
       lastName: data.lastName,
     });
     
-    if (debug) console.log('[card] validation response', response.data);
-    
     return response.data;
   } catch (error) {
-    if (debug) console.error('[card] validation error', error?.response?.data || error?.message);
-    
     const errorMessage = error?.response?.data?.message || error?.message || 'Failed to validate guest';
     throw new Error(errorMessage);
   }
@@ -51,10 +43,6 @@ export const validateGuest = async (data) => {
 
 // Regenerate lost card using backend API
 export const regenerateCard = async (data) => {
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-  
-  if (debug) console.log('[card] regenerating card', data);
-  
   try {
     const response = await apiClient.post('/lost-card/regenerate', {
       reservation_id: data.reservationId || data.reservation_id,
@@ -62,12 +50,8 @@ export const regenerateCard = async (data) => {
       room_number: data.roomNumber || data.room_number,
     });
     
-    if (debug) console.log('[card] regenerate response', response.data);
-    
     return response.data;
   } catch (error) {
-    if (debug) console.error('[card] regenerate error', error);
-    
     // Handle network errors with more detail
     if (!error.response) {
       if (error.code === 'ECONNREFUSED' || error.message?.includes('Network Error')) {

@@ -1,47 +1,34 @@
 import { apiClient } from './api/apiClient';
 import { API_CONFIG } from '../config/constants';
+import { mockData, shouldUseMock } from './mockData';
 
 const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
+
+// Helper to normalize data fields
+const normalizeData = (data) => ({
+  reservation_id: data.reservation_id || data.reservationId,
+  guest_email: data.guest_email || data.guestEmail,
+  guest_phone: data.guest_phone || data.guestPhone,
+  guest_name: {
+    first_name: data.guest_name?.first_name || data.firstName || '',
+    last_name: data.guest_name?.last_name || data.lastName || '',
+  },
+  check_in_date: data.check_in_date || data.checkInDate || new Date().toISOString(),
+  check_out_date: data.check_out_date || data.checkOutDate,
+  room_number: data.room_number || data.roomNumber,
+  confirmation_code: data.confirmation_code || data.confirmationCode,
+});
 
 /**
  * Process check-in for a reservation
  * @param {Object} data - Check-in data
- * @param {string} data.reservation_id - Reservation ID (KSUID)
- * @param {string} data.guest_email - Guest email
- * @param {string} data.guest_phone - Guest phone
- * @param {Object} data.guest_name - Guest name object
- * @param {string} data.guest_name.first_name - Guest first name
- * @param {string} data.guest_name.last_name - Guest last name
- * @param {string} data.check_in_date - Check-in date (ISO 8601)
- * @param {string} data.check_out_date - Check-out date (ISO 8601)
- * @param {string} data.room_number - Room number
- * @param {string} data.confirmation_code - Confirmation code (optional)
  * @returns {Promise<Object>} Check-in response
  */
 export const processCheckIn = async (data) => {
-  if (debug) console.log('[checkin] processing check-in', data);
-  
   try {
-    // Prepare request payload - use snake_case as expected by backend
-    const payload = {
-      reservation_id: data.reservation_id || data.reservationId,
-      guest_email: data.guest_email || data.guestEmail,
-      guest_phone: data.guest_phone || data.guestPhone,
-      guest_name: {
-        first_name: data.guest_name?.first_name || data.firstName || '',
-        last_name: data.guest_name?.last_name || data.lastName || '',
-      },
-      check_in_date: data.check_in_date || data.checkInDate || new Date().toISOString(),
-      check_out_date: data.check_out_date || data.checkOutDate,
-      room_number: data.room_number || data.roomNumber,
-      confirmation_code: data.confirmation_code || data.confirmationCode,
-    };
-
-    if (debug) console.log('[checkin] check-in request payload', payload);
+    const payload = normalizeData(data);
 
     const response = await apiClient.post('/api/kiosk/v1/check-in', payload);
-    
-    if (debug) console.log('[checkin] check-in response', response.data);
     
     return {
       success: true,
@@ -49,7 +36,10 @@ export const processCheckIn = async (data) => {
       message: response.data.message || 'Check-in completed successfully',
     };
   } catch (err) {
-    if (debug) console.error('[checkin] check-in error', err?.response?.data || err?.message);
+    // Use mock data if network error
+    if (shouldUseMock(err)) {
+      return mockData.checkIn(data);
+    }
     
     const errorMessage = err?.response?.data?.message || 
                          err?.response?.data?.error || 
@@ -65,12 +55,8 @@ export const processCheckIn = async (data) => {
  * @returns {Promise<Object>} Check-in status
  */
 export const getCheckInStatus = async (reservationId) => {
-  if (debug) console.log('[checkin] fetching check-in status', reservationId);
-  
   try {
     const response = await apiClient.get(`/api/kiosk/v1/check-in/${reservationId}/status`);
-    
-    if (debug) console.log('[checkin] check-in status response', response.data);
     
     return {
       success: true,
@@ -78,7 +64,10 @@ export const getCheckInStatus = async (reservationId) => {
       message: 'Check-in status retrieved successfully',
     };
   } catch (err) {
-    if (debug) console.error('[checkin] status error', err?.response?.data || err?.message);
+    // Use mock data if network error
+    if (shouldUseMock(err)) {
+      return mockData.checkInStatus(reservationId);
+    }
     
     if (err?.response?.status === 404) {
       throw new Error('Check-in not found');
@@ -97,30 +86,21 @@ export const getCheckInStatus = async (reservationId) => {
  * @returns {Promise<Object>} Reservation details
  */
 export const validateReservation = async (data) => {
-  if (debug) console.log('[checkin] validating reservation', data);
+  const reservationId = data.reservationId || data.reservation_id;
+  const lastName = data.lastName || data.last_name;
+  
+  if (!reservationId) throw new Error('Reservation ID is required');
+  if (!lastName) throw new Error('Last name is required');
   
   try {
-    const reservationId = data.reservationId || data.reservation_id;
-    const lastName = data.lastName || data.last_name;
-    
-    if (!reservationId) {
-      throw new Error('Reservation ID is required');
-    }
-    
-    if (!lastName) {
-      throw new Error('Last name is required');
-    }
-    
     const response = await apiClient.get(`/api/kiosk/v1/reservations/${reservationId}`, {
       params: { lastName }
     });
     
-    if (debug) console.log('[checkin] validation response', response.data);
-    
     const reservationData = response.data.data || response.data;
     
     // Validate that we actually got reservation data
-    if (!reservationData || !reservationData.reservation_id && !reservationData.id) {
+    if (!reservationData || (!reservationData.reservation_id && !reservationData.id)) {
       throw new Error('Invalid reservation data received from server');
     }
     
@@ -130,7 +110,10 @@ export const validateReservation = async (data) => {
       message: response.data.message || 'Reservation validated successfully',
     };
   } catch (err) {
-    if (debug) console.error('[checkin] validation error', err?.response?.data || err?.message);
+    // Use mock data if network error (but not for 404/403 which are validation failures)
+    if (shouldUseMock(err) && err?.response?.status !== 404 && err?.response?.status !== 403) {
+      return mockData.reservation(data);
+    }
     
     if (err?.response?.status === 404) {
       throw new Error('Reservation not found. Please check your reservation ID and last name.');

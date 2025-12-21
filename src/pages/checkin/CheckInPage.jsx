@@ -44,6 +44,7 @@ const CheckInPage = () => {
     
     try {
       // Call backend API to validate reservation
+      
       const result = await validateReservation.mutateAsync(values);
       
       // Only proceed if validation was successful AND we have valid reservation data
@@ -98,7 +99,7 @@ const CheckInPage = () => {
         }}
       >
         {/* Header */}
-        <Group justify="space-between" mb="xl">
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
             <img
               src={UnoLogo}

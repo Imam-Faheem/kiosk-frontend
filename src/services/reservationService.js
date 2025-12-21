@@ -1,18 +1,15 @@
 import { apiClient } from './api/apiClient';
-import { simulateApiDelay, mockReservations, mockSuccessResponses, mockErrors } from './mockData';
+import { simulateApiDelay, mockReservations } from './mockData';
 import { validateReservation as validateReservationApaleo } from './checkinService';
 
 const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
 
 // Validate reservation for check-in using Apaleo API
 export const validateReservation = async (data) => {
-  if (debug) console.log('[reservation] validating reservation', data);
-  
   try {
     // Use Apaleo API to validate reservation
     return await validateReservationApaleo(data);
   } catch (error) {
-    if (debug) console.error('[reservation] validation error', error?.message);
     throw error;
   }
 };

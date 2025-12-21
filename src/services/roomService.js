@@ -11,8 +11,6 @@ export const searchRoomAvailability = async (data) => {
   const departure = data.checkOut || data.departure;
   const adults = data.guests || data.adults || 1;
   
-  if (debug) console.log('[rooms/availability] request data', { propertyId, arrival, departure, adults });
-  
   // Use the working /api/kiosk/offers endpoint with GET method
   const params = {
     propertyId,
@@ -26,7 +24,6 @@ export const searchRoomAvailability = async (data) => {
   
   const response = await apiClient.get('/kiosk/offers', { params });
   let out = response.data;
-  if (debug) console.log('[rooms/availability] raw response', out);
   
   // Fetch room types to get images (offers endpoint doesn't include images)
   let roomTypesMap = {};
@@ -41,10 +38,9 @@ export const searchRoomAvailability = async (data) => {
         }
         return acc;
       }, {});
-      if (debug) console.log('[rooms/availability] room types with images', roomTypesMap);
     }
   } catch (err) {
-    if (debug) console.warn('[rooms/availability] failed to fetch room types/images', err?.message);
+    // Failed to fetch room types/images - continue without images
   }
   
   // The /api/kiosk/offers endpoint returns { property: {...}, offers: [...] } directly
@@ -108,13 +104,11 @@ export const searchRoomAvailability = async (data) => {
       message: `${availableRooms.length} rooms available for selected dates` 
     };
     
-    if (debug) console.log('[rooms/availability] normalized from offers', normalizedOut);
     return normalizedOut;
   }
 
   // Fallback: if backend returns `availableRooms` directly (from /api/rooms/availability endpoint)
   if (out?.data?.availableRooms && Array.isArray(out.data.availableRooms)) {
-    if (debug) console.log('[rooms/availability] final response with availableRooms', out);
     return out;
   }
 
@@ -131,21 +125,16 @@ export const searchRoomAvailability = async (data) => {
     message: 'No rooms available for selected dates',
   };
   
-  if (debug) console.log('[rooms/availability] empty response', emptyResponse);
   return emptyResponse;
 };
 
 // Get room details
 export const getRoomDetails = async (roomTypeId, propertyIdArg) => {
   const propertyId = propertyIdArg || process.env.REACT_APP_PROPERTY_ID || 'KIOSK_01';
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
   try {
-    if (debug) console.log('[rooms/details] request', { roomTypeId, propertyId });
     const response = await apiClient.get(`/rooms/${roomTypeId}/details`, { params: { propertyId } });
-    if (debug) console.log('[rooms/details] response', response.data);
     return response.data;
   } catch (err) {
-    if (debug) console.log('[rooms/details] error', err?.response?.data || err?.message);
     throw err;
   }
 };
@@ -153,14 +142,10 @@ export const getRoomDetails = async (roomTypeId, propertyIdArg) => {
 // Get all room types
 export const getAllRoomTypes = async (propertyIdArg) => {
   const propertyId = propertyIdArg || process.env.REACT_APP_PROPERTY_ID || 'KIOSK_01';
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
   try {
-    if (debug) console.log('[rooms/types] request', { propertyId });
     const response = await apiClient.get('/rooms/types', { params: { propertyId } });
-    if (debug) console.log('[rooms/types] response', response.data);
     return response.data;
   } catch (err) {
-    if (debug) console.log('[rooms/types] error', err?.response?.data || err?.message);
     throw err;
   }
 };
