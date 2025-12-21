@@ -12,7 +12,7 @@ import {
   Alert,
   Divider,
 } from '@mantine/core';
-import { IconSignature, IconCheck, IconX, IconRefresh } from '@tabler/icons-react';
+import { IconSignature, IconCheck, IconRefresh } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SignatureCanvas from 'react-signature-canvas';
 import useLanguage from '../../hooks/useLanguage';
@@ -145,7 +145,7 @@ const SignaturePage = () => {
           borderRadius: '20px',
         }}
       >
-        <Group justify="space-between" mb="xl">
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
             <img
               src={UnoLogo}

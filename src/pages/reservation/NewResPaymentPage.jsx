@@ -24,10 +24,9 @@ const NewResPaymentPage = () => {
   const { t } = useLanguage();
   const [paymentStatus, setPaymentStatus] = useState('idle');
   const [error, setError] = useState(null);
-  const [bookingData, setBookingData] = useState(null);
   const hasProcessed = useRef(false);
 
-  const { room, searchCriteria, guestDetails, savedGuest, signature } = location.state || {};
+  const { room, searchCriteria, guestDetails } = location.state || {};
 
   const processPayment = async () => {
       try {
@@ -78,7 +77,6 @@ const NewResPaymentPage = () => {
         try {
           await updateApaleoReservationWithGuest(reservationId, guestDetails, propertyId);
         } catch (updateErr) {
-          console.warn('Failed to update reservation with guest info:', updateErr);
           // Continue even if update fails
         }
 
@@ -99,8 +97,6 @@ const NewResPaymentPage = () => {
           bookingData: bookingResult,
         };
 
-        setBookingData(reservation);
-
         // Navigate to completion page after a short delay to show success
         setTimeout(() => {
           navigate('/reservation/complete', {
@@ -113,8 +109,6 @@ const NewResPaymentPage = () => {
         }, 1500);
         
       } catch (err) {
-        console.error('Payment/Booking error:', err);
-        console.error('Error response:', err?.response?.data);
         setPaymentStatus('failed');
         
         // Extract detailed error message from Apaleo
@@ -153,6 +147,7 @@ const NewResPaymentPage = () => {
     if (room && guestDetails && searchCriteria && !hasProcessed.current) {
       processPayment();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room, guestDetails, searchCriteria, navigate]);
 
   const handleBack = () => {
@@ -187,7 +182,7 @@ const NewResPaymentPage = () => {
           borderRadius: '20px',
         }}
       >
-        <Group justify="space-between" mb="xl">
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
             <Box
               style={{

@@ -9,17 +9,13 @@ import {
   Stack,
   Box,
   Card,
-  Alert,
   Loader,
-  Badge,
   Divider,
 } from '@mantine/core';
 import { 
   IconHome, 
-  IconMail, 
   IconCalendar, 
   IconCreditCard,
-  IconCircleCheck,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
@@ -28,6 +24,7 @@ import { apiClient } from '../../services/api/apiClient';
 import { getCheckInStatus } from '../../services/checkinService';
 import { formatCheckOut, calculateDisplayData } from '../../lib/checkinUtils';
 import UnoLogo from '../../assets/uno.jpg';
+import '../../styles/animations.css';
 
 const CheckInCompletePage = () => {
   const navigate = useNavigate();
@@ -70,7 +67,7 @@ const CheckInCompletePage = () => {
 
     // Fetch check-in status if we have a reservation ID but no check-in data
     const fetchCheckInDetails = async () => {
-      const reservationId = reservation.reservationId || reservation.id;
+      const reservationId = reservation.reservationId ?? reservation.id;
       if (reservationId && !checkInResult?.data && !checkInData) {
         try {
           setLoading(true);
@@ -102,7 +99,7 @@ const CheckInCompletePage = () => {
   useEffect(() => {
     if (!reservation) return;
     
-    const reservationId = reservation.reservationId || reservation.id;
+    const reservationId = reservation.reservationId ?? reservation.id;
     if (!reservationId) return;
 
     // Log check-in completion (only once)
@@ -143,7 +140,7 @@ const CheckInCompletePage = () => {
       clearInterval(countdownInterval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reservation?.reservationId || reservation?.id, navigate]); // Only depend on reservationId
+  }, [reservation?.reservationId || reservation?.id, navigate, displayData, paymentStatus, cardData, logCompletionMutation]);
 
   const handleReturnHome = () => {
     navigate('/home');
@@ -168,86 +165,24 @@ const CheckInCompletePage = () => {
 
   return (
     <>
-      <style>{`
-        @keyframes checkmarkScale {
-          0% { transform: scale(0); opacity: 0; }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes checkmarkDraw {
-          0% { stroke-dashoffset: 100; }
-          100% { stroke-dashoffset: 0; }
-        }
-        @keyframes ripple {
-          0% { transform: scale(0.8); opacity: 1; }
-          100% { transform: scale(2.5); opacity: 0; }
-        }
-        @keyframes glow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-          50% { box-shadow: 0 0 0 20px rgba(34, 197, 94, 0); }
-        }
-        @keyframes sparkleUp {
-          0% { transform: translateY(0) scale(0); opacity: 1; }
-          100% { transform: translateY(-60px) scale(1); opacity: 0; }
-        }
-        .animate-checkmark {
-          animation: checkmarkScale 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-        .checkmark-circle {
-          stroke-dasharray: 283;
-          stroke-dashoffset: 283;
-          animation: checkmarkDraw 0.8s ease-out 0.6s forwards;
-        }
-        .checkmark-path {
-          stroke-dasharray: 60;
-          stroke-dashoffset: 60;
-          animation: checkmarkDraw 0.5s ease-out 1.2s forwards;
-        }
-        .ripple-effect {
-          position: absolute;
-          border-radius: 50%;
-          border: 2px solid rgba(34, 197, 94, 0.6);
-          animation: ripple 1.5s ease-out infinite;
-        }
-        .glow-effect {
-          animation: glow 2s ease-in-out infinite;
-        }
-        .sparkle {
-          position: absolute;
-          width: 6px;
-          height: 6px;
-          background: radial-gradient(circle, rgba(200, 101, 61, 0.8) 0%, transparent 70%);
-          border-radius: 50%;
-          animation: sparkleUp 2s ease-out forwards;
-        }
-      `}</style>
       <Container
         size="lg"
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '24px',
-          backgroundColor: '#FFFFFF',
-        }}
+        h="100vh"
+        style={{ display: 'flex', flexDirection: 'column' }}
+        p="md"
+        bg="white"
       >
         <Paper
           withBorder
           shadow="md"
           p={40}
           radius="xl"
-          style={{
-            width: '100%',
-            maxWidth: '720px',
-            backgroundColor: '#ffffff',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            borderRadius: '20px',
-          }}
+          w="100%"
+          maw={720}
+          bg="white"
         >
           {/* Header */}
-          <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <Group justify="space-between" mb="xl" pb="md" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
             <Group>
               <img
                 src={UnoLogo}

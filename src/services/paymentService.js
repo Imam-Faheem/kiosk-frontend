@@ -1,8 +1,6 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock } from './mockData';
 
-const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-
 // Helper to normalize payment data
 const normalizePaymentData = (data) => {
   const requestBody = {

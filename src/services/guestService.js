@@ -1,4 +1,5 @@
 import { apiClient } from './api/apiClient';
+import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
 
 /**
  * Save guest details to backend
@@ -21,6 +22,10 @@ export const saveGuestDetails = async (guestData) => {
     const response = await apiClient.post('/guests/details', guestData);
     return response.data;
   } catch (err) {
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(500);
+      return mockData.saveGuestDetails(guestData);
+    }
     throw err;
   }
 };
@@ -37,6 +42,10 @@ export const getGuestDetails = async (params) => {
     const response = await apiClient.get('/guests/details', { params });
     return response.data;
   } catch (err) {
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(400);
+      return mockData.getGuestDetails(params);
+    }
     throw err;
   }
 };
@@ -54,6 +63,10 @@ export const updateApaleoReservationWithGuest = async (reservationId, guestData,
     const response = await apiClient.patch(`/guests/reservation/${reservationId}`, guestData, { params });
     return response.data;
   } catch (err) {
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(500);
+      return mockData.updateApaleoReservationWithGuest(reservationId, guestData);
+    }
     throw err;
   }
 };

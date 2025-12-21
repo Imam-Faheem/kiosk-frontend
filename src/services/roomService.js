@@ -1,10 +1,10 @@
 import { apiClient } from './api/apiClient';
-
+import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
+ 
 // Search room availability
 export const searchRoomAvailability = async (data) => {
   // Ensure propertyId is sent to backend if configured
   const propertyId = data?.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
   
   // Map frontend field names to backend API field names
   const arrival = data.checkIn || data.arrival;
@@ -22,110 +22,88 @@ export const searchRoomAvailability = async (data) => {
     unitGroupTypes: 'BedRoom',
   };
   
-  const response = await apiClient.get('/kiosk/offers', { params });
-  let out = response.data;
-  
-  // Fetch room types to get images (offers endpoint doesn't include images)
-  let roomTypesMap = {};
   try {
-    const roomTypesResponse = await apiClient.get('/rooms/types', { params: { propertyId } });
-    const roomTypesData = roomTypesResponse.data;
-    const roomTypes = roomTypesData?.data || roomTypesData || [];
-    if (Array.isArray(roomTypes)) {
-      roomTypesMap = roomTypes.reduce((acc, rt) => {
-        if (rt.roomTypeId && rt.images) {
-          acc[rt.roomTypeId] = rt.images;
-        }
-        return acc;
-      }, {});
-    }
-  } catch (err) {
-    // Failed to fetch room types/images - continue without images
-  }
+    const response = await apiClient.get('/kiosk/offers', { params });
+    let out = response.data;
   
-  // The /api/kiosk/offers endpoint returns { property: {...}, offers: [...] } directly
-  const offers = out?.offers || [];
-  if (Array.isArray(offers) && offers.length > 0) {
-    const checkIn = arrival;
-    const checkOut = departure;
-    const nights = Math.max(1, Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)));
-    const availableRooms = offers.map((offer) => {
-      const unitGroup = offer?.unitGroup || {};
-      const ratePlan = offer?.ratePlan || {};
-      const totalGrossAmount = offer?.totalGrossAmount || {};
-      const currency = totalGrossAmount?.currency || ratePlan?.currency || 'EUR';
-      const totalPrice = totalGrossAmount?.amount || 0;
-      const pricePerNight = nights > 0 ? totalPrice / nights : totalPrice;
-      const roomTypeId = unitGroup?.id || ratePlan?.unitGroupId || offer?.id;
-      
-      // Get images from room types map, fallback to unitGroup images if available
-      let images = [];
-      if (roomTypeId && roomTypesMap[roomTypeId]) {
-        images = roomTypesMap[roomTypeId];
-      } else if (unitGroup?.images && Array.isArray(unitGroup.images)) {
-        images = unitGroup.images.map(img => img?.url || img).filter(Boolean);
+    // Fetch room types for images
+    const roomTypesMap = {};
+    try {
+      const { data } = await apiClient.get('/rooms/types', { params: { propertyId } });
+      const roomTypes = data?.data || data || [];
+      roomTypes.forEach(rt => {
+        if (rt.roomTypeId && rt.images) roomTypesMap[rt.roomTypeId] = rt.images;
+      });
+    } catch {
+      // Continue without images if fetch fails
+    }
+  
+    // Fallback: if backend returns availableRooms directly
+    if (out?.data?.availableRooms) return out;
+
+    // Simple helper to get value with fallback
+    const get = (obj, ...paths) => {
+      for (const path of paths) {
+        const value = path.split('.').reduce((o, p) => o?.[p], obj);
+        if (value !== undefined && value !== null) return value;
       }
-      
+      return null;
+    };
+
+    const offers = out?.offers || [];
+    if (!offers.length) {
       return {
-        roomTypeId, // unitGroup.id
-        unitGroupId: unitGroup?.id || roomTypeId, // For booking
-        ratePlanId: ratePlan?.id || null, // For booking
-        name: unitGroup?.name || ratePlan?.name || 'Room',
-        description: unitGroup?.description || ratePlan?.description || '',
-        capacity: unitGroup?.maxPersons || Number(adults) || 1,
-        maxGuests: unitGroup?.maxPersons || Number(adults) || 1,
-        amenities: (unitGroup?.amenities || []).map(a => (typeof a === 'string' ? a : a?.name)).filter(Boolean),
-        images: images.length > 0 ? images : [], // Empty array if no images found
-        pricePerNight,
+        success: true,
+        data: { checkIn: arrival, checkOut: departure, guests: Number(adults), availableRooms: [], totalAvailable: 0 },
+        message: 'No rooms available for selected dates',
+      };
+    }
+
+    const nights = Math.max(1, Math.ceil((new Date(departure) - new Date(arrival)) / 86400000));
+    const availableRooms = offers.map(offer => {
+      const ug = offer?.unitGroup || {};
+      const rp = offer?.ratePlan || {};
+      const price = offer?.totalGrossAmount || {};
+      const roomTypeId = get(ug, 'id') || get(rp, 'unitGroupId') || offer?.id;
+      const totalPrice = price?.amount || 0;
+      const images = roomTypesMap[roomTypeId] || ug?.images?.map(img => img?.url || img).filter(Boolean) || [];
+
+      return {
+        roomTypeId,
+        unitGroupId: ug?.id || roomTypeId,
+        ratePlanId: rp?.id || null,
+        name: ug?.name || rp?.name || 'Room',
+        description: ug?.description || rp?.description || '',
+        capacity: ug?.maxPersons || adults || 1,
+        maxGuests: ug?.maxPersons || adults || 1,
+        amenities: (ug?.amenities || []).map(a => typeof a === 'string' ? a : a?.name).filter(Boolean),
+        images,
+        pricePerNight: nights > 0 ? totalPrice / nights : totalPrice,
         totalPrice,
-        currency,
+        currency: price?.currency || rp?.currency || 'EUR',
         available: true,
-        // Store original offer data for booking
-        _offerData: {
-          unitGroupId: unitGroup?.id,
-          ratePlanId: ratePlan?.id,
-          arrival: offer?.arrival,
-          departure: offer?.departure,
-        },
+        _offerData: { unitGroupId: ug?.id, ratePlanId: rp?.id, arrival: offer?.arrival, departure: offer?.departure },
       };
     });
-    
-    const normalized = {
-      checkIn,
-      checkOut,
-      guests: Number(adults),
-      availableRooms,
-      totalAvailable: availableRooms.length,
-    };
-    
-    const normalizedOut = { 
-      success: true, 
-      data: normalized, 
-      message: `${availableRooms.length} rooms available for selected dates` 
-    };
-    
-    return normalizedOut;
-  }
 
-  // Fallback: if backend returns `availableRooms` directly (from /api/rooms/availability endpoint)
-  if (out?.data?.availableRooms && Array.isArray(out.data.availableRooms)) {
-    return out;
+    return {
+      success: true,
+      data: { checkIn: arrival, checkOut: departure, guests: Number(adults), availableRooms, totalAvailable: availableRooms.length },
+      message: `${availableRooms.length} rooms available for selected dates`,
+    };
+  } catch (err) {
+    // Use mock data if network error or API fails
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(600);
+      return mockData.roomAvailability(data);
+    }
+    
+    const errorMessage = err?.response?.data?.message || 
+                         err?.response?.data?.error || 
+                         err?.message || 
+                         'Failed to search room availability';
+    throw new Error(errorMessage);
   }
-
-  // If no offers found, return empty result
-  const emptyResponse = {
-    success: true,
-    data: {
-      checkIn: arrival,
-      checkOut: departure,
-      guests: Number(adults),
-      availableRooms: [],
-      totalAvailable: 0,
-    },
-    message: 'No rooms available for selected dates',
-  };
-  
-  return emptyResponse;
 };
 
 // Get room details
@@ -135,6 +113,11 @@ export const getRoomDetails = async (roomTypeId, propertyIdArg) => {
     const response = await apiClient.get(`/rooms/${roomTypeId}/details`, { params: { propertyId } });
     return response.data;
   } catch (err) {
+    // Use mock data if network error or API fails
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(400);
+      return mockData.roomDetails(roomTypeId);
+    }
     throw err;
   }
 };
@@ -146,6 +129,11 @@ export const getAllRoomTypes = async (propertyIdArg) => {
     const response = await apiClient.get('/rooms/types', { params: { propertyId } });
     return response.data;
   } catch (err) {
+    // Use mock data if network error or API fails
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(400);
+      return mockData.roomTypes();
+    }
     throw err;
   }
 };

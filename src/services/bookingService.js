@@ -1,4 +1,5 @@
 import { apiClient } from './api/apiClient';
+import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
 
 /**
  * Create a booking in Apaleo
@@ -18,6 +19,10 @@ export const createBooking = async (bookingData, hotelId) => {
     const response = await apiClient.post(`/booking/${hotelId}`, bookingData);
     return response.data;
   } catch (err) {
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(800);
+      return mockData.createBooking(bookingData);
+    }
     throw err;
   }
 };
@@ -32,6 +37,10 @@ export const getReservation = async (reservationId) => {
     const response = await apiClient.get(`/reservation/${reservationId}`);
     return response.data;
   } catch (err) {
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(400);
+      return mockData.getReservation(reservationId);
+    }
     throw err;
   }
 };

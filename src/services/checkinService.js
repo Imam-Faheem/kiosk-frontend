@@ -1,8 +1,5 @@
 import { apiClient } from './api/apiClient';
-import { API_CONFIG } from '../config/constants';
 import { mockData, shouldUseMock } from './mockData';
-
-const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
 
 // Helper to normalize data fields
 const normalizeData = (data) => ({

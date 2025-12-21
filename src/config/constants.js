@@ -87,7 +87,7 @@ export const VALIDATION_RULES = {
     PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   },
   PHONE: {
-    PATTERN: /^\+?[\d\s\-\(\)]+$/,
+    PATTERN: /^\+?[\d\s\-()]+$/,
   },
 };
 

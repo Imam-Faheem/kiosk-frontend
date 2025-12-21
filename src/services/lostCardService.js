@@ -1,6 +1,5 @@
 import { apiClient } from './api/apiClient';
-
-const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
+import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
 
 /**
  * Validate guest for lost card replacement
@@ -57,6 +56,12 @@ export const validateLostCardGuest = async (data) => {
       message: 'Guest validated successfully',
     };
   } catch (err) {
+    // Use mock data if network error (but not for 404 which is validation failure)
+    if (shouldUseMock(err) && err?.response?.status !== 404) {
+      await simulateApiDelay(600);
+      return mockData.validateLostCardGuest(data);
+    }
+    
     if (err?.response?.status === 404) {
       throw new Error('Reservation not found. Please check your reservation number.');
     }
@@ -105,6 +110,12 @@ export const regenerateLostCard = async (data) => {
       message: response.data.message || 'Card regenerated successfully',
     };
   } catch (err) {
+    // Use mock data if network error
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(800);
+      return mockData.regenerateLostCard(data);
+    }
+    
     const errorMessage = err?.response?.data?.message || 
                          err?.response?.data?.error || 
                          err?.message || 

@@ -4,10 +4,8 @@ import {
   Paper,
   Group,
   Button,
-  Text,
   Title,
   Stack,
-  Box,
   TextInput,
   Alert,
 } from '@mantine/core';
@@ -15,7 +13,7 @@ import { IconAlertCircle, IconArrowRight } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
-import { checkinValidationSchema, checkinInitialValues } from '../../schemas/checkin.schema';
+import { checkinInitialValues } from '../../schemas/checkin.schema';
 import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
@@ -159,7 +157,6 @@ const CheckInPage = () => {
               required
               size="lg"
               {...form.getInputProps('reservationId')}
-              description="This can be found in your confirmation email."
               styles={{
                 input: {
                   borderRadius: '12px',

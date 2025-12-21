@@ -4,10 +4,8 @@ import {
   Paper,
   Group,
   Button,
-  Text,
   Title,
   Stack,
-  Box,
   TextInput,
   Alert,
 } from '@mantine/core';
@@ -16,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import { useForm } from '@mantine/form';
-import { apiClient } from '../../services/api/apiClient';
+import { validateLostCardGuest } from '../../services/lostCardService';
 import UnoLogo from '../../assets/uno.jpg';
 
 const LostCardPage = () => {
@@ -43,29 +41,26 @@ const LostCardPage = () => {
     setIsLoading(true);
     
     try {
-      // Call backend API to validate guest with Apaleo
-      const response = await apiClient.post('/lost-card/validate', {
+      // Validate guest using service (with mock data fallback)
+      const result = await validateLostCardGuest({
         reservationNumber: values.reservationNumber,
-        roomType: values.roomType,
+        roomNumber: values.roomType,
         lastName: values.lastName,
       });
       
-      if (response.data.success) {
-        const guestData = response.data.data;
-        
+      if (result.success) {
         // Navigate to regenerate card page with validated data
         navigate('/lost-card/regenerate', {
           state: {
-            guestData: guestData,
+            guestData: result.data,
             validationData: values,
           },
         });
       } else {
-        throw new Error(response.data.message || 'Validation failed');
+        throw new Error(result.message || 'Validation failed');
       }
     } catch (err) {
-      console.error('Guest validation error:', err);
-      const errorMessage = err?.response?.data?.message || err?.message || t('error.guestValidationFailed');
+      const errorMessage = err?.message || t('error.guestValidationFailed');
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -103,7 +98,7 @@ const LostCardPage = () => {
         }}
       >
         {/* Header */}
-        <Group justify="space-between" mb="xl">
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
             <img
               src={UnoLogo}
@@ -148,12 +143,11 @@ const LostCardPage = () => {
             )}
 
             <TextInput
-              label={t('lostCard.roomType') || 'Room Type'}
+              label="Room type"
               placeholder="Enter room type (e.g., Double, Single, Suite)"
               required
               size="lg"
               {...form.getInputProps('roomType')}
-              description="Room type from your reservation (e.g., Double, Single, Suite)"
               styles={{
                 label: {
                   display: 'inline-flex',

@@ -3,14 +3,12 @@ import {
   Container,
   Paper,
   Group,
-  Button,
   Text,
   Title,
   Stack,
   Box,
   Card,
   Badge,
-  Loader,
   Alert,
   Divider,
 } from '@mantine/core';
@@ -28,6 +26,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { usePaymentMutation } from '../../hooks/usePaymentMutation';
+import '../../styles/animations.css';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
 
@@ -35,7 +34,7 @@ const PaymentCheckPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const checkPaymentStatus = usePaymentMutation('checkStatus', {
+  usePaymentMutation('checkStatus', {
     onSuccess: (result) => {
       if (result.success) {
         setPaymentStatus(result.data);
@@ -131,60 +130,15 @@ const PaymentCheckPage = () => {
 
   return (
     <>
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.7; transform: scale(1.05); }
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shimmer {
-          0% { background-position: -1000px 0; }
-          100% { background-position: 1000px 0; }
-        }
-        .loading-pulse {
-          animation: pulse 2s ease-in-out infinite;
-        }
-        .status-card {
-          animation: slideIn 0.5s ease-out;
-        }
-        .secure-container {
-          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-          border: 1px solid rgba(200, 101, 61, 0.15);
-          position: relative;
-          overflow: hidden;
-        }
-        .secure-container::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(200, 101, 61, 0.08),
-            transparent
-          );
-          animation: shimmer 4s infinite;
-        }
-      `}</style>
-      <Container
-        size="lg"
+    <Container
+      size="lg"
         h="100vh"
         style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}
         py={32}
         px={20}
         bg="gray.0"
-      >
-        <Paper
+    >
+      <Paper
           shadow="xl"
           p={48}
           radius={24}
@@ -192,36 +146,36 @@ const PaymentCheckPage = () => {
           maw={720}
           bg="white"
           style={{ border: '1px solid rgba(0, 0, 0, 0.04)' }}
-        >
-          {/* Header */}
+      >
+        {/* Header */}
           <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-            <Group>
-              <img
-                src={UnoLogo}
-                alt="UNO Hotel Logo"
+          <Group>
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
                 width={50}
                 height={50}
                 style={{ borderRadius: '8px', objectFit: 'cover' }}
-              />
-              <Title 
-                order={2} 
+            />
+            <Title 
+              order={2} 
                 fw={800}
                 c="rgb(34, 34, 34)"
-                style={{ 
+              style={{ 
                   fontSize: '30px',
-                  letterSpacing: '1px',
+                letterSpacing: '1px',
                   marginLeft: '-9px',
                   fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif'
-                }}
-              >
-                UNO HOTELS
-              </Title>
-            </Group>
+              }}
+            >
+              UNO HOTELS
+            </Title>
           </Group>
+        </Group>
 
-          {/* Content */}
+        {/* Content */}
           <Stack gap={32}>
-            {loading ? (
+          {loading ? (
               <Stack align="center" gap={24}>
                 <Box className="loading-pulse">
                   <IconLoader2 
@@ -238,29 +192,29 @@ const PaymentCheckPage = () => {
                   </Text>
                   <Text size="md" c="dimmed" ta="center" maw={400}>
                     Please wait while we check your payment information...
-                  </Text>
+              </Text>
                 </Stack>
-              </Stack>
-            ) : error ? (
-              <Alert
+            </Stack>
+          ) : error ? (
+            <Alert
                 icon={<IconX size={20} />}
                 title="Verification Error"
-                color="red"
-                variant="light"
+              color="red"
+              variant="light"
                 radius="md"
                 styles={{ root: { border: '1px solid rgba(250, 82, 82, 0.2)' } }}
-              >
+            >
                 <Text size="md" fw={500} c="red.7">
-                  {error}
+              {error}
                 </Text>
                 <Text size="sm" c="dimmed" mt={8}>
                   Please try again or contact front desk for assistance.
                 </Text>
-              </Alert>
-            ) : (
-              <>
+            </Alert>
+          ) : (
+            <>
                 {/* Payment Status Card - Primary Focus */}
-                {paymentStatus && (
+              {paymentStatus && (
                   <Card 
                     withBorder 
                     p={32} 
@@ -279,7 +233,7 @@ const PaymentCheckPage = () => {
                     }}
                   >
                     <Stack gap={24}>
-                      <Group justify="space-between" align="center">
+                  <Group justify="space-between" align="center">
                         <Group gap={12}>
                           <Box
                             w={56}
@@ -310,29 +264,29 @@ const PaymentCheckPage = () => {
                               {paymentStatus.status === 'completed' || paymentStatus.status === 'paid' 
                                 ? 'Payment Confirmed' 
                                 : 'Payment Required'}
-                            </Text>
+                      </Text>
                           </Box>
-                        </Group>
-                        <Badge
-                          size="lg"
+                    </Group>
+                    <Badge
+                      size="lg"
                           variant="light"
-                          color={paymentStatus.status === 'completed' || paymentStatus.status === 'paid' ? 'green' : 'orange'}
-                          leftSection={
-                            paymentStatus.status === 'completed' || paymentStatus.status === 'paid' ? 
+                      color={paymentStatus.status === 'completed' || paymentStatus.status === 'paid' ? 'green' : 'orange'}
+                      leftSection={
+                        paymentStatus.status === 'completed' || paymentStatus.status === 'paid' ? 
                             <IconCheck size={16} stroke={2.5} /> : 
                             <IconLoader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                          }
+                      }
                           styles={{ root: { padding: '8px 16px', fontSize: '14px', fontWeight: 600 } }}
-                        >
+                    >
                           {paymentStatus.status === 'completed' || paymentStatus.status === 'paid' 
                             ? 'Paid' 
                             : 'Pending'}
-                        </Badge>
-                      </Group>
+                    </Badge>
+                  </Group>
                       
                       <Divider color="rgba(0, 0, 0, 0.06)" />
-                      
-                      {paymentStatus.amount && (
+                  
+                  {paymentStatus.amount && (
                         <Box>
                           <Text size="xs" fw={600} c="dimmed" mb={8} tt="uppercase" style={{ letterSpacing: '0.5px' }}>
                             Amount
@@ -349,8 +303,8 @@ const PaymentCheckPage = () => {
                           {paymentStatus.balance > 0 && (
                             <Text size="sm" c="dimmed" mt={8}>
                               Balance due: {paymentStatus.currency} {Math.abs(paymentStatus.balance).toFixed(2)}
-                            </Text>
-                          )}
+                    </Text>
+                  )}
                         </Box>
                       )}
                     </Stack>
@@ -485,16 +439,16 @@ const PaymentCheckPage = () => {
                       : 'Payment is required to complete your check-in. Redirecting to payment terminal...'}
                   </Text>
                 </Box>
-              </>
-            )}
-          </Stack>
+            </>
+          )}
+        </Stack>
 
-          {/* Back Button */}
+        {/* Back Button */}
           <Group justify="flex-start" mt={32}>
-            <BackButton onClick={handleBack} text={t('common.back')} />
-          </Group>
-        </Paper>
-      </Container>
+          <BackButton onClick={handleBack} text={t('common.back')} />
+        </Group>
+      </Paper>
+    </Container>
     </>
   );
 };

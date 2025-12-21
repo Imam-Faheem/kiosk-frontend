@@ -186,6 +186,326 @@ export const mockData = {
     },
     message: 'Refund processed successfully (mock)',
   }),
+
+  // Room availability mock data
+  roomAvailability: (data) => {
+    const arrival = data?.checkIn || data?.arrival || new Date().toISOString().split('T')[0];
+    const departure = data?.checkOut || data?.departure || new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0];
+    const adults = Number(data?.guests || data?.adults || 1);
+    const nights = Math.max(1, Math.ceil((new Date(departure) - new Date(arrival)) / (1000 * 60 * 60 * 24)));
+
+    const mockRooms = [
+      {
+        roomTypeId: 'RT-001',
+        unitGroupId: 'RT-001',
+        ratePlanId: 'RP-001',
+        name: 'Deluxe Room',
+        description: 'Spacious room with city view, king-size bed, and modern amenities. Perfect for couples or solo travelers.',
+        capacity: 2,
+        maxGuests: 2,
+        amenities: ['Wi-Fi', 'Air Conditioning', 'TV', 'Mini Bar', 'Safe', 'Room Service'],
+        images: [
+          'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800',
+          'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800',
+        ],
+        pricePerNight: 120.00,
+        totalPrice: 120.00 * nights,
+        currency: 'EUR',
+        available: true,
+        _offerData: {
+          unitGroupId: 'RT-001',
+          ratePlanId: 'RP-001',
+          arrival,
+          departure,
+        },
+      },
+      {
+        roomTypeId: 'RT-002',
+        unitGroupId: 'RT-002',
+        ratePlanId: 'RP-002',
+        name: 'Executive Suite',
+        description: 'Luxurious suite with separate living area, premium furnishings, and stunning views. Ideal for business travelers.',
+        capacity: 3,
+        maxGuests: 3,
+        amenities: ['Wi-Fi', 'Air Conditioning', 'TV', 'Mini Bar', 'Safe', 'Room Service', 'Work Desk', 'Sofa'],
+        images: [
+          'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800',
+          'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800',
+        ],
+        pricePerNight: 180.00,
+        totalPrice: 180.00 * nights,
+        currency: 'EUR',
+        available: true,
+        _offerData: {
+          unitGroupId: 'RT-002',
+          ratePlanId: 'RP-002',
+          arrival,
+          departure,
+        },
+      },
+      {
+        roomTypeId: 'RT-003',
+        unitGroupId: 'RT-003',
+        ratePlanId: 'RP-003',
+        name: 'Family Room',
+        description: 'Comfortable family room with two queen beds, extra space, and family-friendly amenities. Perfect for families with children.',
+        capacity: 4,
+        maxGuests: 4,
+        amenities: ['Wi-Fi', 'Air Conditioning', 'TV', 'Mini Bar', 'Safe', 'Room Service', 'Extra Beds', 'Crib Available'],
+        images: [
+          'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800',
+          'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800',
+        ],
+        pricePerNight: 150.00,
+        totalPrice: 150.00 * nights,
+        currency: 'EUR',
+        available: true,
+        _offerData: {
+          unitGroupId: 'RT-003',
+          ratePlanId: 'RP-003',
+          arrival,
+          departure,
+        },
+      },
+      {
+        roomTypeId: 'RT-004',
+        unitGroupId: 'RT-004',
+        ratePlanId: 'RP-004',
+        name: 'Presidential Suite',
+        description: 'Ultra-luxurious suite with panoramic views, premium amenities, and exclusive access. The ultimate hotel experience.',
+        capacity: 2,
+        maxGuests: 2,
+        amenities: ['Wi-Fi', 'Air Conditioning', 'TV', 'Mini Bar', 'Safe', 'Room Service', 'Jacuzzi', 'Balcony', 'Butler Service'],
+        images: [
+          'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800',
+          'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=800',
+        ],
+        pricePerNight: 350.00,
+        totalPrice: 350.00 * nights,
+        currency: 'EUR',
+        available: true,
+        _offerData: {
+          unitGroupId: 'RT-004',
+          ratePlanId: 'RP-004',
+          arrival,
+          departure,
+        },
+      },
+    ];
+
+    // Filter rooms based on guest capacity
+    const filteredRooms = mockRooms.filter(room => room.maxGuests >= adults);
+
+    return {
+      success: true,
+      data: {
+        checkIn: arrival,
+        checkOut: departure,
+        guests: adults,
+        availableRooms: filteredRooms,
+        totalAvailable: filteredRooms.length,
+      },
+      message: `${filteredRooms.length} rooms available for selected dates`,
+    };
+  },
+
+  // Room details mock data
+  roomDetails: (roomTypeId) => ({
+    success: true,
+    data: {
+      roomTypeId: roomTypeId || 'RT-001',
+      name: 'Deluxe Room',
+      description: 'Spacious room with city view, king-size bed, and modern amenities.',
+      capacity: 2,
+      maxGuests: 2,
+      amenities: ['Wi-Fi', 'Air Conditioning', 'TV', 'Mini Bar', 'Safe', 'Room Service'],
+      images: [
+        'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800',
+        'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800',
+      ],
+      basePrice: 120.00,
+      currency: 'EUR',
+    },
+    message: 'Room details retrieved successfully',
+  }),
+
+  // Room types mock data
+  roomTypes: () => ({
+    success: true,
+    data: [
+      {
+        roomTypeId: 'RT-001',
+        name: 'Deluxe Room',
+        description: 'Spacious room with city view',
+        maxPersons: 2,
+        images: [
+          'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800',
+        ],
+      },
+      {
+        roomTypeId: 'RT-002',
+        name: 'Executive Suite',
+        description: 'Luxurious suite with separate living area',
+        maxPersons: 3,
+        images: [
+          'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800',
+        ],
+      },
+      {
+        roomTypeId: 'RT-003',
+        name: 'Family Room',
+        description: 'Comfortable family room with two queen beds',
+        maxPersons: 4,
+        images: [
+          'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800',
+        ],
+      },
+      {
+        roomTypeId: 'RT-004',
+        name: 'Presidential Suite',
+        description: 'Ultra-luxurious suite with panoramic views',
+        maxPersons: 2,
+        images: [
+          'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800',
+        ],
+      },
+    ],
+    message: 'Room types retrieved successfully',
+  }),
+
+  // Guest details mock data
+  saveGuestDetails: (data) => ({
+    success: true,
+    data: {
+      guestId: `GUEST-${Date.now()}`,
+      firstName: data?.firstName || 'John',
+      lastName: data?.lastName || 'Doe',
+      email: data?.email || 'guest@example.com',
+      phone: data?.phone || '+1234567890',
+      country: data?.country || 'US',
+      addressStreet: data?.addressStreet || '123 Main St',
+      addressCity: data?.addressCity || 'New York',
+      addressState: data?.addressState || 'NY',
+      addressPostal: data?.addressPostal || '10001',
+      propertyId: data?.propertyId || 'BER',
+      createdAt: new Date().toISOString(),
+    },
+    message: 'Guest details saved successfully (mock)',
+  }),
+
+  getGuestDetails: (params) => ({
+    success: true,
+    data: {
+      guestId: params?.guestId || `GUEST-${Date.now()}`,
+      firstName: 'John',
+      lastName: 'Doe',
+      email: params?.email || 'guest@example.com',
+      phone: '+1234567890',
+      country: 'US',
+      addressStreet: '123 Main St',
+      addressCity: 'New York',
+      addressState: 'NY',
+      addressPostal: '10001',
+    },
+    message: 'Guest details retrieved successfully (mock)',
+  }),
+
+  updateApaleoReservationWithGuest: (reservationId, guestData) => ({
+    success: true,
+    data: {
+      reservationId: reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      guestId: `GUEST-${Date.now()}`,
+      ...guestData,
+      updatedAt: new Date().toISOString(),
+    },
+    message: 'Reservation updated with guest details successfully (mock)',
+  }),
+
+  // Booking mock data
+  createBooking: (data) => {
+    const reservationId = `RES-${Date.now()}`;
+    return {
+      id: reservationId,
+      reservationId: reservationId,
+      reservation: {
+        id: reservationId,
+        status: 'confirmed',
+        arrival: data?.arrival || new Date().toISOString().split('T')[0],
+        departure: data?.departure || new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+        propertyId: data?.propertyId || 'BER',
+        unitGroupId: data?.unitGroupId || 'RT-001',
+        ratePlanId: data?.ratePlanId || 'RP-001',
+        adults: data?.adults || 1,
+        primaryGuest: data?.primaryGuest || {
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'guest@example.com',
+        },
+        totalGrossAmount: {
+          amount: 150.00,
+          currency: 'EUR',
+        },
+        createdAt: new Date().toISOString(),
+      },
+      success: true,
+      message: 'Booking created successfully (mock)',
+    };
+  },
+
+  getReservation: (reservationId) => ({
+    success: true,
+    data: {
+      id: reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      reservationId: reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      status: 'confirmed',
+      arrival: new Date().toISOString().split('T')[0],
+      departure: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+      propertyId: 'BER',
+      totalGrossAmount: {
+        amount: 150.00,
+        currency: 'EUR',
+      },
+      primaryGuest: {
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'guest@example.com',
+      },
+    },
+    message: 'Reservation retrieved successfully (mock)',
+  }),
+
+  // Lost card mock data
+  validateLostCardGuest: (data) => ({
+    success: true,
+    data: {
+      reservationId: data?.reservationNumber || API_CONFIG.DEFAULT_RESERVATION_ID,
+      reservationNumber: data?.reservationNumber || API_CONFIG.DEFAULT_RESERVATION_ID,
+      roomNumber: data?.roomNumber || data?.roomType || '101',
+      lastName: data?.lastName || 'Doe',
+      firstName: 'John',
+      email: 'guest@example.com',
+      phone: '+1234567890',
+      guestName: `John ${data?.lastName || 'Doe'}`,
+      checkIn: new Date().toISOString().split('T')[0],
+      checkOut: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+      propertyId: 'BER',
+    },
+    message: 'Guest validated successfully (mock)',
+  }),
+
+  regenerateLostCard: (data) => ({
+    success: true,
+    data: {
+      cardId: `CARD-${Date.now()}`,
+      accessCode: `AC-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+      status: 'active',
+      roomNumber: data?.roomNumber || '101',
+      reservationId: data?.reservationId || API_CONFIG.DEFAULT_RESERVATION_ID,
+      oldCardDeactivated: true,
+      passcode: `AC-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+    },
+    message: 'Card regenerated successfully (mock)',
+  }),
 };
 
 // Utility functions for simulating delays

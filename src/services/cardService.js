@@ -1,5 +1,5 @@
 import { apiClient } from './api/apiClient';
-import { simulateHardwareDelay, simulateApiDelay } from './mockData';
+import { simulateHardwareDelay, simulateApiDelay, mockData, shouldUseMock } from './mockData';
 
 // Issue new card
 export const issueCard = async (data) => {
@@ -52,6 +52,12 @@ export const regenerateCard = async (data) => {
     
     return response.data;
   } catch (error) {
+    // Use mock data if network error
+    if (shouldUseMock(error)) {
+      await simulateApiDelay(800);
+      return mockData.regenerateLostCard(data);
+    }
+    
     // Handle network errors with more detail
     if (!error.response) {
       if (error.code === 'ECONNREFUSED' || error.message?.includes('Network Error')) {

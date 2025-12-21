@@ -4,14 +4,11 @@ import {
   Paper,
   Group,
   Button,
-  Text,
   Title,
   Stack,
-  Box,
   TextInput,
   Select,
   Alert,
-  Loader,
 } from '@mantine/core';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from '@mantine/form';
@@ -75,7 +72,6 @@ const GuestDetailsPage = () => {
         setError(result.message || 'Failed to save guest details');
       }
     } catch (err) {
-      console.error('Error saving guest details:', err);
       const errorMessage = err?.response?.data?.message || err?.message || 'Failed to save guest details';
       setError(errorMessage);
     } finally {
@@ -118,7 +114,7 @@ const GuestDetailsPage = () => {
           borderRadius: '20px',
         }}
       >
-        <Group justify="space-between" mb="xl">
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
             <img
               src={UnoLogo}

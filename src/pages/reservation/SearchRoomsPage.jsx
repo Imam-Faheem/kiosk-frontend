@@ -39,7 +39,6 @@ const SearchRoomsPage = () => {
       setErrorMessage(null);
     },
     onError: (err) => {
-      console.error('Room search error:', err);
       const details = err?.response?.data;
       const msg = (details && (details.message || details.error)) || err?.message || 'Request failed';
       setErrorMessage(msg);
@@ -132,7 +131,7 @@ const SearchRoomsPage = () => {
         }}
       >
         {/* Header */}
-        <Group justify="space-between" mb="xl">
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
             <img
               src={UnoLogo}
@@ -230,25 +229,30 @@ const SearchRoomsPage = () => {
               type="submit"
               size="lg"
               leftSection={<IconSearch size={20} />}
-              loading={loading}
+              disabled={loading}
               style={{
-                backgroundColor: '#C8653D',
+                backgroundColor: loading ? '#E0E0E0' : '#C8653D',
                 color: '#FFFFFF',
                 borderRadius: '12px',
                 fontWeight: 'bold',
                 fontSize: '16px',
                 transition: 'all 0.3s ease',
+                cursor: loading ? 'not-allowed' : 'pointer',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8552F';
-                e.currentTarget.style.transform = 'scale(1.02)';
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#B8552F';
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.transform = 'scale(1)';
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#C8653D';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }
               }}
             >
-              {loading ? t('searchRooms.loading') : t('searchRooms.search')}
+              {t('searchRooms.search')}
             </Button>
           </Stack>
         </form>
@@ -258,7 +262,7 @@ const SearchRoomsPage = () => {
           <Stack align="center" gap="md">
             <Loader size="lg" color="#C8653D" />
             <Text size="lg" c="#666666">
-              {t('searchRooms.loading')}
+              Searching available rooms
             </Text>
           </Stack>
         )}

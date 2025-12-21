@@ -60,7 +60,6 @@ const RoomDetailPage = () => {
               });
             }
           } catch (err) {
-            console.error('Error fetching room images:', err);
             // Use default logo on error
             setRoomData({
               ...room,
@@ -196,7 +195,7 @@ const RoomDetailPage = () => {
           borderRadius: '20px',
         }}
       >
-        <Group justify="space-between" mb="xl">
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
             <img
               src={UnoLogo}
@@ -226,9 +225,8 @@ const RoomDetailPage = () => {
 
         <Stack gap="lg" mb="xl">
           {/* Room Images Gallery */}
-          <Card withBorder p="lg" radius="md">
-            <Stack gap="md">
-              <Text size="xl" fw={600}>{displayRoom.name}</Text>
+          <Stack gap="md">
+            <Text size="xl" fw={600}>{displayRoom.name}</Text>
               
               {/* Main Image */}
               {loading ? (
@@ -373,7 +371,6 @@ const RoomDetailPage = () => {
                 </Stack>
               </Card>
             </Stack>
-          </Card>
 
           <Checkbox
             label={t('roomDetail.terms')}
