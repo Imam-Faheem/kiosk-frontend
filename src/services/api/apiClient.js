@@ -13,11 +13,11 @@ const apiClient = axios.create({
 // Request interceptor to add auth token and X-Property-ID
 apiClient.interceptors.request.use(
   (config) => {
-    // Check if this is a public property list endpoint (no auth required)
+    // Check if this is a truly public endpoint (no auth required)
     const url = config.url || '';
     const method = config.method?.toLowerCase() || '';
     const isPublicPropertyEndpoint = (
-      url.includes('/api/kiosk/v1/properties') || 
+      url.includes('/api/kiosk/v1/properties') ||
       (url.includes('/api/core/v1/organizations') && url.includes('/apaleo/properties'))
     ) && method === 'get';
     
@@ -46,7 +46,7 @@ apiClient.interceptors.request.use(
       return config;
     }
     
-    // Only add auth token for non-public endpoints
+    // Add auth token for all other endpoints
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

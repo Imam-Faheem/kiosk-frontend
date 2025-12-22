@@ -11,7 +11,7 @@ import {
   Title,
   Select,
   TextInput,
-  Center,
+  Group,
 } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
@@ -90,16 +90,7 @@ const PropertyDetails = React.memo(({ properties, selectedPropertyId, capabiliti
           Property Details:
         </Text>
         <Text size="sm" c="dimmed">
-          <strong>ID:</strong> {selectedProperty.id}
-        </Text>
-        <Text size="sm" c="dimmed">
-          <strong>Name:</strong> {selectedProperty.name || selectedProperty.id}
-        </Text>
-        <Text size="sm" c="dimmed">
-          <strong>Currency:</strong> {currency}
-        </Text>
-        <Text size="sm" c="dimmed">
-          <strong>Capabilities:</strong> {loadingCapabilities ? "Loading..." : capabilitiesText}
+          <strong>Name:</strong> {selectedProperty.name || selectedProperty.property_id || selectedProperty.id}
         </Text>
       </Stack>
     </Box>
@@ -221,8 +212,14 @@ const PropertySelectionPage = () => {
         setLoading(true);
         setError(null);
         const response = await getProperties();
-        // getProperties returns { success: true, data: [...] } 
+        // getProperties returns { success: true/false, data: [...], message: '...', error: '...' } 
         const propertiesData = response.data || [];
+        
+        // Check if there was an error
+        if (!response.success && response.message) {
+          setError(response.message || 'Failed to load properties. Please try again.');
+        }
+        
         setProperties(propertiesData);
         
         // If properties exist and a property is already selected, fetch its capabilities
@@ -230,7 +227,7 @@ const PropertySelectionPage = () => {
           await fetchCapabilities(currentPropertyId, currentKioskId);
         } else if (propertiesData.length > 0 && !currentPropertyId) {
           // Pre-select the first one if no property is currently configured
-          const firstPropertyId = propertiesData[0].id;
+          const firstPropertyId = propertiesData[0].id || propertiesData[0].property_id;
           setSelectedPropertyId(firstPropertyId);
           // Use capabilities from API response if available
           const firstProperty = propertiesData[0];
@@ -371,132 +368,146 @@ const PropertySelectionPage = () => {
 
   if (loading) {
     return (
-      <Container size="lg" pos="relative" style={{ minHeight: "100vh" }} bg="gray.0">
-        <Center style={{ minHeight: "100vh", padding: 40 }}>
-          <Paper
-            withBorder
-            shadow="md"
-            p={40}
-            radius="xl"
-            w="100%"
-            maw={850}
-            style={{ borderRadius: 24 }}
-          >
-            <Center>
-              <Stack align="center" gap="md" pt={60}>
-                <Loader size="lg" color="#C8653D" />
-                <Text c="dimmed">Loading properties...</Text>
-              </Stack>
-            </Center>
-          </Paper>
-        </Center>
-      </Container>
-    );
-  }
-
-  return (
-    <Container size="lg" pos="relative" style={{ minHeight: "100vh" }} bg="gray.0">
-      <Center style={{ minHeight: "100vh", padding: 40 }}>
+      <Container
+        size="lg"
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '20px',
+          backgroundColor: '#FFFFFF',
+        }}
+      >
         <Paper
           withBorder
           shadow="md"
           p={40}
           radius="xl"
-          w="100%"
-          maw={850}
-          pos="relative"
-          style={{ borderRadius: 24, paddingTop: 100 }}
+          style={{
+            width: '100%',
+            maxWidth: '700px',
+            backgroundColor: '#ffffff',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            borderRadius: '20px',
+          }}
         >
-          {/* Top-left hotel name */}
-          <Box
-            pos="absolute"
-            top={24}
-            left={32}
-            style={{
-              fontSize: 28,
-              color: "#222",
-              fontWeight: 600,
-              letterSpacing: "1px",
-            }}
-          >
-            <Text fw={600} size="xl">
+          <Stack align="center" gap="md">
+            <Loader size="lg" color="#C8653D" />
+            <Text c="dimmed">Loading properties...</Text>
+          </Stack>
+        </Paper>
+      </Container>
+    );
+  }
+
+  return (
+    <Container
+      size="lg"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px',
+        backgroundColor: '#FFFFFF',
+      }}
+    >
+      <Paper
+        withBorder
+        shadow="md"
+        p={40}
+        radius="xl"
+        style={{
+          width: '100%',
+          maxWidth: '700px',
+          backgroundColor: '#ffffff',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          borderRadius: '20px',
+        }}
+      >
+        {/* Header */}
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <Group>
+            <img
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
+              style={{
+                width: '50px',
+                height: '50px',
+                borderRadius: '8px',
+                marginRight: '0px',
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              style={{ 
+                fontSize: '30px !important',
+                color: 'rgb(34, 34, 34)',
+                fontWeight: '600',
+                letterSpacing: '1px',
+                marginLeft: '-9px'
+              }}
+            >
               UNO HOTELS
-            </Text>
+            </Title>
+          </Group>
+        </Group>
+
+        {/* Main heading */}
+        <Title order={3} style={{ fontSize: '24px', fontWeight: 800, color: '#222', marginBottom: '24px' }}>
+          Property Setup
+        </Title>
+
+        {/* Error Alert */}
+        {error && (
+          <Box maw={600} mx="auto" mb="xl">
+            <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+              {error}
+            </Alert>
           </Box>
+        )}
 
-          {/* Centered Logo */}
-          <Center>
-            <Box mb="md">
-              <img
-                src={UnoLogo}
-                alt="UNO Hotel Logo"
-                style={{ width: 110, height: "auto", borderRadius: 8 }}
+        {/* Property Selection - Dropdown */}
+        <Stack gap="lg" maw={600} mx="auto" mb="xl" w="100%">
+          {properties.length > 0 ? (
+            <>
+              <PropertySelect
+                properties={properties}
+                selectedPropertyId={selectedPropertyId}
+                capabilities={capabilities}
+                onPropertySelect={handlePropertySelect}
               />
-            </Box>
-          </Center>
 
-          {/* Main heading */}
-          <Title order={3} c="dark" mb="xl" fw={500} style={{ fontSize: 22 }} ta="center">
-            Property Setup
-          </Title>
-
-          {/* Error Alert */}
-          {error && (
-            <Box maw={600} mx="auto" mb="xl">
-              <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-                {error}
-              </Alert>
+              {/* Property Details Display */}
+              <PropertyDetails
+                properties={properties}
+                selectedPropertyId={selectedPropertyId}
+                capabilities={capabilities}
+                loadingCapabilities={loadingCapabilities}
+              />
+            </>
+          ) : (
+            <Box mb="xl">
+              <Text c="dimmed" ta="center">
+                No properties available. Please contact support.
+              </Text>
             </Box>
           )}
+        </Stack>
 
-          {/* Property Selection - Dropdown */}
-          <Stack gap="lg" maw={600} mx="auto" mb="xl" w="100%">
-            {properties.length > 0 ? (
-              <>
-                <PropertySelect
-                  properties={properties}
-                  selectedPropertyId={selectedPropertyId}
-                  capabilities={capabilities}
-                  onPropertySelect={handlePropertySelect}
-                />
-
-                {/* Property Details Display */}
-                <PropertyDetails
-                  properties={properties}
-                  selectedPropertyId={selectedPropertyId}
-                  capabilities={capabilities}
-                  loadingCapabilities={loadingCapabilities}
-                />
-
-                {/* Optional Kiosk ID Input */}
-                <TextInput
-                  label="Kiosk ID (Optional)"
-                  placeholder="Enter kiosk ID"
-                  value={kioskId}
-                  onChange={(e) => handleKioskIdChange(e.target.value)}
-                  size="lg"
-                  styles={getInputStyles()}
-                />
-              </>
-            ) : (
-              <Box mb="xl">
-                <Text c="dimmed" ta="center">
-                  No properties available. Please contact support.
-                </Text>
-              </Box>
-            )}
-          </Stack>
-
-          {/* Continue Button */}
-          <Center>
-            <ContinueButton
-              onClick={handleContinue}
-              disabled={!selectedPropertyId || saving}
-              loading={saving}
-            />
-          </Center>
-        </Paper>
-      </Center>
+        {/* Continue Button */}
+        <Stack align="center" gap="md">
+          <ContinueButton
+            onClick={handleContinue}
+            disabled={!selectedPropertyId || saving}
+            loading={saving}
+          />
+        </Stack>
+      </Paper>
     </Container>
   );
 };

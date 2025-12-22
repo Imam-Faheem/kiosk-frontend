@@ -26,7 +26,7 @@ export const createCapabilitiesCacheKey = (propertyId, kioskId = null) => {
 
 export const formatPropertyLabel = (property) => {
   if (!property) return "";
-  return `${property.name || property.id} (${property.id})`;
+  return property.name || property.property_id || property.id || "";
 };
 
 export const formatPropertyDescription = (property, capabilities = {}) => {
