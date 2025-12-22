@@ -17,16 +17,20 @@ export const formatCapabilitiesText = (capabilities, loadingText = "Loading...")
 
 export const getPropertyCurrency = (property, fallback = "N/A") => {
   if (!property) return fallback;
-  return property.currency || property.defaultCurrency || fallback;
+  return property.currency ?? property.defaultCurrency ?? fallback;
 };
 
 export const createCapabilitiesCacheKey = (propertyId, kioskId = null) => {
-  return `${propertyId}-${kioskId || 'null'}`;
+  return `${propertyId}-${kioskId ?? 'null'}`;
 };
 
 export const formatPropertyLabel = (property) => {
   if (!property) return "";
-  return property.name || property.property_id || property.id || "";
+  return property.name ?? property.property_id ?? property.id ?? "";
+};
+
+export const getPropertyId = (property) => {
+  return property?.id ?? property?.property_id ?? null;
 };
 
 export const formatPropertyDescription = (property, capabilities = {}) => {
@@ -37,6 +41,6 @@ export const formatPropertyDescription = (property, capabilities = {}) => {
 
 export const findPropertyById = (properties, propertyId) => {
   if (!Array.isArray(properties) || !propertyId) return null;
-  return properties.find((p) => p.id === propertyId || p.property_id === propertyId) || null;
+  return properties.find((p) => (p.id === propertyId) || (p.property_id === propertyId)) ?? null;
 };
 

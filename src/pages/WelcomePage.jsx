@@ -17,7 +17,6 @@ import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
 import usePropertyStore from "../stores/propertyStore";
 import { STORAGE_KEYS } from "../config/constants";
-import BackButton from "../components/BackButton";
 import UnoLogo from "../assets/uno.jpg";
 
 const languages = [
@@ -57,8 +56,7 @@ const WelcomePage = () => {
         navigate("/property-selector", { replace: true });
         return;
       }
-    } catch (err) {
-      console.error("Failed to parse stored property data:", err);
+    } catch {
       // On error, redirect to property selector
       navigate("/property-selector", { replace: true });
     }
@@ -66,11 +64,6 @@ const WelcomePage = () => {
 
   const handleLanguageChange = (value) => {
     setLanguage(value);
-  };
-
-  const handleBack = () => {
-    // Navigate back to property setup
-    navigate("/");
   };
 
   const handleContinue = () => {
@@ -273,11 +266,6 @@ const WelcomePage = () => {
             {t("welcome.continue") || "Continue"}
           </Button>
         </Box>
-
-        {/* Back Button */}
-        <Group justify="flex-start" style={{ marginTop: "20px" }}>
-          <BackButton onClick={handleBack} text={t("common.back") || "Back"} />
-        </Group>
       </Paper>
     </Container>
   );

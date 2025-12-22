@@ -119,3 +119,32 @@ export const STATUS = {
     REFUNDED: 'refunded',
   },
 };
+
+// Capability mapping for array to object conversion
+export const CAPABILITY_MAP = {
+  'check-in': 'checkIn',
+  'checkIn': 'checkIn',
+  'check-out': 'checkOut',
+  'checkOut': 'checkOut',
+  'key-management': 'keyManagement',
+  'keyManagement': 'keyManagement',
+  'reservations': 'reservations',
+  'reservation': 'reservations',
+  'card-issuance': 'cardIssuance',
+  'cardIssuance': 'cardIssuance',
+  'lost-card': 'lostCard',
+  'lostCard': 'lostCard',
+  'room-service': 'roomService',
+  'roomService': 'roomService',
+};
+
+// Reverse capability mapping for object to array conversion
+export const REVERSE_CAPABILITY_MAP = {
+  checkIn: 'check-in',
+  checkOut: 'check-out',
+  keyManagement: 'key-management',
+  reservations: 'reservations',
+  cardIssuance: 'card-issuance',
+  lostCard: 'lost-card',
+  roomService: 'room-service',
+};

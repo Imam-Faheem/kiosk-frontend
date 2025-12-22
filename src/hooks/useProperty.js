@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 import usePropertyStore from '../stores/propertyStore';
 
 /**
@@ -26,7 +26,7 @@ export const useProperty = (options = {}) => {
   const configureProperty = usePropertyStore((state) => state.configureProperty);
   
   // Check if property is required and configured
-  useMemo(() => {
+  useEffect(() => {
     if (required && !isConfigured) {
       throw new Error('Property must be configured before using this feature');
     }
