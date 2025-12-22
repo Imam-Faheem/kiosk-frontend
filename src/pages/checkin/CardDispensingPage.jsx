@@ -195,15 +195,14 @@ const CardDispensingPage = () => {
         {/* Header */}
         <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
-            <Box
-              component="img"
+            <img
               src={UnoLogo}
               alt="UNO Hotel Logo"
-              w={50}
-              h={50}
-              radius="md"
-              mr={0}
               style={{
+                width: '50px',
+                height: '50px',
+                borderRadius: '8px',
+                marginRight: '0px',
                 objectFit: 'cover',
               }}
             />
