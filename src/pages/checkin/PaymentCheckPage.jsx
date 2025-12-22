@@ -11,6 +11,7 @@ import {
   Badge,
   Alert,
   Divider,
+  Button,
 } from '@mantine/core';
 import { 
   IconCreditCard, 
@@ -22,6 +23,7 @@ import {
   IconUser,
   IconBed,
   IconCurrencyDollar,
+  IconPhone,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
@@ -29,6 +31,12 @@ import { usePaymentMutation } from '../../hooks/usePaymentMutation';
 import '../../styles/animations.css';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
+
+const isPaymentCompleted = (status) => {
+  if (status === 'completed') return true;
+  if (status === 'paid') return true;
+  return false;
+};
 
 const PaymentCheckPage = () => {
   const navigate = useNavigate();
@@ -38,34 +46,36 @@ const PaymentCheckPage = () => {
     onSuccess: (result) => {
       if (result.success) {
         setPaymentStatus(result.data);
+        setLoading(false);
         
-        // Navigate based on payment status
-        if (result.data.status === 'completed' || result.data.status === 'paid') {
-          // Already paid, go to card dispensing
-          setTimeout(() => {
+        // Show payment status for 7 seconds so user can see it
+        setTimeout(() => {
+          // Navigate based on payment status
+          if (isPaymentCompleted(result.data.status)) {
             navigate('/checkin/card-dispensing', {
               state: { reservation, paymentStatus: result.data }
             });
-          }, 2000);
-        } else {
-          // Not paid, go to payment terminal
-          setTimeout(() => {
+          } else {
             navigate('/checkin/payment', {
               state: { reservation, paymentStatus: result.data }
             });
-          }, 2000);
-        }
+          }
+        }, 7000);
       } else {
         setError(t('error.paymentFailed'));
+        setLoading(false);
       }
     },
     onError: (err) => {
-      setError(err.message || t('error.paymentFailed'));
+      setError(err.message ?? t('error.paymentFailed'));
+      setLoading(false);
     }
   });
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [processingTime, setProcessingTime] = useState(0);
+  const [paymentFailed, setPaymentFailed] = useState(false);
 
   const reservation = location.state?.reservation;
 
@@ -78,41 +88,60 @@ const PaymentCheckPage = () => {
     const checkStatus = async () => {
       try {
         setLoading(true);
+        setProcessingTime(0);
+        setPaymentFailed(false);
         
-        // Payment status is already in reservation data from Apaleo
-        // Check balance to determine payment status
+        // Progress timer
+        const progressInterval = setInterval(() => {
+          setProcessingTime(prev => prev + 1);
+        }, 1000);
+        
+        // Simulate processing delay
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        const getPaymentStatus = () => {
+          if (reservation.paymentStatus) return reservation.paymentStatus;
+          return reservation.balance <= 0 ? 'paid' : 'pending';
+        };
+
+        // Calculate actual amount from reservation
+        const totalAmount = reservation.totalAmount ?? 0;
+        
         const paymentStatusData = {
-          status: reservation.paymentStatus || (reservation.balance <= 0 ? 'paid' : 'pending'),
-          amount: reservation.totalAmount || Math.abs(reservation.balance || 0),
-          currency: reservation.currency || 'EUR',
-          balance: reservation.balance || 0,
-          transactionId: reservation.id || `TXN-${Date.now()}`
+          status: getPaymentStatus(),
+          amount: totalAmount,
+          currency: reservation.currency ?? 'EUR',
+          balance: reservation.balance ?? 0,
+          transactionId: reservation.id ?? `TXN-${Date.now()}`
         };
         
+        clearInterval(progressInterval);
         setPaymentStatus(paymentStatusData);
+        setLoading(false);
         
-        // Small delay for UI
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Check if payment failed
+        if (!isPaymentCompleted(paymentStatusData.status) && paymentStatusData.balance > 0) {
+          setPaymentFailed(true);
+        }
+        
+        // Show payment status for 7 seconds so user can see it
+        await new Promise(resolve => setTimeout(resolve, 7000));
         
         // Navigate based on payment status
-        if (paymentStatusData.status === 'paid' || paymentStatusData.balance <= 0) {
-          // Already paid, go to card dispensing (which will trigger Apaleo check-in)
-          setTimeout(() => {
-            navigate('/checkin/card-dispensing', {
-              state: { reservation, paymentStatus: paymentStatusData }
-            });
-          }, 500);
+        const shouldProceedToCard = isPaymentCompleted(paymentStatusData.status) ? true : paymentStatusData.balance <= 0;
+        
+        if (shouldProceedToCard) {
+          navigate('/checkin/card-dispensing', {
+            state: { reservation, paymentStatus: paymentStatusData }
+          });
         } else {
-          // Not paid, go to payment terminal
-          setTimeout(() => {
-            navigate('/checkin/payment', {
-              state: { reservation, paymentStatus: paymentStatusData }
-            });
-          }, 500);
+          navigate('/checkin/payment', {
+            state: { reservation, paymentStatus: paymentStatusData }
+          });
         }
       } catch (err) {
-        setError(err.message || t('error.paymentFailed'));
-      } finally {
+        setError(err.message ?? t('error.paymentFailed'));
+        setPaymentFailed(true);
         setLoading(false);
       }
     };
@@ -129,44 +158,52 @@ const PaymentCheckPage = () => {
   }
 
   return (
-    <>
     <Container
       size="lg"
-        h="100vh"
-        style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}
-        py={32}
-        px={20}
-        bg="gray.0"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+      p={20}
+      bg="#FFFFFF"
     >
       <Paper
-          shadow="xl"
-          p={48}
-          radius={24}
-          w="100%"
-          maw={720}
-          bg="white"
-          style={{ border: '1px solid rgba(0, 0, 0, 0.04)' }}
+        withBorder
+        shadow="md"
+        p={40}
+        radius="xl"
+        w="100%"
+        maw={600}
+        bg="#ffffff"
+        style={{
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+        }}
       >
         {/* Header */}
-          <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+        <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
-            <img
+            <Box
+              component="img"
               src={UnoLogo}
               alt="UNO Hotel Logo"
-                width={50}
-                height={50}
-                style={{ borderRadius: '8px', objectFit: 'cover' }}
+              w={50}
+              h={50}
+              radius="md"
+              mr={0}
+              style={{
+                objectFit: 'cover',
+              }}
             />
             <Title 
               order={2} 
-                fw={800}
-                c="rgb(34, 34, 34)"
-              style={{ 
-                  fontSize: '30px',
-                letterSpacing: '1px',
-                  marginLeft: '-9px',
-                  fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif'
-              }}
+              fz={30}
+              c="rgb(34, 34, 34)"
+              fw={600}
+              lts={1}
+              ml={-9}
             >
               UNO HOTELS
             </Title>
@@ -174,27 +211,82 @@ const PaymentCheckPage = () => {
         </Group>
 
         {/* Content */}
-          <Stack gap={32}>
+        <Stack gap="lg" mb="xl">
           {loading ? (
-              <Stack align="center" gap={24}>
-                <Box className="loading-pulse">
-                  <IconLoader2 
-                    size={64} 
-                    color="#C8653D"
+            <>
+              {/* Status Headline */}
+              <Stack gap={8} align="center" mb={24}>
+                <Title 
+                  order={2} 
+                  fw={700} 
+                  c="dark.9" 
+                  ta="center"
+                  fz={24}
+                  lts={-0.3}
+                >
+                  Verifying Payment Status
+                </Title>
+                <Text 
+                  size="sm" 
+                  c="dimmed" 
+                  ta="center"
+                  maw={500}
+                  lh={1.6}
+                >
+                  Please wait while we check your payment information...
+                </Text>
+              </Stack>
+
+              {/* Loading Indicator with Progress */}
+              <Box
+                p={24}
+                bg="rgba(200, 101, 61, 0.02)"
+                radius="md"
+                style={{
+                  border: '1px solid rgba(200, 101, 61, 0.1)',
+                }}
+              >
+                <Stack align="center" gap={24}>
+                  <Box className="loading-pulse">
+                    <IconLoader2 
+                      size={64} 
+                      color="#C8653D"
+                      style={{
+                        animation: 'spin 1s linear infinite',
+                      }}
+                    />
+                  </Box>
+                  <Stack align="center" gap={8}>
+                    <Text size="sm" c="dimmed" ta="center">
+                      Processing payment verification...
+                    </Text>
+                    <Text size="xs" c="dimmed" ta="center">
+                      Estimated time: {processingTime < 3 ? '~3 seconds' : 'Almost done'}
+                    </Text>
+                  </Stack>
+                  {/* Progress Bar */}
+                  <Box
+                    w="100%"
+                    h={4}
+                    bg="rgba(200, 101, 61, 0.1)"
+                    radius={2}
                     style={{
-                      animation: 'spin 1s linear infinite',
+                      overflow: 'hidden',
                     }}
-                  />
-                </Box>
-                <Stack align="center" gap={8}>
-                  <Text size="xl" fw={600} c="#222222" ta="center">
-                    Verifying Payment Status
-                  </Text>
-                  <Text size="md" c="dimmed" ta="center" maw={400}>
-                    Please wait while we check your payment information...
-              </Text>
+                  >
+                    <Box
+                      h="100%"
+                      bg="#C8653D"
+                      radius={2}
+                      style={{
+                        width: `${Math.min((processingTime / 3) * 100, 100)}%`,
+                        transition: 'width 0.3s ease',
+                      }}
+                    />
+                  </Box>
                 </Stack>
-            </Stack>
+              </Box>
+            </>
           ) : error ? (
             <Alert
                 icon={<IconX size={20} />}
@@ -213,243 +305,298 @@ const PaymentCheckPage = () => {
             </Alert>
           ) : (
             <>
-                {/* Payment Status Card - Primary Focus */}
+              {/* Status Headline */}
+              <Stack gap={8} align="center" mb={24}>
+                <Title 
+                  order={2} 
+                  fw={700} 
+                  c="dark.9" 
+                  ta="center"
+                  fz={24}
+                  lts={-0.3}
+                >
+                  {isPaymentCompleted(paymentStatus?.status) 
+                    ? 'Payment Completed' 
+                    : paymentFailed 
+                    ? 'Payment Failed' 
+                    : 'Payment Verification'}
+                </Title>
+                <Text 
+                  size="sm" 
+                  c="dimmed" 
+                  ta="center"
+                  maw={500}
+                  lh={1.6}
+                >
+                  {isPaymentCompleted(paymentStatus?.status)
+                    ? 'Your payment has been confirmed. Proceeding to card issuance...'
+                    : paymentFailed
+                    ? 'Unable to verify payment. Please retry or contact support.'
+                    : 'Payment verification in progress. Please wait...'}
+                </Text>
+              </Stack>
+
+              {/* Payment Status */}
               {paymentStatus && (
-                  <Card 
-                    withBorder 
-                    p={32} 
-                    radius="md"
-                    bg="white"
-                    styles={{
-                      root: {
-                        border: '2px solid',
-                        borderColor: paymentStatus.status === 'completed' || paymentStatus.status === 'paid' 
-                          ? 'rgba(34, 197, 94, 0.3)' 
-                          : 'rgba(200, 101, 61, 0.3)',
-                        boxShadow: paymentStatus.status === 'completed' || paymentStatus.status === 'paid'
-                          ? '0 8px 24px rgba(34, 197, 94, 0.15)'
-                          : '0 8px 24px rgba(200, 101, 61, 0.15)',
-                      },
-                    }}
-                  >
-                    <Stack gap={24}>
-                  <Group justify="space-between" align="center">
-                        <Group gap={12}>
-                          <Box
-                            w={56}
-                            h={56}
-                            style={{
-                              borderRadius: '12px',
-                              backgroundColor: paymentStatus.status === 'completed' || paymentStatus.status === 'paid'
-                                ? 'rgba(34, 197, 94, 0.1)'
-                                : 'rgba(200, 101, 61, 0.1)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <IconCreditCard 
-                              size={28} 
-                              color={paymentStatus.status === 'completed' || paymentStatus.status === 'paid' 
-                                ? '#22c55e' 
-                                : '#C8653D'} 
-                              stroke={2}
-                            />
-                          </Box>
-                          <Box>
-                            <Text size="xs" fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.5px' }}>
-                              Payment Status
-                            </Text>
-                            <Text size="xl" fw={700} c="dark.9" mt={4}>
-                              {paymentStatus.status === 'completed' || paymentStatus.status === 'paid' 
-                                ? 'Payment Confirmed' 
-                                : 'Payment Required'}
-                      </Text>
-                          </Box>
-                    </Group>
-                    <Badge
-                      size="lg"
-                          variant="light"
-                      color={paymentStatus.status === 'completed' || paymentStatus.status === 'paid' ? 'green' : 'orange'}
-                      leftSection={
-                        paymentStatus.status === 'completed' || paymentStatus.status === 'paid' ? 
-                            <IconCheck size={16} stroke={2.5} /> : 
-                            <IconLoader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                      }
-                          styles={{ root: { padding: '8px 16px', fontSize: '14px', fontWeight: 600 } }}
+                <Box
+                  p={24}
+                  bg={isPaymentCompleted(paymentStatus.status) 
+                    ? 'rgba(34, 197, 94, 0.02)' 
+                    : paymentFailed 
+                    ? 'rgba(239, 68, 68, 0.02)' 
+                    : 'rgba(200, 101, 61, 0.02)'}
+                  radius="md"
+                  style={{
+                    border: isPaymentCompleted(paymentStatus.status) 
+                      ? '1px solid rgba(34, 197, 94, 0.15)' 
+                      : paymentFailed 
+                      ? '1px solid rgba(239, 68, 68, 0.15)' 
+                      : '1px solid rgba(200, 101, 61, 0.1)',
+                  }}
+                >
+                  <Stack gap={20}>
+                    <Group 
+                      gap={16}
+                      align="center"
+                      p="12px 16px"
+                      radius="md"
+                      bg={isPaymentCompleted(paymentStatus.status) 
+                        ? 'rgba(34, 197, 94, 0.08)' 
+                        : paymentFailed 
+                        ? 'rgba(239, 68, 68, 0.08)' 
+                        : 'rgba(200, 101, 61, 0.05)'}
+                      style={{
+                        transition: 'all 0.3s ease',
+                      }}
                     >
-                          {paymentStatus.status === 'completed' || paymentStatus.status === 'paid' 
-                            ? 'Paid' 
-                            : 'Pending'}
-                    </Badge>
-                  </Group>
-                      
-                      <Divider color="rgba(0, 0, 0, 0.06)" />
-                  
-                  {paymentStatus.amount && (
-                        <Box>
-                          <Text size="xs" fw={600} c="dimmed" mb={8} tt="uppercase" style={{ letterSpacing: '0.5px' }}>
-                            Amount
+                      <Box
+                        w={24}
+                        h={24}
+                        bg={isPaymentCompleted(paymentStatus.status) ? '#22c55e' : paymentFailed ? '#ef4444' : '#C8653D'}
+                        style={{
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {isPaymentCompleted(paymentStatus.status) ? (
+                          <IconCheck size={14} color="white" stroke={3} />
+                        ) : paymentFailed ? (
+                          <IconX size={14} color="white" stroke={3} />
+                        ) : (
+                          <IconLoader2 
+                            size={16} 
+                            color="white" 
+                            style={{ animation: 'spin 1s linear infinite' }}
+                          />
+                        )}
+                      </Box>
+                      <Text 
+                        size="md" 
+                        fw={700} 
+                        c="dark.9"
+                        ff="Inter, sans-serif"
+                        lts={-0.2}
+                        style={{ 
+                          flex: 1,
+                        }}
+                      >
+                        {isPaymentCompleted(paymentStatus.status) 
+                          ? 'Payment Completed' 
+                          : paymentFailed 
+                          ? 'Payment Failed' 
+                          : 'Payment Required'}
+                      </Text>
+                      {!isPaymentCompleted(paymentStatus.status) && !paymentFailed && loading && (
+                        <Text 
+                          size="xs" 
+                          c="#C8653D" 
+                          fw={600}
+                          ff="Inter, sans-serif"
+                        >
+                          Processing...
+                        </Text>
+                      )}
+                    </Group>
+
+                    {/* Only show amount when payment is completed or there's an amount due, not during processing */}
+                    {(!loading && (isPaymentCompleted(paymentStatus.status) || paymentStatus.balance > 0)) && (
+                      <Group 
+                        gap={16}
+                        align="center"
+                        p="12px 16px"
+                        radius="md"
+                      >
+                        <Box
+                          w={40}
+                          h={40}
+                          radius="md"
+                          bg="rgba(200, 101, 61, 0.05)"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text size="lg" fw={700} c="dark.9">
+                            {paymentStatus.currency === 'EUR' ? '€' : paymentStatus.currency === 'USD' ? '$' : paymentStatus.currency === 'GBP' ? '£' : paymentStatus.currency?.[0] ?? '€'}
+                          </Text>
+                        </Box>
+                        <Box style={{ flex: 1 }}>
+                          <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" lts={0.5}>
+                            {paymentStatus.balance > 0 ? 'Amount Due' : 'Amount Paid'}
                           </Text>
                           <Group gap={8} align="baseline">
-                            <IconCurrencyDollar size={20} color="#222222" />
-                            <Text size="32px" fw={700} c="#222222" style={{ lineHeight: 1 }}>
-                              {paymentStatus.amount}
+                            <Text size="lg" fw={700} c="dark.9" lh={1}>
+                              {paymentStatus.balance > 0 
+                                ? Math.abs(paymentStatus.balance).toFixed(2)
+                                : (() => {
+                                    const paidAmount = reservation.totalAmount ?? 0;
+                                    return paidAmount > 0 ? paidAmount.toFixed(2) : '0.00';
+                                  })()}
                             </Text>
-                            <Text size="lg" fw={500} c="dimmed">
+                            <Text size="sm" fw={500} c="dimmed">
                               {paymentStatus.currency}
                             </Text>
                           </Group>
                           {paymentStatus.balance > 0 && (
-                            <Text size="sm" c="dimmed" mt={8}>
-                              Balance due: {paymentStatus.currency} {Math.abs(paymentStatus.balance).toFixed(2)}
-                    </Text>
-                  )}
+                            <Text size="xs" c="#C8653D" fw={600} mt={4}>
+                              Payment required to proceed
+                            </Text>
+                          )}
+                          {isPaymentCompleted(paymentStatus.status) && paymentStatus.balance <= 0 && (
+                            <Text size="xs" c="green" fw={600} mt={4}>
+                              Payment completed
+                            </Text>
+                          )}
                         </Box>
-                      )}
-                    </Stack>
-                  </Card>
-                )}
+                      </Group>
+                    )}
+                  </Stack>
+                </Box>
+              )}
 
-                {/* Reservation Summary */}
-                <Card 
-                  withBorder 
-                  p={24} 
+                {/* Reservation Summary - Simplified */}
+                <Box
+                  p={24}
+                  bg="rgba(200, 101, 61, 0.02)"
                   radius="md"
-                  bg="white"
-                  style={{ border: '1px solid rgba(0, 0, 0, 0.08)' }}
+                  style={{
+                    border: '1px solid rgba(200, 101, 61, 0.1)',
+                  }}
                 >
                   <Stack gap={20}>
-                    <Group gap={8} mb={4}>
+                    <Group 
+                      gap={16}
+                      align="center"
+                      p="12px 16px"
+                      radius="md"
+                    >
                       <IconShield size={20} color="#C8653D" />
-                      <Text size="md" fw={600} c="dark.9">
+                      <Text 
+                        size="md" 
+                        fw={600} 
+                        c="dark.9"
+                        ff="Inter, sans-serif"
+                        lts={-0.2}
+                        style={{ 
+                          flex: 1,
+                        }}
+                      >
                         Reservation Details
                       </Text>
                     </Group>
-                    
-                    <Divider color="rgba(0, 0, 0, 0.06)" />
-                    
-                    <Group gap={24}>
+
+                    <Group 
+                      gap={16}
+                      align="center"
+                      p="12px 16px"
+                      radius="md"
+                    >
+                      <IconUser size={20} color="#666666" />
                       <Box style={{ flex: 1 }}>
-                        <Group gap={8} mb={4}>
-                          <IconUser size={16} color="#666666" />
-                          <Text size="xs" fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.5px' }}>
-                            Guest Name
-                          </Text>
-                        </Group>
+                        <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" lts={0.5}>
+                          Guest Name
+                        </Text>
                         <Text size="md" fw={500} c="dark.9">
-                          {reservation.firstName || reservation.guest_name?.first_name || ''} {reservation.lastName || reservation.guest_name?.last_name || ''}
+                          {(() => {
+                            const firstName = reservation.guest_name?.first_name ?? reservation.firstName ?? '';
+                            const lastName = reservation.guest_name?.last_name ?? reservation.lastName ?? '';
+                            return `${firstName} ${lastName}`.trim();
+                          })()}
                         </Text>
                       </Box>
-                      
-                      {reservation.roomNumber && (
+                    </Group>
+
+                    {reservation.roomNumber && (
+                      <Group 
+                        gap={16}
+                        align="center"
+                        p="12px 16px"
+                        radius="md"
+                      >
+                        <IconBed size={20} color="#666666" />
                         <Box style={{ flex: 1 }}>
-                          <Group gap={8} mb={4}>
-                            <IconBed size={16} color="gray.6" />
-                            <Text size="xs" fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.5px' }}>
-                              Room
-                            </Text>
-                          </Group>
+                          <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" lts={0.5}>
+                            Room
+                          </Text>
                           <Text size="md" fw={500} c="dark.9">
                             {reservation.roomNumber}
                           </Text>
                         </Box>
-                      )}
-                    </Group>
-
-                    {(reservation.roomType || reservation.checkIn || reservation.checkOut) && (
-                      <>
-                        <Divider color="gray.2" />
-                        <Group gap={24}>
-                          {reservation.roomType && (
-                            <Box style={{ flex: 1 }}>
-                              <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" style={{ letterSpacing: '0.5px' }}>
-                                Room Type
-                              </Text>
-                              <Text size="md" fw={500} c="dark.9">
-                                {reservation.roomType}
-                              </Text>
-                            </Box>
-                          )}
-                        </Group>
-                      </>
+                      </Group>
                     )}
 
-                    {(reservation.checkIn || reservation.checkOut) && (
-                      <>
-                        <Divider color="gray.2" />
-                        <Group gap={24}>
-                          {reservation.checkIn && (
-                            <Box style={{ flex: 1 }}>
-                              <Group gap={8} mb={4}>
-                                <IconCalendar size={16} color="gray.6" />
-                                <Text size="xs" fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.5px' }}>
-                                  Check-In
-                                </Text>
-                              </Group>
-                              <Text size="md" fw={500} c="dark.9">
-                                {new Date(reservation.checkIn).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric'
-                                })}
-                              </Text>
-                            </Box>
-                          )}
-                          
-                          {reservation.checkOut && (
-                            <Box style={{ flex: 1 }}>
-                              <Group gap={8} mb={4}>
-                                <IconCalendar size={16} color="gray.6" />
-                                <Text size="xs" fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.5px' }}>
-                                  Check-Out
-                                </Text>
-                              </Group>
-                              <Text size="md" fw={500} c="dark.9">
-                                {new Date(reservation.checkOut).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric'
-                                })}
-                              </Text>
-                            </Box>
-                          )}
-                        </Group>
-                      </>
+                    {reservation.roomType && (
+                      <Group 
+                        gap={16}
+                        align="center"
+                        p="12px 16px"
+                        radius="md"
+                      >
+                        <IconBed size={20} color="#666666" />
+                        <Box style={{ flex: 1 }}>
+                          <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" lts={0.5}>
+                            Room Type
+                          </Text>
+                          <Text size="md" fw={500} c="dark.9">
+                            {reservation.roomType}
+                          </Text>
+                        </Box>
+                      </Group>
                     )}
                   </Stack>
-                </Card>
-
-                {/* Status Message */}
-                <Box
-                  p={16}
-                  bg={paymentStatus?.status === 'completed' || paymentStatus?.status === 'paid'
-                    ? 'rgba(34, 197, 94, 0.05)'
-                    : 'rgba(200, 101, 61, 0.05)'}
-                  style={{
-                    borderRadius: '8px',
-                    border: `1px solid ${paymentStatus?.status === 'completed' || paymentStatus?.status === 'paid'
-                      ? 'rgba(34, 197, 94, 0.1)'
-                      : 'rgba(200, 101, 61, 0.1)'}`,
-                  }}
-                >
-                  <Text size="sm" c="dimmed" ta="center" style={{ lineHeight: 1.6 }}>
-                    {paymentStatus?.status === 'completed' || paymentStatus?.status === 'paid'
-                      ? 'Your payment has been confirmed. Proceeding to card issuance...'
-                      : 'Payment is required to complete your check-in. Redirecting to payment terminal...'}
-                  </Text>
                 </Box>
             </>
           )}
         </Stack>
 
-        {/* Back Button */}
-          <Group justify="flex-start" mt={32}>
+        {/* Action Buttons */}
+        <Group justify="space-between" mt={32}>
           <BackButton onClick={handleBack} text={t('common.back')} />
+          
+          {paymentFailed && (
+            <Button
+              size="md"
+              variant="light"
+              leftSection={<IconPhone size={18} />}
+              onClick={() => {
+                // Contact support action
+                window.location.href = 'tel:+1234567890';
+              }}
+              c="#C8653D"
+              fw={600}
+              radius="md"
+              px={24}
+              py={10}
+            >
+              Contact Support
+            </Button>
+          )}
         </Group>
       </Paper>
     </Container>
-    </>
   );
 };
 

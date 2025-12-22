@@ -3,20 +3,30 @@ import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
  
 // Search room availability
 export const searchRoomAvailability = async (data) => {
-  // Ensure propertyId is sent to backend if configured
-  const propertyId = data?.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
+  const getPropertyId = () => {
+    if (data?.propertyId) return data.propertyId;
+    if (process.env.REACT_APP_PROPERTY_ID) return process.env.REACT_APP_PROPERTY_ID;
+    return 'BER';
+  };
+
+  const propertyId = getPropertyId();
   
-  // Map frontend field names to backend API field names
-  const arrival = data.checkIn || data.arrival;
-  const departure = data.checkOut || data.departure;
-  const adults = data.guests || data.adults || 1;
+  const arrival = data.checkIn ?? data.arrival;
+  const departure = data.checkOut ?? data.departure;
+  
+  const getAdults = () => {
+    if (data.guests) return data.guests;
+    if (data.adults) return data.adults;
+    return 1;
+  };
+  const adults = getAdults();
   
   // Use the working /api/kiosk/offers endpoint with GET method
   const params = {
     propertyId,
     arrival,
     departure,
-    adults: Number(adults) || 1,
+    adults: Number(adults) ? Number(adults) : 1,
     channelCode: 'Direct',
     timeSliceTemplate: 'OverNight',
     unitGroupTypes: 'BedRoom',
@@ -30,7 +40,7 @@ export const searchRoomAvailability = async (data) => {
     const roomTypesMap = {};
     try {
       const { data } = await apiClient.get('/rooms/types', { params: { propertyId } });
-      const roomTypes = data?.data || data || [];
+      const roomTypes = data?.data ?? data ?? [];
       roomTypes.forEach(rt => {
         if (rt.roomTypeId && rt.images) roomTypesMap[rt.roomTypeId] = rt.images;
       });
@@ -50,7 +60,7 @@ export const searchRoomAvailability = async (data) => {
       return null;
     };
 
-    const offers = out?.offers || [];
+    const offers = out?.offers ?? [];
     if (!offers.length) {
       return {
         success: true,
@@ -61,26 +71,63 @@ export const searchRoomAvailability = async (data) => {
 
     const nights = Math.max(1, Math.ceil((new Date(departure) - new Date(arrival)) / 86400000));
     const availableRooms = offers.map(offer => {
-      const ug = offer?.unitGroup || {};
-      const rp = offer?.ratePlan || {};
-      const price = offer?.totalGrossAmount || {};
-      const roomTypeId = get(ug, 'id') || get(rp, 'unitGroupId') || offer?.id;
-      const totalPrice = price?.amount || 0;
-      const images = roomTypesMap[roomTypeId] || ug?.images?.map(img => img?.url || img).filter(Boolean) || [];
+      const ug = offer?.unitGroup ?? {};
+      const rp = offer?.ratePlan ?? {};
+      const price = offer?.totalGrossAmount ?? {};
+      
+      const getRoomTypeId = () => {
+        const ugId = get(ug, 'id');
+        if (ugId) return ugId;
+        const rpId = get(rp, 'unitGroupId');
+        if (rpId) return rpId;
+        return offer?.id;
+      };
+      const roomTypeId = getRoomTypeId();
+      
+      const totalPrice = price?.amount ?? 0;
+      
+      const getImages = () => {
+        if (roomTypesMap[roomTypeId]) return roomTypesMap[roomTypeId];
+        const ugImages = ug?.images?.map(img => img?.url ?? img).filter(Boolean);
+        return ugImages ?? [];
+      };
+      const images = getImages();
+
+      const getName = () => {
+        if (ug?.name) return ug.name;
+        if (rp?.name) return rp.name;
+        return 'Room';
+      };
+
+      const getDescription = () => {
+        return ug?.description ?? rp?.description ?? '';
+      };
+
+      const getCapacity = () => {
+        if (ug?.maxPersons) return ug.maxPersons;
+        if (adults) return adults;
+        return 1;
+      };
+
+      const getCurrency = () => {
+        if (price?.currency) return price.currency;
+        if (rp?.currency) return rp.currency;
+        return 'EUR';
+      };
 
       return {
         roomTypeId,
-        unitGroupId: ug?.id || roomTypeId,
-        ratePlanId: rp?.id || null,
-        name: ug?.name || rp?.name || 'Room',
-        description: ug?.description || rp?.description || '',
-        capacity: ug?.maxPersons || adults || 1,
-        maxGuests: ug?.maxPersons || adults || 1,
-        amenities: (ug?.amenities || []).map(a => typeof a === 'string' ? a : a?.name).filter(Boolean),
+        unitGroupId: ug?.id ?? roomTypeId,
+        ratePlanId: rp?.id ?? null,
+        name: getName(),
+        description: getDescription(),
+        capacity: getCapacity(),
+        maxGuests: getCapacity(),
+        amenities: (ug?.amenities ?? []).map(a => typeof a === 'string' ? a : a?.name).filter(Boolean),
         images,
         pricePerNight: nights > 0 ? totalPrice / nights : totalPrice,
         totalPrice,
-        currency: price?.currency || rp?.currency || 'EUR',
+        currency: getCurrency(),
         available: true,
         _offerData: { unitGroupId: ug?.id, ratePlanId: rp?.id, arrival: offer?.arrival, departure: offer?.departure },
       };
@@ -98,17 +145,24 @@ export const searchRoomAvailability = async (data) => {
       return mockData.roomAvailability(data);
     }
     
-    const errorMessage = err?.response?.data?.message || 
-                         err?.response?.data?.error || 
-                         err?.message || 
-                         'Failed to search room availability';
-    throw new Error(errorMessage);
+    const getErrorMessage = () => {
+      if (err?.response?.data?.message) return err.response.data.message;
+      if (err?.response?.data?.error) return err.response.data.error;
+      if (err?.message) return err.message;
+      return 'Failed to search room availability';
+    };
+    throw new Error(getErrorMessage());
   }
 };
 
 // Get room details
 export const getRoomDetails = async (roomTypeId, propertyIdArg) => {
-  const propertyId = propertyIdArg || process.env.REACT_APP_PROPERTY_ID || 'KIOSK_01';
+  const getPropertyId = () => {
+    if (propertyIdArg) return propertyIdArg;
+    if (process.env.REACT_APP_PROPERTY_ID) return process.env.REACT_APP_PROPERTY_ID;
+    return 'KIOSK_01';
+  };
+  const propertyId = getPropertyId();
   try {
     const response = await apiClient.get(`/rooms/${roomTypeId}/details`, { params: { propertyId } });
     return response.data;
@@ -124,7 +178,12 @@ export const getRoomDetails = async (roomTypeId, propertyIdArg) => {
 
 // Get all room types
 export const getAllRoomTypes = async (propertyIdArg) => {
-  const propertyId = propertyIdArg || process.env.REACT_APP_PROPERTY_ID || 'KIOSK_01';
+  const getPropertyId = () => {
+    if (propertyIdArg) return propertyIdArg;
+    if (process.env.REACT_APP_PROPERTY_ID) return process.env.REACT_APP_PROPERTY_ID;
+    return 'KIOSK_01';
+  };
+  const propertyId = getPropertyId();
   try {
     const response = await apiClient.get('/rooms/types', { params: { propertyId } });
     return response.data;

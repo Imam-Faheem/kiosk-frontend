@@ -1,6 +1,10 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock } from './mockData';
 
+const isNetworkError = (error) => {
+  return !error?.response || error?.code === 'ECONNABORTED' || error?.code === 'ERR_NETWORK';
+};
+
 // Helper to normalize data fields
 const normalizeData = (data) => ({
   reservation_id: data.reservation_id ?? data.reservationId,
@@ -107,7 +111,12 @@ export const validateReservation = async (data) => {
       message: response.data.message ?? 'Reservation validated successfully',
     };
   } catch (err) {
-    // Use mock data if network error (but not for 404/403 which are validation failures)
+    // Always use mock data on network errors (but not for 404/403 which are validation failures)
+    if (isNetworkError(err) && err?.response?.status !== 404 && err?.response?.status !== 403) {
+      return mockData.reservation(data);
+    }
+    
+    // Also use mock data if shouldUseMock returns true (for other errors)
     if (shouldUseMock(err) && err?.response?.status !== 404 && err?.response?.status !== 403) {
       return mockData.reservation(data);
     }

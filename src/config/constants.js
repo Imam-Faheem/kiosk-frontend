@@ -1,14 +1,11 @@
+import { IconCreditCard, IconMail, IconLock } from '@tabler/icons-react';
+
 // API Configuration
 export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000',
   KIOSK_API_BASE: process.env.REACT_APP_KIOSK_API_BASE || 'http://localhost:8000/api/kiosk/v1',
   TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,
-  // Test Credentials
-  DEFAULT_PROPERTY_ID: '0ujsszwN8NRY24YaXiTIE2VWDTJ',
-  DEFAULT_ORGANIZATION_ID: '0ujsszwN8NRY24YaXiTIE2VWDTS',
-  DEFAULT_RESERVATION_ID: '0ujssxh0YyPaqWxqM0kOmoXxY6',
-  DEFAULT_LOCK_ID: '0ujssxh0YyPaqWxqM0kOmoXxY9',
 };
 
 // Application Constants
@@ -43,10 +40,6 @@ export const API_ENDPOINTS = {
   },
   GUESTS: {
     BASE: '/guests',
-  },
-  ROOMS: {
-    BASE: '/rooms',
-    AVAILABLE: '/rooms/available',
   },
   CHECKIN: {
     BASE: '/api/kiosk/v1/check-in',
@@ -157,6 +150,13 @@ export const CARD_DISPENSING_STEPS = [
     iconKey: 'mail',
   },
 ];
+
+// Card Dispensing Step Icons
+export const STEP_ICONS = {
+  creditCard: IconCreditCard,
+  lock: IconLock,
+  mail: IconMail,
+};
 
 // Status Messages Configuration
 export const CARD_STATUS_MESSAGES = {

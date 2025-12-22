@@ -21,24 +21,24 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
-import { processCheckIn } from '../../services/checkinService';
-import { CARD_DISPENSING_STEPS, CARD_STATUS_MESSAGES } from '../../config/constants';
+import { useCheckInMutation } from '../../hooks/useCheckInMutation';
+import { CARD_DISPENSING_STEPS, CARD_STATUS_MESSAGES, STEP_ICONS } from '../../config/constants';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
-
-const STEP_ICONS = {
-  creditCard: IconCreditCard,
-  lock: IconLock,
-  mail: IconMail,
-};
+import '../../styles/animations.css';
 
 const CardDispensingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+  const processCheckIn = useCheckInMutation('process', {
+    onError: (err) => {
+      // Check-in error - continue with card issuance
+    }
+  });
   const issueCard = useCardMutation('issue', {
     onError: (err) => {
-      setError(err.message || t('error.cardIssuanceFailed'));
+      setError(err.message ?? t('error.cardIssuanceFailed'));
       setCardStatus('error');
     }
   });
@@ -53,7 +53,7 @@ const CardDispensingPage = () => {
   const steps = useMemo(() => 
     CARD_DISPENSING_STEPS.map(step => ({
       ...step,
-      label: t(step.labelKey) || step.defaultLabel,
+      label: t(step.labelKey) ?? step.defaultLabel,
       icon: STEP_ICONS[step.iconKey],
     })), [t]
   );
@@ -76,18 +76,18 @@ const CardDispensingPage = () => {
         
         let checkInResult = null;
         try {
-          checkInResult = await processCheckIn({
-            reservation_id: reservation.reservationId || reservation.id,
-            guest_email: reservation.email || reservation.guestEmail,
-            guest_phone: reservation.phone || reservation.guestPhone,
+          checkInResult = await processCheckIn.mutateAsync({
+            reservation_id: reservation.reservation_id ?? reservation.reservationId ?? reservation.id,
+            guest_email: reservation.guest_email ?? reservation.email ?? reservation.guestEmail,
+            guest_phone: reservation.guest_phone ?? reservation.phone ?? reservation.guestPhone,
             guest_name: {
-              first_name: reservation.firstName || reservation.guest_name?.first_name || '',
-              last_name: reservation.lastName || reservation.guest_name?.last_name || '',
+              first_name: reservation.guest_name?.first_name ?? reservation.firstName ?? '',
+              last_name: reservation.guest_name?.last_name ?? reservation.lastName ?? '',
             },
-            check_in_date: reservation.checkIn || reservation.check_in_date || new Date().toISOString(),
-            check_out_date: reservation.checkOut || reservation.check_out_date,
-            room_number: reservation.roomNumber || reservation.room_number,
-            confirmation_code: reservation.confirmationCode || reservation.confirmation_code,
+            check_in_date: reservation.check_in_date ?? reservation.checkIn ?? reservation.checkInDate ?? new Date().toISOString(),
+            check_out_date: reservation.check_out_date ?? reservation.checkOut ?? reservation.checkOutDate,
+            room_number: reservation.room_number ?? reservation.roomNumber,
+            confirmation_code: reservation.confirmation_code ?? reservation.confirmationCode,
           });
         } catch (err) {
           // Check-in error - continue with card issuance
@@ -100,10 +100,21 @@ const CardDispensingPage = () => {
         setCardStatus('encoding');
         
         const result = await issueCard.mutateAsync({
-          reservationId: reservation.reservationId || reservation.id,
-          roomNumber: checkInResult?.data?.room_number || reservation.roomNumber || reservation.room_number || reservation.roomType || 'TBD',
-          guestName: reservation.guestName || `${reservation.firstName || ''} ${reservation.lastName || ''}`.trim() || 'Guest',
-          email: reservation.email || reservation.guest_email
+          reservationId: reservation.reservation_id ?? reservation.reservationId ?? reservation.id,
+          roomNumber: checkInResult?.data?.room_number ?? reservation.room_number ?? reservation.roomNumber ?? reservation.roomType ?? 'TBD',
+          guestName: (() => {
+            if (reservation.guest_name) {
+              if (typeof reservation.guest_name === 'string') {
+                return reservation.guest_name;
+              }
+              const firstName = reservation.guest_name.first_name ?? '';
+              const lastName = reservation.guest_name.last_name ?? '';
+              const fullName = `${firstName} ${lastName}`.trim();
+              return fullName ?? 'Guest';
+            }
+            return reservation.guestName ?? 'Guest';
+          })(),
+          email: reservation.guest_email ?? reservation.email ?? reservation.guestEmail
         });
 
         if (!result.success) {
@@ -125,12 +136,12 @@ const CardDispensingPage = () => {
           });
         }, 5000);
       } catch (err) {
-        setError(err.message || t('error.cardDispenserError'));
+        setError(err.message ?? t('error.cardDispenserError'));
       }
     };
 
     processCard();
-  }, [reservation, paymentStatus, navigate, t, issueCard]);
+  }, [reservation, paymentStatus, navigate, t, processCheckIn, issueCard]);
 
   const handleBack = () => {
     navigate('/checkin');
@@ -140,68 +151,74 @@ const CardDispensingPage = () => {
     return null;
   }
 
+  const getStatusTextProps = () => {
+    const isSending = cardStatus === 'sending';
+    const isCompleted = cardStatus === 'completed';
+    const isHighlighted = isSending ? true : isCompleted;
+    
+    return {
+      size: isCompleted ? 'md' : 'sm',
+      fw: isHighlighted ? 700 : 600,
+      c: isSending ? '#C8653D' : isCompleted ? '#22c55e' : 'dark.9',
+      gap: isSending ? 12 : 8,
+      maw: isSending ? 420 : 400,
+    };
+  };
+
+  const statusTextProps = getStatusTextProps();
+
   return (
-    <>
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .secure-container {
-          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-          border: 1px solid rgba(200, 101, 61, 0.15);
-        }
-      `}</style>
-      <Container
-        size="lg"
+    <Container
+      size="lg"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+      p={20}
+      bg="#FFFFFF"
+    >
+      <Paper
+        withBorder
+        shadow="md"
+        p={40}
+        radius="xl"
+        w="100%"
+        maw={600}
+        bg="#ffffff"
         style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '24px',
-          backgroundColor: '#FFFFFF',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
         }}
       >
-        <Paper
-          withBorder
-          shadow="md"
-          p={40}
-          radius="xl"
-          style={{
-            width: '100%',
-            maxWidth: '720px',
-            backgroundColor: '#ffffff',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            borderRadius: '20px',
-          }}
-        >
-          {/* Header */}
-          <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-            <Group>
-              <img
-                src={UnoLogo}
-                alt="UNO Hotel Logo"
-                width={50}
-                height={50}
-                style={{ borderRadius: '8px', objectFit: 'cover' }}
-              />
-              <Title 
-                order={2} 
-                fw={800}
-                c="rgb(34, 34, 34)"
-                style={{ 
-                  fontSize: '30px',
-                  letterSpacing: '1px',
-                  marginLeft: '-9px',
-                  fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif'
-                }}
-              >
-                UNO HOTELS
-              </Title>
-            </Group>
+        {/* Header */}
+        <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <Group>
+            <Box
+              component="img"
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
+              w={50}
+              h={50}
+              radius="md"
+              mr={0}
+              style={{
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              fz={30}
+              c="rgb(34, 34, 34)"
+              fw={600}
+              lts={1}
+              ml={-9}
+            >
+              UNO HOTELS
+            </Title>
           </Group>
+        </Group>
 
         {/* Content */}
           <Stack gap={32}>
@@ -225,33 +242,39 @@ const CardDispensingPage = () => {
             <>
                 {/* Enhanced Stepper */}
                 <Box>
-              <Stepper
-                active={currentStep}
-                size="lg"
-                color="#C8653D"
-                radius="md"
+                  <Stepper
+                    active={currentStep}
+                    size="lg"
+                    color="#C8653D"
+                    radius="md"
                     iconSize={42}
+                    orientation="vertical"
                     styles={{
                       stepBody: { marginTop: 12 },
                       stepLabel: { 
-                        fontSize: '15px',
-                        fontWeight: currentStep === 2 ? 600 : 500,
-                        color: currentStep === 2 ? '#222222' : undefined,
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: '#222222',
                       },
                       stepDescription: { 
-                        fontSize: '13px',
-                        marginTop: 4,
-                        color: currentStep === 2 ? '#666666' : '#999999',
+                        fontSize: '14px',
+                        marginTop: 6,
+                        color: '#666666',
+                        lineHeight: 1.5,
                       },
                       separator: {
-                        backgroundColor: currentStep >= 2 ? '#C8653D' : '#e0e0e0',
+                        backgroundColor: '#C8653D',
                         transition: 'background-color 0.4s ease',
+                      },
+                      step: {
+                        paddingBottom: 24,
                       },
                     }}
                   >
                     {steps.map((step, index) => {
                       const isActive = index === currentStep;
                       const isCompleted = index < currentStep;
+                      const isPending = index > currentStep;
                       const StepIcon = step.icon;
                       
                       return (
@@ -260,22 +283,30 @@ const CardDispensingPage = () => {
                           label={step.label}
                           description={step.description}
                           icon={
-                            isCompleted ? <IconCircleCheck size={20} stroke={2.5} /> :
-                            isActive ? <IconLoader2 size={20} style={{ animation: 'spin 1s linear infinite', color: '#C8653D' }} /> :
-                            <StepIcon size={18} />
+                            isCompleted ? <IconCircleCheck size={22} stroke={2.5} /> :
+                            isActive ? <IconLoader2 size={22} className="spin-animation" style={{ color: '#C8653D' }} /> :
+                            <StepIcon size={20} />
                           }
                           styles={{
                             stepIcon: {
-                              borderColor: isActive || isCompleted ? '#C8653D' : '#e0e0e0',
-                              backgroundColor: isActive ? 'rgba(200, 101, 61, 0.1)' : isCompleted ? '#C8653D' : '#f5f5f5',
+                              borderColor: isActive ? '#C8653D' : isCompleted ? '#C8653D' : '#e0e0e0',
+                              backgroundColor: isActive ? 'rgba(200, 101, 61, 0.1)' : isCompleted ? '#C8653D' : isPending ? '#f5f5f5' : '#ffffff',
                               transition: 'all 0.3s ease',
-                              transform: isActive ? 'scale(1.1)' : 'scale(1)',
+                              transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                              borderWidth: isActive ? '2px' : '1px',
+                            },
+                            stepLabel: {
+                              fontWeight: isActive ? 700 : isCompleted ? 600 : 500,
+                              color: isActive ? '#C8653D' : isCompleted ? '#22c55e' : '#666666',
+                            },
+                            stepDescription: {
+                              color: isActive ? '#333333' : isCompleted ? '#666666' : '#999999',
                             },
                           }}
                         />
                       );
                     })}
-              </Stepper>
+                  </Stepper>
                 </Box>
 
                 {/* Main Status Display */}
@@ -304,17 +335,17 @@ const CardDispensingPage = () => {
 
                   {/* Status Messages */}
                   {statusMessage && (
-                    <Stack align="center" gap={cardStatus === 'sending' ? 12 : 8}>
+                    <Stack align="center" gap={statusTextProps.gap}>
                       <Text 
                         size="xl" 
-                        fw={cardStatus === 'sending' || cardStatus === 'completed' ? 700 : 600} 
-                        c={cardStatus === 'sending' ? '#C8653D' : cardStatus === 'completed' ? '#22c55e' : 'dark.9'} 
+                        fw={statusTextProps.fw} 
+                        c={statusTextProps.c} 
                         ta="center"
                         style={cardStatus === 'sending' ? { letterSpacing: '0.3px', textShadow: '0 2px 4px rgba(200, 101, 61, 0.1)' } : undefined}
                       >
                         {statusMessage.title}
                       </Text>
-                      <Text size={cardStatus === 'completed' ? 'md' : 'sm'} c="dimmed" ta="center" maw={cardStatus === 'sending' ? 420 : 400}>
+                      <Text size={statusTextProps.size} c="dimmed" ta="center" maw={statusTextProps.maw}>
                         {statusMessage.description}
                       </Text>
                       {cardStatus === 'sending' && (
@@ -326,7 +357,7 @@ const CardDispensingPage = () => {
                           styles={{ root: { padding: '6px 16px', fontSize: '12px', fontWeight: 500 } }}
                         >
                           <IconMail size={14} style={{ marginRight: 6 }} />
-                          {reservation.email || reservation.guest_email || 'your email'}
+                          {reservation.guest_email ?? reservation.email ?? 'your email'}
                         </Badge>
                       )}
                     </Stack>
@@ -342,7 +373,6 @@ const CardDispensingPage = () => {
         </Group>
       </Paper>
     </Container>
-    </>
   );
 };
 

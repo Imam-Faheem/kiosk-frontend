@@ -14,6 +14,7 @@ import {
   Badge,
   Alert,
   Loader,
+  Box,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { IconSearch, IconUsers } from '@tabler/icons-react';
@@ -31,7 +32,6 @@ const SearchRoomsPage = () => {
   const [searchResults, setSearchResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-  
 
   const searchAvailability = useRoomMutation('searchAvailability', {
     onSuccess: (result) => {
@@ -112,8 +112,8 @@ const SearchRoomsPage = () => {
         justifyContent: 'center',
         alignItems: 'center',
         padding: '20px',
-        overflow: 'visible',
         backgroundColor: '#FFFFFF',
+        position: 'relative',
       }}
     >
       <Paper
@@ -127,7 +127,6 @@ const SearchRoomsPage = () => {
           backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
           borderRadius: '20px',
-          overflow: 'visible',
         }}
       >
         {/* Header */}
@@ -172,7 +171,12 @@ const SearchRoomsPage = () => {
                   valueFormat="YYYY-MM-DD"
                   {...form.getInputProps('checkIn')}
                   minDate={new Date()}
-                  popoverProps={{ withinPortal: true, position: 'bottom-start', shadow: 'md', zIndex: 300 }}
+                  popoverProps={{ 
+                    withinPortal: true, 
+                    position: 'bottom-start', 
+                    shadow: 'md', 
+                    zIndex: 1000,
+                  }}
                   styles={{
                     input: {
                       borderRadius: '12px',
@@ -193,7 +197,12 @@ const SearchRoomsPage = () => {
                   valueFormat="YYYY-MM-DD"
                   {...form.getInputProps('checkOut')}
                   minDate={form.values.checkIn ? new Date(form.values.checkIn) : new Date()}
-                  popoverProps={{ withinPortal: true, position: 'bottom-start', shadow: 'md', zIndex: 300 }}
+                  popoverProps={{ 
+                    withinPortal: true, 
+                    position: 'bottom-start', 
+                    shadow: 'md', 
+                    zIndex: 1000,
+                  }}
                   styles={{
                     input: {
                       borderRadius: '12px',

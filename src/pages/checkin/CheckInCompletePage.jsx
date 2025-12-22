@@ -20,7 +20,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../services/api/apiClient';
-import { getCheckInStatus } from '../../services/checkinService';
+import { useCheckInMutation } from '../../hooks/useCheckInMutation';
 import { formatCheckOut, calculateDisplayData } from '../../lib/checkinUtils';
 import UnoLogo from '../../assets/uno.jpg';
 import '../../styles/animations.css';
@@ -33,11 +33,26 @@ const CheckInCompletePage = () => {
   const [checkInData, setCheckInData] = useState(null);
   const [showCelebration, setShowCelebration] = useState(false);
   const checkmarkRef = useRef(null);
+  const countdownIntervalRef = useRef(null);
   
   const reservation = location.state?.reservation;
   const paymentStatus = location.state?.paymentStatus;
   const cardData = location.state?.cardData;
   const checkInResult = location.state?.checkInResult;
+
+  const checkInStatusMutation = useCheckInMutation('getStatus', {
+    onSuccess: (result) => {
+      if (result.success) {
+        setCheckInData(result.data);
+      }
+    },
+    onError: () => {
+      // If check-in status fetch fails, use checkInResult if available
+      if (checkInResult?.data) {
+        setCheckInData(checkInResult.data);
+      }
+    }
+  });
 
   // Calculate display data from all available sources
   const displayData = useMemo(() => 
@@ -65,19 +80,13 @@ const CheckInCompletePage = () => {
 
     // Fetch check-in status if we have a reservation ID but no check-in data
     const fetchCheckInDetails = async () => {
-      const reservationId = reservation.reservationId ?? reservation.id;
+      const reservationId = reservation.reservation_id ?? reservation.reservationId ?? reservation.id;
       if (reservationId && !checkInResult?.data && !checkInData) {
         try {
           setLoading(true);
-          const statusResult = await getCheckInStatus(reservationId);
-          if (statusResult.success) {
-            setCheckInData(statusResult.data);
-          }
+          await checkInStatusMutation.mutateAsync(reservationId);
         } catch (err) {
-          // If check-in status fetch fails, use checkInResult if available
-          if (checkInResult?.data) {
-            setCheckInData(checkInResult.data);
-          }
+          // Error handled in mutation onError callback
         } finally {
           setLoading(false);
         }
@@ -94,52 +103,91 @@ const CheckInCompletePage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
-  // Log completion and setup countdown
   useEffect(() => {
     if (!reservation) return;
     
-    const reservationId = reservation.reservationId ?? reservation.id;
+    const reservationId = reservation.reservation_id ?? reservation.reservationId ?? reservation.id;
     if (!reservationId) return;
 
-    // Log check-in completion (only once)
     const logKey = `checkin-logged-${reservationId}`;
-    if (!sessionStorage.getItem(logKey)) {
-      // Use displayData if available, otherwise use reservation data
-      const guestName = displayData?.guestName || 
-                       reservation.guestName || 
-                       `${reservation.firstName || ''} ${reservation.lastName || ''}`.trim() ||
-                       'Guest';
-      const roomNumber = displayData?.roomNumber || reservation.roomNumber || 'TBD';
-      const checkInTime = displayData?.checkInTime || new Date().toISOString();
+    const hasLogged = sessionStorage.getItem(logKey);
+
+    if (!hasLogged) {
+      const getGuestName = () => {
+        if (displayData?.guestName) return displayData.guestName;
+        
+        if (typeof reservation.guest_name === 'string') {
+          return reservation.guest_name;
+        }
+        
+        if (reservation.guest_name) {
+          const firstName = reservation.guest_name.first_name ?? '';
+          const lastName = reservation.guest_name.last_name ?? '';
+          const fullName = `${firstName} ${lastName}`.trim();
+          if (fullName) return fullName;
+        }
+        
+        return reservation.guestName ?? 'Guest';
+      };
+      
+      const guestName = getGuestName();
+      
+      const roomNumber = displayData?.roomNumber ?? reservation.room_number ?? reservation.roomNumber ?? 'TBD';
+      const checkInTime = displayData?.checkInTime ?? new Date().toISOString();
       
       logCompletionMutation.mutate({
         reservationId,
         guestName,
         roomNumber,
         checkInTime,
-        paymentStatus: paymentStatus?.status || 'completed',
+        paymentStatus: paymentStatus?.status ?? 'completed',
         cardIssued: !!cardData,
       });
+      
       sessionStorage.setItem(logKey, 'true');
     }
 
-    // Auto-return to MainMenu after 15s
-    const countdownInterval = setInterval(() => {
+    return () => {
+      // Cleanup handled in countdown effect
+    };
+  }, [reservation?.reservation_id ?? reservation?.reservationId ?? reservation?.id, navigate, displayData, paymentStatus, cardData, logCompletionMutation]);
+
+  // Separate effect for countdown timer - runs once on mount
+  useEffect(() => {
+    if (!reservation) return;
+
+    // Reset countdown to 15
+    setCountdown(15);
+
+    // Clear any existing interval
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+    }
+
+    // Start countdown timer
+    countdownIntervalRef.current = setInterval(() => {
       setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(countdownInterval);
+        const next = prev - 1;
+        if (next <= 0) {
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
           navigate('/home');
           return 0;
         }
-        return prev - 1;
+        return next;
       });
     }, 1000);
 
+    // Cleanup on unmount
     return () => {
-      clearInterval(countdownInterval);
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reservation?.reservationId || reservation?.id, navigate, displayData, paymentStatus, cardData, logCompletionMutation]);
+  }, [reservation, navigate]);
 
   const handleReturnHome = () => {
     navigate('/home');
@@ -163,74 +211,95 @@ const CheckInCompletePage = () => {
   }
 
   return (
-    <>
-      <Container
-        size="lg"
+    <Container
+      size="lg"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+      p={20}
+      bg="#FFFFFF"
+    >
+      <Paper
+        withBorder
+        shadow="md"
+        p={40}
+        radius="xl"
+        w="100%"
+        maw={600}
+        bg="#ffffff"
         style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '24px',
-          backgroundColor: '#FFFFFF',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
         }}
       >
-        <Paper
-          withBorder
-          shadow="md"
-          p={40}
-          radius="xl"
-          style={{
-            width: '100%',
-            maxWidth: '720px',
-            backgroundColor: '#ffffff',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            borderRadius: '20px',
-          }}
-        >
-          {/* Header */}
-          <Group justify="space-between" mb="xl" pb="md" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-            <Group>
-              <img
-                src={UnoLogo}
-                alt="UNO Hotel Logo"
-                width={50}
-                height={50}
-                style={{ borderRadius: '8px', objectFit: 'cover' }}
-              />
-              <Title 
-                order={2} 
-                fw={800}
-                c="rgb(34, 34, 34)"
-                style={{ 
-                  fontSize: '30px',
-                  letterSpacing: '1px',
-                  marginLeft: '-9px',
-                  fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif'
-                }}
-              >
-                UNO HOTELS
-              </Title>
-            </Group>
+        {/* Header */}
+        <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <Group>
+            <Box
+              component="img"
+              src={UnoLogo}
+              alt="UNO Hotel Logo"
+              w={50}
+              h={50}
+              radius="md"
+              mr={0}
+              style={{
+                objectFit: 'cover',
+              }}
+            />
+            <Title 
+              order={2} 
+              fz={30}
+              c="rgb(34, 34, 34)"
+              fw={600}
+              lts={1}
+              ml={-9}
+            >
+              UNO HOTELS
+            </Title>
           </Group>
+        </Group>
 
           {/* Success Content */}
-          <Stack gap={32} align="center" mb={40}>
+          <Stack gap={32} align="center">
             {/* Animated Success Checkmark */}
             <Box
-              style={{
-                position: 'relative',
-                width: '140px',
-                height: '140px',
-                marginBottom: '8px',
-              }}
+              pos="relative"
+              w={140}
+              h={140}
+              mb={8}
             >
               {/* Ripple Effects */}
               {showCelebration && (
                 <>
-                  <Box className="ripple-effect" style={{ top: '50%', left: '50%', marginTop: '-70px', marginLeft: '-70px', width: '140px', height: '140px' }} />
-                  <Box className="ripple-effect" style={{ top: '50%', left: '50%', marginTop: '-70px', marginLeft: '-70px', width: '140px', height: '140px', animationDelay: '0.3s' }} />
+                  <Box 
+                    className="ripple-effect" 
+                    pos="absolute"
+                    top="50%"
+                    left="50%"
+                    style={{ 
+                      marginTop: '-70px', 
+                      marginLeft: '-70px', 
+                      width: '140px', 
+                      height: '140px' 
+                    }} 
+                  />
+                  <Box 
+                    className="ripple-effect" 
+                    pos="absolute"
+                    top="50%"
+                    left="50%"
+                    style={{ 
+                      marginTop: '-70px', 
+                      marginLeft: '-70px', 
+                      width: '140px', 
+                      height: '140px', 
+                      animationDelay: '0.3s' 
+                    }} 
+                  />
                 </>
               )}
               
@@ -238,10 +307,10 @@ const CheckInCompletePage = () => {
               <Box
                 ref={checkmarkRef}
                 className="glow-effect"
+                w={140}
+                h={140}
+                bg="#22c55e"
                 style={{
-                  width: '140px',
-                  height: '140px',
-                  backgroundColor: '#22c55e',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
@@ -282,9 +351,10 @@ const CheckInCompletePage = () => {
                 <Box
                   key={i}
                   className="sparkle"
+                  pos="absolute"
+                  top="50%"
+                  left="50%"
                   style={{
-                    top: '50%',
-                    left: '50%',
                     transform: `translate(-50%, -50%) rotate(${i * 45}deg) translateY(-70px)`,
                     animationDelay: `${0.5 + i * 0.1}s`,
                   }}
@@ -299,11 +369,9 @@ const CheckInCompletePage = () => {
                 c="dark.9" 
                 fw={700} 
                 ta="center"
-                style={{
-                  fontSize: '32px',
-                  letterSpacing: '-0.5px',
-                  lineHeight: 1.2,
-                }}
+                fz={32}
+                lts={-0.5}
+                lh={1.2}
               >
                 Check-In Complete
               </Title>
@@ -312,7 +380,7 @@ const CheckInCompletePage = () => {
                 c="dimmed" 
                 ta="center"
                 maw={500}
-                style={{ lineHeight: 1.6 }}
+                lh={1.6}
               >
                 Your room is ready. We're delighted to welcome you to UNO Hotels.
               </Text>
@@ -331,8 +399,8 @@ const CheckInCompletePage = () => {
                   h={80}
                   bg="#C8653D"
                   mt={8}
+                  radius="md"
                   style={{
-                    borderRadius: '16px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -354,7 +422,7 @@ const CheckInCompletePage = () => {
                 >
                   <Stack gap={20}>
                     <Box>
-                      <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" style={{ letterSpacing: '0.5px' }}>
+                      <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" lts={0.5}>
                         Room Number
                       </Text>
                       <Text size="xl" fw={700} c="dark.9">
@@ -368,7 +436,7 @@ const CheckInCompletePage = () => {
                       <Box style={{ flex: 1 }}>
                         <Group gap={8} mb={4}>
                           <IconCalendar size={16} color="#666666" />
-                          <Text size="xs" fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.5px' }}>
+                          <Text size="xs" fw={600} c="dimmed" tt="uppercase" lts={0.5}>
                             Check-In Time
                           </Text>
                         </Group>
@@ -392,7 +460,7 @@ const CheckInCompletePage = () => {
                       <Box style={{ flex: 1 }}>
                         <Group gap={8} mb={4}>
                           <IconCalendar size={16} color="#666666" />
-                          <Text size="xs" fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.5px' }}>
+                          <Text size="xs" fw={600} c="dimmed" tt="uppercase" lts={0.5}>
                             Check-Out
                           </Text>
                         </Group>
@@ -405,7 +473,7 @@ const CheckInCompletePage = () => {
                     <Divider color="gray.2" />
                     
                     <Box>
-                      <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" style={{ letterSpacing: '0.5px' }}>
+                      <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" lts={0.5}>
                         Guest
                       </Text>
                       <Text size="md" fw={500} c="dark.9">
@@ -421,18 +489,26 @@ const CheckInCompletePage = () => {
                   fw={500} 
                   c="#222222" 
                   ta="center"
-                  style={{
-                    marginTop: '8px',
-                    lineHeight: 1.6,
-                  }}
+                  mt={8}
+                  lh={1.6}
                 >
                   We hope you enjoy your stay with us.
                 </Text>
 
                 {/* Auto-return countdown */}
-                <Text size="sm" c="dimmed" ta="center">
-                  Returning to main menu in {countdown} {countdown === 1 ? 'second' : 'seconds'}...
-                </Text>
+                <Box
+                  p={16}
+                  bg="rgba(200, 101, 61, 0.05)"
+                  radius="md"
+                  w="100%"
+                  style={{
+                    border: '1px solid rgba(200, 101, 61, 0.1)',
+                  }}
+                >
+                  <Text size="md" fw={600} c="#C8653D" ta="center">
+                    Returning to main menu in {countdown} {countdown === 1 ? 'second' : 'seconds'}...
+                  </Text>
+                </Box>
               </>
             )}
           </Stack>
@@ -440,39 +516,29 @@ const CheckInCompletePage = () => {
           {/* Return Home Button */}
           <Group justify="center" mt={8}>
             <Button
-                size="lg"
-                leftSection={<IconHome size={20} stroke={2} />}
-                onClick={handleReturnHome}
-                bg="#C8653D"
-                c="white"
-                fw={600}
-                styles={{
-                  root: {
-                    borderRadius: '12px',
-                    fontSize: '16px',
-                    padding: '12px 32px',
-                    height: 'auto',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    boxShadow: '0 4px 12px rgba(200, 101, 61, 0.25)',
-                  },
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#B8552F';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(200, 101, 61, 0.35)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#C8653D';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(200, 101, 61, 0.25)';
-                }}
-              >
+              size="lg"
+              leftSection={<IconHome size={20} stroke={2} />}
+              onClick={handleReturnHome}
+              bg="#C8653D"
+              c="white"
+              fw={600}
+              radius="md"
+              px={32}
+              py={12}
+              h="auto"
+              styles={{
+                root: {
+                  fontSize: '16px',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: '0 4px 12px rgba(200, 101, 61, 0.25)',
+                },
+              }}
+            >
               Return to Home
             </Button>
           </Group>
         </Paper>
       </Container>
-    </>
   );
 };
 

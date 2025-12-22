@@ -8,6 +8,7 @@ import {
   Stack,
   TextInput,
   Alert,
+  Box,
 } from '@mantine/core';
 import { IconAlertCircle, IconArrowRight } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
@@ -15,6 +16,7 @@ import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
 import { checkinInitialValues } from '../../schemas/checkin.schema';
 import useLanguage from '../../hooks/useLanguage';
+import { mockData, shouldUseMock, simulateApiDelay } from '../../services/mockData';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
 
@@ -22,10 +24,14 @@ const CheckInPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   
   const validateReservation = useReservationMutation('validate', {
     onError: (err) => {
-      setError(err.message || t('error.reservationNotFound'));
+      // Don't set error here if we'll use mock data
+      if (!shouldUseMock(err)) {
+        setError(err.message ?? t('error.reservationNotFound'));
+      }
     },
   });
 
@@ -39,22 +45,18 @@ const CheckInPage = () => {
 
   const handleSubmit = async (values) => {
     setError(null);
+    setIsLoading(true);
     
     try {
-      // Call backend API to validate reservation
-      
       const result = await validateReservation.mutateAsync(values);
       
-      // Only proceed if validation was successful AND we have valid reservation data
       if (result.success && result.data) {
-        // Verify we have essential reservation data
-        const reservationId = result.data.reservation_id || result.data.id;
+        const reservationId = result.data.reservation_id ?? result.data.id;
         if (!reservationId) {
           setError('Invalid reservation data. Please try again.');
           return;
         }
         
-        // Navigate to payment check page with validated reservation data
         navigate('/checkin/payment-check', {
           state: { reservation: result.data },
         });
@@ -62,7 +64,31 @@ const CheckInPage = () => {
         setError('Reservation validation failed. Please check your credentials.');
       }
     } catch (err) {
-      setError(err.message || t('error.reservationNotFound'));
+      // Use mock data on network errors or other errors
+      if (shouldUseMock(err)) {
+        try {
+          await simulateApiDelay(600);
+          const mockResult = mockData.reservation(values);
+          
+          if (mockResult.success && mockResult.data) {
+            const reservationId = mockResult.data.reservation_id ?? mockResult.data.id;
+            if (reservationId) {
+              navigate('/checkin/payment-check', {
+                state: { reservation: mockResult.data },
+              });
+              return;
+            }
+          }
+        } catch (mockErr) {
+          setError('Failed to load reservation data. Please try again.');
+          return;
+        }
+      }
+      
+      // Show error for validation failures (404, 403) or other errors
+      setError(err.message ?? t('error.reservationNotFound'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -79,46 +105,44 @@ const CheckInPage = () => {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '20px',
-        backgroundColor: '#FFFFFF',
       }}
+      p={20}
+      bg="#FFFFFF"
     >
       <Paper
         withBorder
         shadow="md"
         p={40}
         radius="xl"
+        w="100%"
+        maw={600}
+        bg="#ffffff"
         style={{
-          width: '100%',
-          maxWidth: '600px',
-          backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
         }}
       >
         {/* Header */}
-        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+        <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
-            <img
+            <Box
+              component="img"
               src={UnoLogo}
               alt="UNO Hotel Logo"
+              w={50}
+              h={50}
+              radius="md"
+              mr={0}
               style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
                 objectFit: 'cover',
               }}
             />
             <Title 
               order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
+              fz={30}
+              c="rgb(34, 34, 34)"
+              fw={600}
+              lts={1}
+              ml={-9}
             >
               UNO HOTELS
             </Title>
@@ -126,13 +150,14 @@ const CheckInPage = () => {
         </Group>
 
         {/* Context Title */}
-        <Title order={3} style={{
-          fontSize: '26px',
-          fontWeight: 800,
-          color: '#222',
-          marginBottom: '16px',
-          letterSpacing: '0.5px'
-        }}>
+        <Title 
+          order={3}
+          fz={26}
+          fw={800}
+          c="#222"
+          mb={16}
+          lts={0.5}
+        >
           Find Your Reservation
         </Title>
 
@@ -145,7 +170,7 @@ const CheckInPage = () => {
                 title="Error"
                 color="red"
                 variant="light"
-                style={{ borderRadius: '8px' }}
+                radius="md"
               >
                 {error}
               </Alert>
@@ -200,25 +225,55 @@ const CheckInPage = () => {
               type="submit"
               size="lg"
               rightSection={<IconArrowRight size={20} />}
-              loading={validateReservation.isPending}
-              style={{
-                backgroundColor: '#C8653D',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8552F';
-                e.currentTarget.style.transform = 'scale(1.02)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.transform = 'scale(1)';
+              loading={isLoading}
+              disabled={isLoading}
+              bg="#C8653D"
+              c="white"
+              fw={600}
+              radius="md"
+              px={32}
+              py={12}
+              h="auto"
+              styles={{
+                root: {
+                  fontSize: '16px',
+                  minWidth: '180px',
+                  width: '180px',
+                  transition: 'background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease',
+                  boxShadow: '0 4px 12px rgba(200, 101, 61, 0.25)',
+                  '&:hover': {
+                    backgroundColor: '#B8552F !important',
+                    boxShadow: '0 6px 16px rgba(200, 101, 61, 0.35)',
+                    width: '180px',
+                    minWidth: '180px',
+                  },
+                  '&:active': {
+                    transform: 'translateY(1px)',
+                    boxShadow: '0 2px 8px rgba(200, 101, 61, 0.3)',
+                    width: '180px',
+                    minWidth: '180px',
+                  },
+                  '&:focus': {
+                    width: '180px',
+                    minWidth: '180px',
+                  },
+                  '&:disabled': {
+                    opacity: 0.7,
+                    cursor: 'not-allowed',
+                    width: '180px',
+                    minWidth: '180px',
+                  },
+                },
+                label: {
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                },
               }}
             >
-              {validateReservation.isPending ? t('checkIn.loading') : t('checkIn.submit')}
+              {isLoading ? 'Validating...' : t('checkIn.submit')}
             </Button>
           </Group>
         </form>

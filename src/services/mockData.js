@@ -1,5 +1,8 @@
 import { API_CONFIG } from '../config/constants';
 
+// Mock bathroom image URL
+export const BATHROOM_IMAGE_URL = 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800';
+
 // Mock data generators for fallback when API fails
 export const mockData = {
   // Check-in mock data

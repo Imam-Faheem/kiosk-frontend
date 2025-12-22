@@ -21,6 +21,7 @@ import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
 import { getRoomDetails } from '../../services/roomService';
+import { BATHROOM_IMAGE_URL } from '../../services/mockData';
 
 const RoomDetailPage = () => {
   const navigate = useNavigate();
@@ -89,10 +90,17 @@ const RoomDetailPage = () => {
   // Use roomData if available, otherwise fallback to room
   const displayRoom = roomData || room;
   
-  // Ensure images array exists
-  const roomImages = displayRoom?.images && Array.isArray(displayRoom.images) && displayRoom.images.length > 0
+  // Ensure images array exists - combine room images with bathroom image
+  const baseImages = displayRoom?.images && Array.isArray(displayRoom.images) && displayRoom.images.length > 0
     ? displayRoom.images
     : [UnoLogo];
+  
+  // Always include bathroom image as the third image
+  const roomImages = baseImages.length >= 2 
+    ? [...baseImages.slice(0, 2), BATHROOM_IMAGE_URL]
+    : baseImages.length === 1
+    ? [baseImages[0], UnoLogo, BATHROOM_IMAGE_URL]
+    : [UnoLogo, UnoLogo, BATHROOM_IMAGE_URL];
   const formatDate = (value) => {
     if (!value) return '';
     const date = new Date(value);

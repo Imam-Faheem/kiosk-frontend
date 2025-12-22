@@ -10,7 +10,7 @@ import {
   Alert,
   Button,
 } from '@mantine/core';
-import { IconCheck, IconX, IconKey, IconHome } from '@tabler/icons-react';
+import { IconCheck, IconX, IconKey, IconHome, IconLoader2 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
@@ -43,7 +43,7 @@ const RegenerateCardPage = () => {
       }
     },
     onError: (err) => {
-      setError(err.message || t('error.cardRegenerationFailed'));
+      setError(err.message ?? t('error.cardRegenerationFailed'));
       setCardStatus('error');
     }
   });
@@ -54,17 +54,28 @@ const RegenerateCardPage = () => {
     { label: t('regenerateCard.steps.programming'), status: 'programming' },
   ], [t]);
 
-  const guestName = useMemo(() => 
-    guestData?.guestName || `${guestData?.firstName || ''} ${guestData?.lastName || ''}`.trim(),
-    [guestData]
-  );
+  const guestName = useMemo(() => {
+    if (guestData?.guestName) return guestData.guestName;
+    const firstName = guestData?.firstName ?? '';
+    const lastName = guestData?.lastName ?? '';
+    const fullName = `${firstName} ${lastName}`.trim();
+    return fullName ? fullName : '';
+  }, [guestData]);
 
-  const cardMutationData = useMemo(() => ({
-    reservationId: guestData?.reservationId || guestData?.reservationNumber,
-    roomNumber: guestData?.roomNumber,
-    guestName,
-    propertyId: guestData?.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
-  }), [guestData, guestName]);
+  const cardMutationData = useMemo(() => {
+    const getPropertyId = () => {
+      if (guestData?.propertyId) return guestData.propertyId;
+      if (process.env.REACT_APP_PROPERTY_ID) return process.env.REACT_APP_PROPERTY_ID;
+      return 'BER';
+    };
+
+    return {
+      reservationId: guestData?.reservationId ?? guestData?.reservationNumber,
+      roomNumber: guestData?.roomNumber,
+      guestName,
+      propertyId: getPropertyId(),
+    };
+  }, [guestData, guestName]);
 
   const processStep = async (stepIndex, status) => {
     setCurrentStep(stepIndex);
@@ -101,10 +112,10 @@ const RegenerateCardPage = () => {
             });
           }, 2000);
         } else {
-          setError(result.message || t('error.cardDispenserError'));
+          setError(result.message ?? t('error.cardDispenserError'));
         }
       } catch (err) {
-        setError(err.message || t('error.cardDispenserError'));
+        setError(err.message ?? t('error.cardDispenserError'));
       }
     };
 
@@ -133,34 +144,32 @@ const RegenerateCardPage = () => {
   }
 
   return (
-    <>
-      <Container
-        size="lg"
+    <Container
+      size="lg"
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+      p={20}
+      bg="#FFFFFF"
+    >
+      <Paper
+        withBorder
+        shadow="md"
+        p={40}
+        radius="xl"
+        w="100%"
+        maw={600}
+        bg="#ffffff"
         style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '20px',
-          backgroundColor: '#FFFFFF',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
         }}
       >
-        <Paper
-          withBorder
-          shadow="md"
-          p={40}
-          radius="xl"
-          style={{
-            width: '100%',
-            maxWidth: '600px',
-            backgroundColor: '#ffffff',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            borderRadius: '20px',
-          }}
-        >
           {/* Header */}
-          <Group justify="space-between" mb="xl" pb="md" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
             <Group>
               <Box
                 component="img"
@@ -169,15 +178,18 @@ const RegenerateCardPage = () => {
                 w={50}
                 h={50}
                 radius="md"
-                style={{ objectFit: 'cover' }}
+                mr={0}
+                style={{
+                  objectFit: 'cover',
+                }}
               />
               <Title 
-                order={2}
+                order={2} 
                 fz={30}
-                c="dark.9"
+                c="rgb(34, 34, 34)"
                 fw={600}
+                lts={1}
                 ml={-9}
-                style={{ letterSpacing: '1px' }}
               >
                 UNO HOTELS
               </Title>
@@ -193,120 +205,174 @@ const RegenerateCardPage = () => {
                 variant="light"
                 radius="md"
               >
-                <Text size="md" fw={500} style={{ fontFamily: 'Inter, sans-serif' }}>
+                <Text size="md" fw={500} ff="Inter, sans-serif">
                   {error}
                 </Text>
               </Alert>
             ) : (
               <>
-                <Stack gap={24}>
-                  {steps.map((step, index) => {
-                    const isCompleted = index < currentStep;
-                    const isActive = index === currentStep;
-                    
-                    const getStepIcon = () => {
-                      if (isCompleted) {
-                        return <IconCheck size={20} color="#22c55e" stroke={2.5} />;
-                      }
-                      if (isActive) {
-                        if (step.status === 'deactivating') {
+                {/* Status Headline */}
+                <Stack gap={8} align="center" mb={24}>
+                  <Title 
+                    order={2} 
+                    fw={700} 
+                    c="dark.9" 
+                    ta="center"
+                    fz={24}
+                    lts={-0.3}
+                  >
+                    {cardStatus === 'completed' ? 'Card Update Complete' : 'Updating Room Access'}
+                  </Title>
+                  {cardStatus !== 'completed' && (
+                    <Text 
+                      size="sm" 
+                      c="dimmed" 
+                      ta="center"
+                      maw={500}
+                      lh={1.6}
+                    >
+                      Please wait while we update your access card. Do not remove the card during this process.
+                    </Text>
+                  )}
+                </Stack>
+
+                {/* Steps Sequence */}
+                <Box
+                  p={24}
+                  bg="rgba(200, 101, 61, 0.02)"
+                  radius="md"
+                  style={{
+                    border: '1px solid rgba(200, 101, 61, 0.1)',
+                  }}
+                >
+                  <Stack gap={20}>
+                    {steps.map((step, index) => {
+                      const isCompleted = index < currentStep;
+                      const isActive = index === currentStep;
+                      const isPending = index > currentStep;
+                      
+                      const getStepIcon = () => {
+                        if (isCompleted) {
                           return (
-                            <Box pos="relative" w={20} h={20}>
-                              <Box
-                                pos="absolute"
-                                w={20}
-                                h={20}
-                                style={{
-                                  border: '2px solid #C8653D',
-                                  borderRadius: '50%',
-                                  animation: 'pulseRing 2s ease-in-out infinite',
-                                }}
-                              />
-                              <Box
-                                pos="absolute"
-                                top={6}
-                                left={6}
-                                w={8}
-                                h={8}
-                                bg="#C8653D"
-                                style={{ borderRadius: '50%' }}
-                              />
-                            </Box>
-                          );
-                        } else if (step.status === 'generating') {
-                          return (
-                            <Box w={20} h={20}>
-                              <svg width="20" height="20" viewBox="0 0 20 20" style={{ overflow: 'visible' }}>
-                                <path
-                                  d="M 4 10 L 8 6 L 12 10 L 16 6"
-                                  fill="none"
-                                  stroke="#C8653D"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="animated-line"
-                                />
-                              </svg>
-                            </Box>
-                          );
-                        } else {
-                          return (
-                            <Box w={20} h={20}>
-                              <svg width="20" height="20" viewBox="0 0 20 20" style={{ overflow: 'visible' }}>
-                                <rect
-                                  x="4"
-                                  y="6"
-                                  width="12"
-                                  height="8"
-                                  fill="none"
-                                  stroke="#C8653D"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  className="animated-line"
-                                />
-                                <path
-                                  d="M 8 10 L 10 12 L 12 10"
-                                  fill="none"
-                                  stroke="#C8653D"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="animated-line"
-                                />
-                              </svg>
+                            <Box
+                              w={24}
+                              h={24}
+                              bg="#22c55e"
+                              style={{
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <IconCheck size={14} color="white" stroke={3} />
                             </Box>
                           );
                         }
-                      }
+                        if (isActive) {
+                          if (step.status === 'deactivating') {
+                            return (
+                              <Box pos="relative" w={24} h={24}>
+                                <Box
+                                  pos="absolute"
+                                  w={24}
+                                  h={24}
+                                  style={{
+                                    border: '2px solid #C8653D',
+                                    borderRadius: '50%',
+                                    animation: 'pulseRing 2s ease-in-out infinite',
+                                  }}
+                                />
+                                <Box
+                                  pos="absolute"
+                                  top={6}
+                                  left={6}
+                                  w={12}
+                                  h={12}
+                                  bg="#C8653D"
+                                  style={{ borderRadius: '50%' }}
+                                />
+                              </Box>
+                            );
+                          } else if (step.status === 'generating') {
+                            return (
+                              <Box w={24} h={24} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <IconLoader2 
+                                  size={20} 
+                                  color="#C8653D" 
+                                  style={{ animation: 'spin 1s linear infinite' }}
+                                />
+                              </Box>
+                            );
+                          } else {
+                            return (
+                              <Box w={24} h={24} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <IconLoader2 
+                                  size={20} 
+                                  color="#C8653D" 
+                                  style={{ animation: 'spin 1s linear infinite' }}
+                                />
+                              </Box>
+                            );
+                          }
+                        }
+                        return (
+                          <Box
+                            w={24}
+                            h={24}
+                            bg="rgba(209, 213, 219, 0.3)"
+                            style={{
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <IconKey size={16} color="#d1d5db" stroke={1.5} />
+                          </Box>
+                        );
+                      };
+                      
                       return (
-                        <IconKey size={20} color="#d1d5db" stroke={1.5} />
-                      );
-                    };
-                    
-                    return (
-                      <Box key={index}>
-                        <Group justify="space-between" mb={8}>
+                        <Group 
+                          key={index}
+                          gap={16}
+                          align="center"
+                          p="12px 16px"
+                          radius="md"
+                          bg={isActive ? 'rgba(200, 101, 61, 0.05)' : 'transparent'}
+                          style={{
+                            transition: 'all 0.3s ease',
+                          }}
+                        >
+                          {getStepIcon()}
                           <Text 
                             size="md" 
-                            fw={isActive ? 600 : isCompleted ? 500 : 400} 
-                            c={isActive ? 'dark.9' : isCompleted ? 'dark.7' : 'gray.6'}
+                            fw={isActive ? 700 : isCompleted ? 600 : 500} 
+                            c={isActive ? 'dark.9' : isCompleted ? '#22c55e' : 'gray.6'}
+                            ff="Inter, sans-serif"
+                            lts={-0.2}
                             style={{ 
-                              fontFamily: 'Inter, sans-serif',
-                              letterSpacing: '-0.2px',
-                              transition: 'all 0.3s ease',
+                              flex: 1,
                             }}
                           >
                             {step.label}
                           </Text>
-                          {getStepIcon()}
+                          {isActive && (
+                            <Text 
+                              size="xs" 
+                              c="#C8653D" 
+                              fw={600}
+                              ff="Inter, sans-serif"
+                            >
+                              Processing...
+                            </Text>
+                          )}
                         </Group>
-                        {isActive && (
-                          <Box mt={12} className="glow-loading-line" />
-                        )}
-                      </Box>
-                    );
-                  })}
-                </Stack>
+                      );
+                    })}
+                  </Stack>
+                </Box>
 
                 {cardStatus === 'completed' && (
                   <Stack align="center" gap={12} mt={24}>
@@ -438,41 +504,34 @@ const RegenerateCardPage = () => {
             )}
           </Stack>
 
-          <Group justify="center">
-            <Button
-              size="lg"
-              leftSection={<IconHome size={20} stroke={2} />}
-              onClick={handleReturnHome}
-              bg="#C8653D"
-              c="white"
-              fw={600}
-              styles={{
-                root: {
-                  borderRadius: '12px',
-                  fontSize: '16px',
-                  padding: '12px 32px',
-                  height: 'auto',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  boxShadow: '0 4px 12px rgba(200, 101, 61, 0.25)',
-                },
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8552F';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 16px rgba(200, 101, 61, 0.35)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(200, 101, 61, 0.25)';
-              }}
-            >
-              Return to Home
-            </Button>
-          </Group>
+          {/* Return Home Button - Only show when completed or error */}
+          {(cardStatus === 'completed' || error) && (
+            <Group justify="center" mt={8}>
+              <Button
+                size="lg"
+                leftSection={<IconHome size={20} stroke={2} />}
+                onClick={handleReturnHome}
+                bg="#C8653D"
+                c="white"
+                fw={600}
+                radius="md"
+                px={32}
+                py={12}
+                h="auto"
+                styles={{
+                  root: {
+                    fontSize: '16px',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: '0 4px 12px rgba(200, 101, 61, 0.25)',
+                  },
+                }}
+              >
+                Return to Home
+              </Button>
+            </Group>
+          )}
         </Paper>
       </Container>
-    </>
   );
 };
 
