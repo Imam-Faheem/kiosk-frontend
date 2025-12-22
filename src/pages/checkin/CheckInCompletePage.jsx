@@ -21,7 +21,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../services/api/apiClient';
 import { useCheckInMutation } from '../../hooks/useCheckInMutation';
-import { formatCheckOut, calculateDisplayData } from '../../lib/checkinUtils';
+import { formatCheckOut, calculateDisplayData, getGuestName } from '../../lib/checkinUtils';
 import UnoLogo from '../../assets/uno.jpg';
 import '../../styles/animations.css';
 
@@ -113,24 +113,7 @@ const CheckInCompletePage = () => {
     const hasLogged = sessionStorage.getItem(logKey);
 
     if (!hasLogged) {
-      const getGuestName = () => {
-        if (displayData?.guestName) return displayData.guestName;
-        
-        if (typeof reservation.guest_name === 'string') {
-          return reservation.guest_name;
-        }
-        
-        if (reservation.guest_name) {
-          const firstName = reservation.guest_name.first_name ?? '';
-          const lastName = reservation.guest_name.last_name ?? '';
-          const fullName = `${firstName} ${lastName}`.trim();
-          if (fullName) return fullName;
-        }
-        
-        return reservation.guestName ?? 'Guest';
-      };
-      
-      const guestName = getGuestName();
+      const guestName = displayData?.guestName ?? getGuestName(reservation, checkInData);
       
       const roomNumber = displayData?.roomNumber ?? reservation.room_number ?? reservation.roomNumber ?? 'TBD';
       const checkInTime = displayData?.checkInTime ?? new Date().toISOString();

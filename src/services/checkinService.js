@@ -1,24 +1,10 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock } from './mockData';
+import { normalizeReservationData } from '../lib/checkinUtils';
 
 const isNetworkError = (error) => {
   return !error?.response || error?.code === 'ECONNABORTED' || error?.code === 'ERR_NETWORK';
 };
-
-// Helper to normalize data fields
-const normalizeData = (data) => ({
-  reservation_id: data.reservation_id ?? data.reservationId,
-  guest_email: data.guest_email ?? data.guestEmail,
-  guest_phone: data.guest_phone ?? data.guestPhone,
-  guest_name: {
-    first_name: data.guest_name?.first_name ?? data.firstName ?? '',
-    last_name: data.guest_name?.last_name ?? data.lastName ?? '',
-  },
-  check_in_date: data.check_in_date ?? data.checkInDate ?? new Date().toISOString(),
-  check_out_date: data.check_out_date ?? data.checkOutDate,
-  room_number: data.room_number ?? data.roomNumber,
-  confirmation_code: data.confirmation_code ?? data.confirmationCode,
-});
 
 /**
  * Process check-in for a reservation
@@ -27,7 +13,7 @@ const normalizeData = (data) => ({
  */
 export const processCheckIn = async (data) => {
   try {
-    const payload = normalizeData(data);
+    const payload = normalizeReservationData(data);
 
     const response = await apiClient.post('/api/kiosk/v1/check-in', payload);
     

@@ -191,3 +191,14 @@ export const formatFileSize = (bytes) => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
+
+/**
+ * Get property ID from various sources with fallback
+ * @param {Object} data - Data object that may contain propertyId
+ * @returns {string} Property ID
+ */
+export const getPropertyId = (data = null) => {
+  if (data?.propertyId) return data.propertyId;
+  if (process.env.REACT_APP_PROPERTY_ID) return process.env.REACT_APP_PROPERTY_ID;
+  return 'BER';
+};

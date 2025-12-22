@@ -14,6 +14,7 @@ import { IconCheck, IconX, IconKey, IconHome, IconLoader2 } from '@tabler/icons-
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
+import { getPropertyId } from '../../lib/utils';
 import UnoLogo from '../../assets/uno.jpg';
 import '../../styles/animations.css';
 
@@ -63,17 +64,11 @@ const RegenerateCardPage = () => {
   }, [guestData]);
 
   const cardMutationData = useMemo(() => {
-    const getPropertyId = () => {
-      if (guestData?.propertyId) return guestData.propertyId;
-      if (process.env.REACT_APP_PROPERTY_ID) return process.env.REACT_APP_PROPERTY_ID;
-      return 'BER';
-    };
-
     return {
       reservationId: guestData?.reservationId ?? guestData?.reservationNumber,
       roomNumber: guestData?.roomNumber,
       guestName,
-      propertyId: getPropertyId(),
+      propertyId: getPropertyId(guestData),
     };
   }, [guestData, guestName]);
 

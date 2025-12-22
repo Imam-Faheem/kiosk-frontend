@@ -28,15 +28,10 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { usePaymentMutation } from '../../hooks/usePaymentMutation';
+import { isPaymentCompleted, getPaymentStatus } from '../../lib/paymentUtils';
 import '../../styles/animations.css';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
-
-const isPaymentCompleted = (status) => {
-  if (status === 'completed') return true;
-  if (status === 'paid') return true;
-  return false;
-};
 
 const PaymentCheckPage = () => {
   const navigate = useNavigate();
@@ -99,16 +94,11 @@ const PaymentCheckPage = () => {
         // Simulate processing delay
         await new Promise(resolve => setTimeout(resolve, 3000));
         
-        const getPaymentStatus = () => {
-          if (reservation.paymentStatus) return reservation.paymentStatus;
-          return reservation.balance <= 0 ? 'paid' : 'pending';
-        };
-
         // Calculate actual amount from reservation
         const totalAmount = reservation.totalAmount ?? 0;
         
         const paymentStatusData = {
-          status: getPaymentStatus(),
+          status: getPaymentStatus(reservation),
           amount: totalAmount,
           currency: reservation.currency ?? 'EUR',
           balance: reservation.balance ?? 0,
