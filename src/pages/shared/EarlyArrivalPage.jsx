@@ -155,7 +155,7 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
   return (
     <Container size="lg" style={EARLY_ARRIVAL_STYLES.CONTAINER}>
       <Paper withBorder shadow="md" p={40} radius="xl" style={EARLY_ARRIVAL_STYLES.PAPER}>
-        <Group justify="space-between" mb="xl">
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
             <img src={UnoLogo} alt="UNO Hotel Logo" style={EARLY_ARRIVAL_STYLES.LOGO} />
             <Title order={1} c="#0B152A" fw={700} style={titleStyle}>
