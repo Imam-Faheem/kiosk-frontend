@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -16,6 +16,8 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
 import { checkinValidationSchema, checkinInitialValues } from '../../schemas/checkin.schema';
+import { isBeforeTargetTime } from '../../lib/timeUtils';
+import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
@@ -24,6 +26,12 @@ const CheckInPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+      navigate('/checkin/early-arrival');
+    }
+  }, [navigate]);
   
   const validateReservation = useReservationMutation('validate', {
     onSuccess: (result) => {
@@ -200,22 +208,8 @@ const CheckInPage = () => {
               size="lg"
               rightSection={<IconArrowRight size={20} />}
               loading={validateReservation.isPending}
-              style={{
-                backgroundColor: '#C8653D',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8552F';
-                e.currentTarget.style.transform = 'scale(1.02)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
+              styles={BUTTON_STYLES.primary}
+              radius="md"
             >
               {validateReservation.isPending ? t('checkIn.loading') : t('checkIn.submit')}
             </Button>

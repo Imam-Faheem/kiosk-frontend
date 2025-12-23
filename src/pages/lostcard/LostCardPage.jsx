@@ -18,6 +18,7 @@ import BackButton from '../../components/BackButton';
 import { useForm } from '@mantine/form';
 import { apiClient } from '../../services/api/apiClient';
 import UnoLogo from '../../assets/uno.jpg';
+import { BUTTON_STYLES } from '../../config/constants';
 
 const LostCardPage = () => {
   const navigate = useNavigate();
@@ -245,26 +246,8 @@ const LostCardPage = () => {
               size="lg"
               leftSection={<IconCheck size={20} />}
               loading={isLoading}
-              style={{
-                backgroundColor: '#C8653D',
-                color: '#FFFFFF',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#B8552F';
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#C8653D';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }
-              }}
+              styles={BUTTON_STYLES.primarySmall}
+              radius="md"
             >
               {isLoading ? 'Validating...' : t('lostCard.submit')}
             </Button>

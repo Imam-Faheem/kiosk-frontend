@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -14,6 +14,7 @@ import {
   Badge,
   Alert,
   Loader,
+  Box,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { IconSearch, IconUsers } from '@tabler/icons-react';
@@ -21,6 +22,8 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useRoomMutation } from '../../hooks/useRoomMutation';
 import { roomSearchValidationSchema, roomSearchInitialValues } from '../../schemas/reservation.schema';
+import { isBeforeTargetTime } from '../../lib/timeUtils';
+import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES, FORM_INPUT_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
@@ -31,7 +34,12 @@ const SearchRoomsPage = () => {
   const [searchResults, setSearchResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-  
+
+  useEffect(() => {
+    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+      navigate('/reservation/early-arrival');
+    }
+  }, [navigate]);
 
   const searchAvailability = useRoomMutation('searchAvailability', {
     onSuccess: (result) => {
@@ -106,54 +114,52 @@ const SearchRoomsPage = () => {
   return (
     <Container
       size="lg"
-      style={{
+      h="100vh"
+      style={{ 
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '20px',
         overflow: 'visible',
-        backgroundColor: '#FFFFFF',
       }}
+      bg="white"
+      p="20px"
     >
       <Paper
         withBorder
         shadow="md"
         p={40}
         radius="xl"
-        style={{
-          width: '100%',
-          maxWidth: '1000px',
-          backgroundColor: '#ffffff',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
-          overflow: 'visible',
+        w="100%"
+        maw={1000}
+        bg="white"
+        styles={{
+          root: {
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            borderRadius: '20px',
+            overflow: 'visible',
+          },
         }}
       >
         {/* Header */}
         <Group justify="space-between" mb="xl">
           <Group>
-            <img
+            <Box
+              component="img"
               src={UnoLogo}
               alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
+              w={50}
+              h={50}
+              style={{ borderRadius: '8px', marginRight: '0px', objectFit: 'cover' }}
             />
             <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
+              order={2}
+              fz={30}
+              c="rgb(34, 34, 34)"
+              fw={600}
+              lts={1}
+              ml="-9px"
             >
               UNO HOTELS
             </Title>
@@ -174,15 +180,7 @@ const SearchRoomsPage = () => {
                   {...form.getInputProps('checkIn')}
                   minDate={new Date()}
                   popoverProps={{ withinPortal: true, position: 'bottom-start', shadow: 'md', zIndex: 300 }}
-                  styles={{
-                    input: {
-                      borderRadius: '12px',
-                      border: '2px solid #E0E0E0',
-                      '&:focus': {
-                        borderColor: '#C8653D',
-                      }
-                    }
-                  }}
+                  styles={FORM_INPUT_STYLES.dateInput}
                 />
               </Grid.Col>
               <Grid.Col span={4}>
@@ -195,15 +193,7 @@ const SearchRoomsPage = () => {
                   {...form.getInputProps('checkOut')}
                   minDate={form.values.checkIn ? new Date(form.values.checkIn) : new Date()}
                   popoverProps={{ withinPortal: true, position: 'bottom-start', shadow: 'md', zIndex: 300 }}
-                  styles={{
-                    input: {
-                      borderRadius: '12px',
-                      border: '2px solid #E0E0E0',
-                      '&:focus': {
-                        borderColor: '#C8653D',
-                      }
-                    }
-                  }}
+                  styles={FORM_INPUT_STYLES.dateInput}
                 />
               </Grid.Col>
               <Grid.Col span={4}>
@@ -213,15 +203,7 @@ const SearchRoomsPage = () => {
                   required
                   size="lg"
                   {...form.getInputProps('guests')}
-                  styles={{
-                    input: {
-                      borderRadius: '12px',
-                      border: '2px solid #E0E0E0',
-                      '&:focus': {
-                        borderColor: '#C8653D',
-                      }
-                    }
-                  }}
+                  styles={FORM_INPUT_STYLES.select}
                 />
               </Grid.Col>
             </Grid>
@@ -231,22 +213,8 @@ const SearchRoomsPage = () => {
               size="lg"
               leftSection={<IconSearch size={20} />}
               loading={loading}
-              style={{
-                backgroundColor: '#C8653D',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8552F';
-                e.currentTarget.style.transform = 'scale(1.02)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
+              styles={BUTTON_STYLES.primary}
+              radius="md"
             >
               {loading ? t('searchRooms.loading') : t('searchRooms.search')}
             </Button>
@@ -290,13 +258,15 @@ const SearchRoomsPage = () => {
                     withBorder
                     p="lg"
                     radius="md"
-                    style={{
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'scale(1.02)',
-                        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
-                      }
+                    style={{ cursor: 'pointer' }}
+                    styles={{
+                      root: {
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'scale(1.02)',
+                          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                        },
+                      },
                     }}
                     onClick={() => handleSelectRoom(room)}
                   >
@@ -304,9 +274,9 @@ const SearchRoomsPage = () => {
                       <Image
                         src={(room.images && room.images[0]) || UnoLogo}
                         alt={room.name}
-                        height={200}
+                        h={200}
                         radius="md"
-                        style={{ objectFit: 'cover' }}
+                        fit="cover"
                       />
                       
                       <Stack gap="sm">
@@ -350,11 +320,9 @@ const SearchRoomsPage = () => {
                           
                           <Button
                             size="md"
-                            style={{
-                              backgroundColor: '#C8653D',
-                              color: '#FFFFFF',
-                              borderRadius: '8px',
-                            }}
+                            bg="#C8653D"
+                            c="white"
+                            radius="md"
                           >
                             Select
                           </Button>
