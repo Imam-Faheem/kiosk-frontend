@@ -10,6 +10,7 @@ import './config/i18n';
 import WelcomePage from "./pages/WelcomePage";
 import MainMenuPage from "./pages/MainMenuPage";
 import ErrorPage from "./pages/ErrorPage";
+import PropertySelectionPage from "./pages/PropertySelectionPage";
 
 // Check-in flow pages
 import CheckInPage from "./pages/checkin/CheckInPage";
@@ -65,7 +66,10 @@ const AppRoutes = () => {
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
           {/* Main kiosk flow */}
-          <Route path="/" element={<WelcomePage />} />
+          <Route path="/" element={<PropertySelectionPage />} />
+          <Route path="/property-setup" element={<PropertySelectionPage />} />
+          <Route path="/property-selector" element={<PropertySelectionPage />} />
+          <Route path="/welcome" element={<WelcomePage />} />
           <Route path="/home" element={<MainMenuPage />} />
           
           {/* Check-in flow */}

@@ -9,11 +9,14 @@ import {
   Grid,
   Image,
   Card,
+  Group,
 } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
+import usePropertyStore from "../stores/propertyStore";
+import { STORAGE_KEYS } from "../config/constants";
 import UnoLogo from "../assets/uno.jpg";
 
 const languages = [
@@ -29,17 +32,42 @@ const WelcomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { language, setLanguage, initializeLanguage } = useLanguageStore();
+  const { isConfigured, propertyId } = usePropertyStore();
 
   // Ensure language is properly initialized
   useEffect(() => {
     initializeLanguage();
   }, [initializeLanguage]);
 
+  // Check property configuration on mount
+  useEffect(() => {
+    // Check localStorage for property selection
+    try {
+      const storedProperty = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
+      if (!storedProperty) {
+        // No property selected, redirect to property selector
+        navigate("/property-selector", { replace: true });
+        return;
+      }
+      
+      const propertyData = JSON.parse(storedProperty);
+      if (!propertyData.propertyId) {
+        // Invalid property data, redirect to property selector
+        navigate("/property-selector", { replace: true });
+        return;
+      }
+    } catch {
+      // On error, redirect to property selector
+      navigate("/property-selector", { replace: true });
+    }
+  }, [navigate]);
+
   const handleLanguageChange = (value) => {
     setLanguage(value);
   };
 
   const handleContinue = () => {
+    // Navigate to home after language selection
     navigate("/home");
   };
 
@@ -206,7 +234,7 @@ const WelcomePage = () => {
         </Box>
 
         {/* ✅ Continue Button */}
-        <Box ta="center">
+        <Box ta="center" mb="xl">
           <Button
             size="xl"
             onClick={handleContinue}

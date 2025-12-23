@@ -10,13 +10,21 @@ import {
 import { IconKey, IconCalendar, IconCreditCardOff } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import useLanguage from '../hooks/useLanguage';
+import usePropertyStore from '../stores/propertyStore';
 import UnoLogo from '../assets/uno.jpg';
 import BackButton from '../components/BackButton';
 
 const MainMenuPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { isConfigured, propertyId } = usePropertyStore();
 
+  // Redirect to property setup if property is not configured
+  useEffect(() => {
+    if (!isConfigured || !propertyId) {
+      navigate('/', { replace: true });
+    }
+  }, [isConfigured, propertyId, navigate]);
 
   const handleBack = () => {
     navigate('/');

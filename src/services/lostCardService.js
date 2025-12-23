@@ -1,6 +1,13 @@
 import { apiClient } from './api/apiClient';
+import usePropertyStore from '../stores/propertyStore';
 
 const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
+
+// Helper to get propertyId from store or fallback
+const getPropertyId = () => {
+  const propertyId = usePropertyStore.getState().propertyId;
+  return propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
+};
 
 /**
  * Validate guest for lost card replacement
@@ -50,7 +57,7 @@ export const validateLostCardGuest = async (data) => {
       guestName: `${reservation.primaryGuest?.firstName || ''} ${reservation.primaryGuest?.lastName || ''}`.trim(),
       checkIn: reservation.arrival,
       checkOut: reservation.departure,
-      propertyId: reservation.property?.id || 'BER',
+      propertyId: reservation.property?.id || getPropertyId(),
       // Include full reservation for later use
       _apaleoReservation: reservation,
     };
@@ -86,7 +93,7 @@ export const regenerateLostCard = async (data) => {
   
   try {
     const { reservationId, roomNumber, propertyId } = data;
-    const property = propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
+    const property = propertyId || getPropertyId();
     
     // Call backend endpoint to regenerate passcode
     // The backend will:

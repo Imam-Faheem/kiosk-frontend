@@ -1,8 +1,9 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
-  TIMEOUT: 10000,
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000',
+  TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,
+  ORGANIZATION_ID: process.env.REACT_APP_ORGANIZATION_ID || '0ujsszwN8NRY24YaXiTIE2VWDTS',
 };
 
 // Application Constants
@@ -20,6 +21,7 @@ export const STORAGE_KEYS = {
   USER_DATA: 'user_data',
   LANGUAGE: 'language',
   THEME: 'theme',
+  KIOSK_PROPERTY: 'kioskProperty', // Property selection data
 };
 
 // API Endpoints
@@ -116,4 +118,33 @@ export const STATUS = {
     FAILED: 'failed',
     REFUNDED: 'refunded',
   },
+};
+
+// Capability mapping for array to object conversion
+export const CAPABILITY_MAP = {
+  'check-in': 'checkIn',
+  'checkIn': 'checkIn',
+  'check-out': 'checkOut',
+  'checkOut': 'checkOut',
+  'key-management': 'keyManagement',
+  'keyManagement': 'keyManagement',
+  'reservations': 'reservations',
+  'reservation': 'reservations',
+  'card-issuance': 'cardIssuance',
+  'cardIssuance': 'cardIssuance',
+  'lost-card': 'lostCard',
+  'lostCard': 'lostCard',
+  'room-service': 'roomService',
+  'roomService': 'roomService',
+};
+
+// Reverse capability mapping for object to array conversion
+export const REVERSE_CAPABILITY_MAP = {
+  checkIn: 'check-in',
+  checkOut: 'check-out',
+  keyManagement: 'key-management',
+  reservations: 'reservations',
+  cardIssuance: 'card-issuance',
+  lostCard: 'lost-card',
+  roomService: 'room-service',
 };

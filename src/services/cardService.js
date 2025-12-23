@@ -1,5 +1,12 @@
 import { apiClient } from './api/apiClient';
 import { simulateHardwareDelay, simulateApiDelay, mockSuccessResponses, mockErrors } from './mockData';
+import usePropertyStore from '../stores/propertyStore';
+
+// Helper to get propertyId from store or fallback
+const getPropertyId = () => {
+  const propertyId = usePropertyStore.getState().propertyId;
+  return propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
+};
 
 // Issue new card
 export const issueCard = async (data) => {
@@ -58,7 +65,7 @@ export const regenerateCard = async (data) => {
   try {
     const response = await apiClient.post('/lost-card/regenerate', {
       reservation_id: data.reservationId || data.reservation_id,
-      property_id: data.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
+      property_id: data.propertyId || getPropertyId(),
       room_number: data.roomNumber || data.room_number,
     });
     

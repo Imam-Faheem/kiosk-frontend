@@ -1,9 +1,16 @@
 import { apiClient } from './api/apiClient';
+import usePropertyStore from '../stores/propertyStore';
+
+// Helper to get propertyId from store or fallback
+const getPropertyId = () => {
+  const propertyId = usePropertyStore.getState().propertyId;
+  return propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
+};
 
 // Search room availability
 export const searchRoomAvailability = async (data) => {
   // Ensure propertyId is sent to backend if configured
-  const propertyId = data?.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
+  const propertyId = data?.propertyId || getPropertyId();
   const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
   
   // Map frontend field names to backend API field names
@@ -137,7 +144,7 @@ export const searchRoomAvailability = async (data) => {
 
 // Get room details
 export const getRoomDetails = async (roomTypeId, propertyIdArg) => {
-  const propertyId = propertyIdArg || process.env.REACT_APP_PROPERTY_ID || 'KIOSK_01';
+  const propertyId = propertyIdArg || getPropertyId();
   const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
   try {
     if (debug) console.log('[rooms/details] request', { roomTypeId, propertyId });
@@ -152,7 +159,7 @@ export const getRoomDetails = async (roomTypeId, propertyIdArg) => {
 
 // Get all room types
 export const getAllRoomTypes = async (propertyIdArg) => {
-  const propertyId = propertyIdArg || process.env.REACT_APP_PROPERTY_ID || 'KIOSK_01';
+  const propertyId = propertyIdArg || getPropertyId();
   const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
   try {
     if (debug) console.log('[rooms/types] request', { propertyId });
