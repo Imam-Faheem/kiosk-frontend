@@ -53,6 +53,7 @@ apiClient.interceptors.request.use(
     const method = config.method?.toLowerCase() || '';
     const isPublicPropertyEndpoint = (
       url.includes('/api/kiosk/v1/properties') ||
+      (url.includes('/api/kiosk/v1/organizations') && url.includes('/properties')) ||
       (url.includes('/api/core/v1/organizations') && url.includes('/apaleo/properties'))
     ) && method === 'get';
     
