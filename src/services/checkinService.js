@@ -3,26 +3,8 @@ import { mockData, shouldUseMock } from './mockData';
 
 export const processCheckIn = async (data) => {
   try {
-    const payload = {
-      reservation_id: data.reservation_id ?? data.reservationId,
-      guest_email: data.guest_email ?? data.guestEmail,
-      guest_phone: data.guest_phone ?? data.guestPhone,
-      guest_name: {
-        first_name: data.guest_name?.first_name ?? data.firstName ?? '',
-        last_name: data.guest_name?.last_name ?? data.lastName ?? '',
-      },
-      check_in_date: data.check_in_date ?? data.checkInDate ?? new Date().toISOString(),
-      check_out_date: data.check_out_date ?? data.checkOutDate,
-      room_number: data.room_number ?? data.roomNumber,
-      confirmation_code: data.confirmation_code ?? data.confirmationCode,
-    };
-    const response = await apiClient.post('/api/kiosk/v1/check-in', payload);
-    
-    return {
-      success: true,
-      data: response.data.data ?? response.data,
-      message: response.data.message ?? 'Check-in completed successfully',
-    };
+    const response = await apiClient.post('/api/kiosk/v1/check-in', data);
+    return response.data;
   } catch (error) {
     if (shouldUseMock(error)) {
       return mockData.checkIn(data);
@@ -39,12 +21,7 @@ export const processCheckIn = async (data) => {
 export const getCheckInStatus = async (reservationId) => {
   try {
     const response = await apiClient.get(`/api/kiosk/v1/check-in/${reservationId}/status`);
-    
-    return {
-      success: true,
-      data: response.data.data ?? response.data,
-      message: 'Check-in status retrieved successfully',
-    };
+    return response.data;
   } catch (error) {
     if (shouldUseMock(error)) {
       return mockData.checkInStatus(reservationId);
@@ -60,8 +37,7 @@ export const getCheckInStatus = async (reservationId) => {
 };
 
 export const validateReservation = async (data) => {
-  const reservationId = data.reservationId ?? data.reservation_id;
-  const lastName = data.lastName ?? data.last_name;
+  const { reservationId, lastName } = data;
   
   if (!reservationId) {
     throw new Error('Reservation ID is required');
@@ -74,18 +50,7 @@ export const validateReservation = async (data) => {
     const response = await apiClient.get(`/api/kiosk/v1/reservations/${reservationId}`, {
       params: { lastName },
     });
-    
-    const reservationData = response.data.data ?? response.data;
-    
-    if (!reservationData || (!reservationData.reservation_id && !reservationData.id)) {
-      throw new Error('Invalid reservation data received from server');
-    }
-    
-    return {
-      success: true,
-      data: reservationData,
-      message: response.data.message ?? 'Reservation validated successfully',
-    };
+    return response.data;
   } catch (error) {
     const isNetworkError = !error?.response || error?.code === 'ECONNABORTED' || error?.code === 'ERR_NETWORK';
     const isValidationError = error?.response?.status === 404 || error?.response?.status === 403;

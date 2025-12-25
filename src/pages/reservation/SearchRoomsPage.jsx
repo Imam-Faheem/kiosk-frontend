@@ -24,6 +24,7 @@ import { useRoomMutation } from '../../hooks/useRoomMutation';
 import { roomSearchValidationSchema, roomSearchInitialValues } from '../../schemas/reservation.schema';
 import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES, FORM_INPUT_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
+import usePropertyStore from '../../stores/propertyStore';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
 
@@ -79,11 +80,15 @@ const SearchRoomsPage = () => {
     setErrorMessage(null);
     setSearchResults(null);
 
+    const checkInDate = values.checkIn ? (values.checkIn instanceof Date ? values.checkIn.toISOString().split('T')[0] : values.checkIn) : null;
+    const checkOutDate = values.checkOut ? (values.checkOut instanceof Date ? values.checkOut.toISOString().split('T')[0] : values.checkOut) : null;
+    const adults = values.guests ? Number(values.guests) : 1;
+
     const searchData = {
-      ...values,
-      checkIn: values.checkIn ? (values.checkIn instanceof Date ? values.checkIn.toISOString().split('T')[0] : values.checkIn) : null,
-      checkOut: values.checkOut ? (values.checkOut instanceof Date ? values.checkOut.toISOString().split('T')[0] : values.checkOut) : null,
-      guests: values.guests ? Number(values.guests) : null,
+      propertyId: usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER',
+      arrival: checkInDate,
+      departure: checkOutDate,
+      adults: adults || 1,
     };
 
     try {
@@ -120,14 +125,14 @@ const SearchRoomsPage = () => {
   return (
     <Container
       size="lg"
-      h="100vh"
       style={{ 
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: 'center',
-        overflow: 'visible',
+        paddingTop: '20px',
+        paddingBottom: '20px',
       }}
       bg="white"
       p="20px"
@@ -144,7 +149,6 @@ const SearchRoomsPage = () => {
           root: {
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
             borderRadius: '20px',
-            overflow: 'visible',
           },
         }}
       >

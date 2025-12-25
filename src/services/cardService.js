@@ -1,6 +1,5 @@
 import { apiClient } from './api/apiClient';
 import { simulateHardwareDelay, simulateApiDelay, mockData, shouldUseMock } from './mockData';
-import usePropertyStore from '../stores/propertyStore';
 
 export const issueCard = async (data) => {
   try {
@@ -38,11 +37,7 @@ export const validateGuest = async (data) => {
 
 export const regenerateCard = async (data) => {
   try {
-    const response = await apiClient.post('/lost-card/regenerate', {
-      reservation_id: data.reservationId ?? data.reservation_id,
-      property_id: data.propertyId ?? usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER',
-      room_number: data.roomNumber ?? data.room_number,
-    });
+    const response = await apiClient.post('/lost-card/regenerate', data);
     return response.data;
   } catch (error) {
     if (shouldUseMock(error)) {

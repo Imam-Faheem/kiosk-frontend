@@ -61,7 +61,10 @@ const CheckInPage = () => {
     setIsLoading(true);
 
     try {
-      const result = await validateReservation.mutateAsync(values);
+      const result = await validateReservation.mutateAsync({
+        reservationId: values.reservationId ?? values.reservation_id,
+        lastName: values.lastName ?? values.last_name,
+      });
 
       if (result.success && result.data) {
         const reservationId = result.data.reservation_id ?? result.data.id;

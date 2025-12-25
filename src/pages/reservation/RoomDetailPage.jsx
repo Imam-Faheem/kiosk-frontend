@@ -18,6 +18,7 @@ import {
 import { IconWifi, IconSnowflake, IconShield, IconCoffee, IconDeviceTv } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
+import usePropertyStore from '../../stores/propertyStore';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
 import { getRoomDetails } from '../../services/roomService';
@@ -44,7 +45,7 @@ const RoomDetailPage = () => {
         if (!hasImages) {
           setLoading(true);
           try {
-            const propertyId = process.env.REACT_APP_PROPERTY_ID || 'BER';
+            const propertyId = usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
             const result = await getRoomDetails(room.roomTypeId, propertyId);
             
             if (result.success && result.data && result.data.images) {

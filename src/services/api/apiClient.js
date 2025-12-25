@@ -15,7 +15,7 @@ const generateIdempotencyKey = (prefix = 'req') => {
 const getPropertyContext = () => {
   const defaultContext = {
     propertyId: API_CONFIG.DEFAULT_PROPERTY_ID,
-    organizationId: API_CONFIG.DEFAULT_ORGANIZATION_ID,
+    organizationId: API_CONFIG.ORGANIZATION_ID,
   };
 
   try {
@@ -45,7 +45,7 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor to add auth token and X-Property-ID
+// Request interceptor to add X-Property-ID and X-Organization-ID
 apiClient.interceptors.request.use(
   (config) => {
     // Check if this is a truly public endpoint (no auth required)
@@ -75,12 +75,6 @@ apiClient.interceptors.request.use(
       return config;
     }
     
-    // Add auth token for all other endpoints
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
     // Add X-Property-ID and X-Organization-ID for kiosk endpoints
     const isKioskEndpoint = config.url?.includes('/api/kiosk/v1');
     if (isKioskEndpoint) {
@@ -118,14 +112,9 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Handle 401 errors (unauthorized)
-    if (error.response?.status === 401) {
-      localStorage.removeItem('access_token');
-    }
-    
     // Handle 400/403 errors related to property/organization ID
     if (error.response?.status === 400 || error.response?.status === 403) {
-      const message = error.response?.data?.message || '';
+      const message = error.response?.data?.message ?? '';
       if (message.includes('X-Property-ID') || message.includes('X-Organization-ID') || message.includes('property') || message.includes('organization')) {
         // Redirect to property selector if property is missing
         if (typeof window !== 'undefined' && !window.location.pathname.includes('/property-selector')) {
@@ -142,91 +131,6 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// API methods
-export const api = {
-  // Auth endpoints
-  auth: {
-    login: (credentials) => apiClient.post('/login', credentials),
-    logout: () => apiClient.post('/logout'),
-    refreshToken: () => apiClient.post('/refresh-token'),
-    getProfile: () => apiClient.get('/profile'),
-  },
-
-  // Reservation endpoints
-  reservations: {
-    getAll: (params) => apiClient.get('/reservations', { params }),
-    getById: (id) => apiClient.get(`/reservations/${id}`),
-    create: (data) => apiClient.post('/reservations', data),
-    update: (id, data) => apiClient.put(`/reservations/${id}`, data),
-    delete: (id) => apiClient.delete(`/reservations/${id}`),
-    search: (params) => apiClient.get('/reservations/search', { params }),
-  },
-
-  // Guest endpoints
-  guests: {
-    getAll: (params) => apiClient.get('/guests', { params }),
-    getById: (id) => apiClient.get(`/guests/${id}`),
-    create: (data) => apiClient.post('/guests', data),
-    update: (id, data) => apiClient.put(`/guests/${id}`, data),
-    delete: (id) => apiClient.delete(`/guests/${id}`),
-  },
-
-  // Room endpoints
-  rooms: {
-    getAll: (params) => apiClient.get('/rooms', { params }),
-    getById: (id) => apiClient.get(`/rooms/${id}`),
-    getAvailable: (params) => apiClient.get('/rooms/available', { params }),
-  },
-
-  // Check-in/Check-out endpoints
-  checkin: {
-    process: (data) => apiClient.post('/api/kiosk/v1/check-in', data),
-    getStatus: (reservationId) => apiClient.get(`/api/kiosk/v1/check-in/${reservationId}/status`),
-    validateReservation: (reservationId, lastName) => apiClient.get(`/api/kiosk/v1/reservations/${reservationId}`, {
-      params: { lastName }
-    }),
-  },
-
-  checkout: {
-    process: (data) => apiClient.post('/api/kiosk/v1/checkout', data),
-    getStatus: (reservationId) => apiClient.get(`/api/kiosk/v1/checkout/${reservationId}/status`),
-  },
-
-  // Digital Key endpoints
-  digitalKey: {
-    issue: (data) => apiClient.post('/api/kiosk/v1/key/issue', data),
-    get: (keyId) => apiClient.get(`/api/kiosk/v1/key/${keyId}`),
-    revoke: (keyId) => apiClient.delete(`/api/kiosk/v1/key/${keyId}`),
-    regenerate: (keyId, data) => apiClient.post(`/api/kiosk/v1/key/${keyId}/regenerate`, data),
-  },
-
-  // Payment endpoints
-  payments: {
-    process: (data) => apiClient.post('/api/kiosk/v1/payment', data),
-    getStatus: (reservationId) => apiClient.get(`/api/kiosk/v1/payment/status/${reservationId}`),
-    getHistory: (params) => apiClient.get('/api/kiosk/v1/payment/history', { params }),
-    refund: (transactionId, data) => apiClient.post(`/api/kiosk/v1/payment/${transactionId}/refund`, data),
-  },
-
-  // Reports endpoints
-  reports: {
-    occupancy: (params) => apiClient.get('/reports/occupancy', { params }),
-    revenue: (params) => apiClient.get('/reports/revenue', { params }),
-    guests: (params) => apiClient.get('/reports/guests', { params }),
-  },
-
-  // Property endpoints
-  properties: {
-    getAll: () => apiClient.get('/properties'),
-    getById: (id) => apiClient.get(`/properties/${id}`),
-    getCapabilities: (propertyId, kioskId) => {
-      const params = { propertyId };
-      if (kioskId) params.kioskId = kioskId;
-      return apiClient.get('/kiosk/capabilities', { params });
-    },
-  },
-};
 
 export { apiClient };
 export default apiClient;

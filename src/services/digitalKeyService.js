@@ -1,24 +1,5 @@
 import { apiClient } from './api/apiClient';
-import { API_CONFIG } from '../config/constants';
 import { mockData, shouldUseMock } from './mockData';
-
-// Helper to normalize key data
-const normalizeKeyData = (data) => {
-  const roomNumber = data.room_number ?? data.roomNumber;
-  const requestBody = {
-    reservation_id: data.reservation_id ?? data.reservationId,
-    guest_email: data.guest_email ?? data.guestEmail,
-    lock_id: data.lock_id ?? data.lockId ?? API_CONFIG.DEFAULT_LOCK_ID,
-    room_number: roomNumber,
-    key_type: data.key_type ?? data.keyType ?? 2,
-    key_name: data.key_name ?? data.keyName ?? `Room ${roomNumber} - Guest Key`,
-  };
-  if (requestBody.key_type === 2 || requestBody.key_type === 3) {
-    if (data.start_date ?? data.startDate) requestBody.start_date = data.start_date ?? data.startDate;
-    if (data.end_date ?? data.endDate) requestBody.end_date = data.end_date ?? data.endDate;
-  }
-  return requestBody;
-};
 
 /**
  * Issue a digital key for a reservation
@@ -27,13 +8,8 @@ const normalizeKeyData = (data) => {
  */
 export const issueDigitalKey = async (data) => {
   try {
-    const response = await apiClient.post('/api/kiosk/v1/key/issue', normalizeKeyData(data));
-    
-    return {
-      success: true,
-      data: response.data.data ?? response.data,
-      message: response.data.message ?? 'Digital key issued successfully',
-    };
+    const response = await apiClient.post('/api/kiosk/v1/key/issue', data);
+    return response.data;
   } catch (err) {
     if (shouldUseMock(err)) {
       return mockData.digitalKey(data);
@@ -55,12 +31,7 @@ export const issueDigitalKey = async (data) => {
 export const getDigitalKey = async (keyId) => {
   try {
     const response = await apiClient.get(`/api/kiosk/v1/key/${keyId}`);
-    
-    return {
-      success: true,
-      data: response.data.data ?? response.data,
-      message: 'Digital key retrieved successfully',
-    };
+    return response.data;
   } catch (err) {
     if (shouldUseMock(err)) {
       return mockData.digitalKeyGet(keyId);
@@ -83,12 +54,7 @@ export const getDigitalKey = async (keyId) => {
 export const revokeDigitalKey = async (keyId) => {
   try {
     const response = await apiClient.delete(`/api/kiosk/v1/key/${keyId}`);
-    
-    return {
-      success: true,
-      data: response.data.data ?? response.data,
-      message: response.data.message ?? 'Digital key revoked successfully',
-    };
+    return response.data;
   } catch (err) {
     if (shouldUseMock(err)) {
       return { success: true, data: { key_id: keyId, status: 'revoked' }, message: 'Digital key revoked successfully (mock)' };
@@ -110,16 +76,8 @@ export const revokeDigitalKey = async (keyId) => {
  */
 export const regenerateDigitalKey = async (keyId, data = {}) => {
   try {
-    const response = await apiClient.post(`/api/kiosk/v1/key/${keyId}/regenerate`, {
-      reason: data.reason ?? 'lost_card',
-      guest_email: data.guest_email ?? data.guestEmail,
-    });
-    
-    return {
-      success: true,
-      data: response.data.data ?? response.data,
-      message: response.data.message ?? 'Digital key regenerated successfully',
-    };
+    const response = await apiClient.post(`/api/kiosk/v1/key/${keyId}/regenerate`, data);
+    return response.data;
   } catch (err) {
     if (shouldUseMock(err)) {
       return mockData.digitalKey({ reservation_id: data.reservation_id, lock_id: data.lock_id });

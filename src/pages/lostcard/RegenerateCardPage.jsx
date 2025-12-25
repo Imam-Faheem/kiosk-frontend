@@ -65,13 +65,13 @@ const RegenerateCardPage = () => {
   }, [guestData]);
 
   const cardMutationData = useMemo(() => {
+    const propertyId = guestData?.propertyId ?? usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
     return {
-      reservationId: guestData?.reservationId ?? guestData?.reservationNumber,
-      roomNumber: guestData?.roomNumber,
-      guestName,
-      propertyId: guestData?.propertyId ?? usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER',
+      reservation_id: guestData?.reservationId ?? guestData?.reservation_id ?? guestData?.reservationNumber,
+      room_number: guestData?.roomNumber ?? guestData?.room_number,
+      property_id: propertyId,
     };
-  }, [guestData, guestName]);
+  }, [guestData]);
 
   const processStep = async (stepIndex, status) => {
     setCurrentStep(stepIndex);

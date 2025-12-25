@@ -1,30 +1,6 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock } from './mockData';
 
-// Helper to normalize payment data
-const normalizePaymentData = (data) => {
-  const requestBody = {
-    reservation_id: data.reservation_id ?? data.reservationId,
-    amount: data.amount,
-    currency: data.currency ?? 'USD',
-    payment_method: {
-      type: data.payment_method?.type ?? data.paymentMethod?.type ?? 'card',
-    },
-    description: data.description ?? 'Room charges and taxes',
-  };
-  if (requestBody.payment_method.type === 'card') {
-    requestBody.payment_method.card_last4 = data.payment_method?.card_last4 ?? 
-                                            data.paymentMethod?.cardLast4 ?? 
-                                            data.cardLast4;
-    requestBody.payment_method.card_brand = data.payment_method?.card_brand ?? 
-                                           data.paymentMethod?.cardBrand ?? 
-                                           data.cardBrand ?? 
-                                           'visa';
-  }
-  if (data.metadata) requestBody.metadata = data.metadata;
-  return requestBody;
-};
-
 /**
  * Process payment for a reservation
  * @param {Object} data - Payment data
@@ -32,13 +8,8 @@ const normalizePaymentData = (data) => {
  */
 export const processPayment = async (data) => {
   try {
-    const response = await apiClient.post('/api/kiosk/v1/payment', normalizePaymentData(data));
-    
-    return {
-      success: true,
-      data: response.data.data ?? response.data,
-      message: response.data.message ?? 'Payment processed successfully',
-    };
+    const response = await apiClient.post('/api/kiosk/v1/payment', data);
+    return response.data;
   } catch (err) {
     if (shouldUseMock(err)) {
       return mockData.payment(data);
@@ -60,12 +31,7 @@ export const processPayment = async (data) => {
 export const getPaymentStatus = async (reservationId) => {
   try {
     const response = await apiClient.get(`/api/kiosk/v1/payment/status/${reservationId}`);
-    
-    return {
-      success: true,
-      data: response.data.data ?? response.data,
-      message: 'Payment status retrieved successfully',
-    };
+    return response.data;
   } catch (err) {
     if (shouldUseMock(err)) {
       return mockData.paymentStatus(reservationId);
@@ -93,13 +59,7 @@ export const getPaymentHistory = async (params = {}) => {
     if (params.limit) queryParams.limit = params.limit;
 
     const response = await apiClient.get('/api/kiosk/v1/payment/history', { params: queryParams });
-    
-    return {
-      success: true,
-      data: response.data.data ?? response.data,
-      pagination: response.data.pagination,
-      message: 'Payment history retrieved successfully',
-    };
+    return response.data;
   } catch (err) {
     if (shouldUseMock(err)) {
       return mockData.paymentHistory(params);
@@ -118,17 +78,8 @@ export const getPaymentHistory = async (params = {}) => {
  */
 export const processRefund = async (transactionId, data) => {
   try {
-    const response = await apiClient.post(`/api/kiosk/v1/payment/${transactionId}/refund`, {
-      amount: data.amount,
-      currency: data.currency ?? 'USD',
-      reason: data.reason ?? 'Refund request',
-    });
-    
-    return {
-      success: true,
-      data: response.data.data ?? response.data,
-      message: response.data.message ?? 'Refund processed successfully',
-    };
+    const response = await apiClient.post(`/api/kiosk/v1/payment/${transactionId}/refund`, data);
+    return response.data;
   } catch (err) {
     if (shouldUseMock(err)) {
       return mockData.refund(transactionId, data);

@@ -1,21 +1,6 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock } from './mockData';
 
-// Helper to normalize checkout data
-const normalizeCheckoutData = (data) => {
-  const requestBody = {
-    reservation_id: data.reservation_id ?? data.reservationId,
-    room_number: data.room_number ?? data.roomNumber,
-    final_bill_amount: data.final_bill_amount ?? data.finalBillAmount,
-    payment_status: data.payment_status ?? data.paymentStatus ?? 'completed',
-  };
-  const guestEmail = data.guest_email ?? data.guestEmail;
-  const checkOutDate = data.check_out_date ?? data.checkOutDate;
-  if (guestEmail) requestBody.guest_email = guestEmail;
-  if (checkOutDate) requestBody.check_out_date = checkOutDate;
-  return requestBody;
-};
-
 /**
  * Process checkout for a reservation
  * @param {Object} data - Checkout data
@@ -23,13 +8,8 @@ const normalizeCheckoutData = (data) => {
  */
 export const processCheckout = async (data) => {
   try {
-    const response = await apiClient.post('/api/kiosk/v1/checkout', normalizeCheckoutData(data));
-    
-    return {
-      success: true,
-      data: response.data.data ?? response.data,
-      message: response.data.message ?? 'Checkout completed successfully',
-    };
+    const response = await apiClient.post('/api/kiosk/v1/checkout', data);
+    return response.data;
   } catch (err) {
     if (shouldUseMock(err)) {
       return mockData.checkout(data);
@@ -51,12 +31,7 @@ export const processCheckout = async (data) => {
 export const getCheckoutStatus = async (reservationId) => {
   try {
     const response = await apiClient.get(`/api/kiosk/v1/checkout/${reservationId}/status`);
-    
-    return {
-      success: true,
-      data: response.data.data ?? response.data,
-      message: 'Checkout status retrieved successfully',
-    };
+    return response.data;
   } catch (err) {
     if (shouldUseMock(err)) {
       return mockData.checkoutStatus(reservationId);

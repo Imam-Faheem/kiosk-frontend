@@ -1,6 +1,5 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
-import usePropertyStore from '../stores/propertyStore';
 
 export const validateLostCardGuest = async (data) => {
   try {
@@ -21,29 +20,7 @@ export const validateLostCardGuest = async (data) => {
       throw new Error('Room number does not match reservation records');
     }
 
-    const primaryGuest = reservation?.primaryGuest ?? {};
-    const propertyId = usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
-
-    const guestData = {
-      reservationId: reservation.id,
-      reservationNumber: reservation.id,
-      roomNumber: assignedRoom ?? roomNumber ?? 'TBD',
-      lastName: primaryGuest.lastName ?? '',
-      firstName: primaryGuest.firstName ?? '',
-      email: primaryGuest.email ?? '',
-      phone: primaryGuest.phone ?? '',
-      guestName: `${primaryGuest.firstName ?? ''} ${primaryGuest.lastName ?? ''}`.trim(),
-      checkIn: reservation.arrival,
-      checkOut: reservation.departure,
-      propertyId: reservation.property?.id ?? propertyId,
-      _apaleoReservation: reservation,
-    };
-
-    return {
-      success: true,
-      data: guestData,
-      message: 'Guest validated successfully',
-    };
+    return reservationResponse.data;
   } catch (error) {
     if (shouldUseMock(error) && error?.response?.status !== 404) {
       await simulateApiDelay(600);
@@ -64,27 +41,8 @@ export const validateLostCardGuest = async (data) => {
 
 export const regenerateLostCard = async (data) => {
   try {
-    const { reservationId, roomNumber, propertyId } = data;
-
-    const response = await apiClient.post('/lost-card/regenerate', {
-      reservation_id: reservationId,
-      property_id: propertyId ?? usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER',
-      room_number: roomNumber,
-    });
-
-    return {
-      success: true,
-      data: {
-        cardId: response.data.cardId ?? `CARD-${Date.now()}`,
-        accessCode: response.data.accessCode ?? response.data.passcode,
-        status: 'active',
-        roomNumber,
-        reservationId,
-        oldCardDeactivated: response.data.oldCardDeactivated !== false,
-        ...response.data,
-      },
-      message: response.data.message ?? 'Card regenerated successfully',
-    };
+    const response = await apiClient.post('/lost-card/regenerate', data);
+    return response.data;
   } catch (error) {
     if (shouldUseMock(error)) {
       await simulateApiDelay(800);
