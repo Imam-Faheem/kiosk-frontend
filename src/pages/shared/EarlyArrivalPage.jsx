@@ -13,7 +13,8 @@ import {
 import { IconAlertCircle, IconHome, IconClock } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { buttonStyles } from '../../constants/style.constants';
-import { EARLY_ARRIVAL_CONFIG, EARLY_ARRIVAL_STYLES, EARLY_ARRIVAL_FLOW_CONFIGS } from '../../config/constants';
+import { EARLY_ARRIVAL_CONFIG, EARLY_ARRIVAL_STYLES } from '../../config/constants';
+import { EARLY_ARRIVAL_FLOW_CONFIGS } from '../../config/routes';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
 

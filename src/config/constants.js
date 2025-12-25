@@ -5,12 +5,11 @@ import { IconCreditCard, IconMail, IconLock } from '@tabler/icons-react';
  * Centralized configuration for API endpoints and settings
  */
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000',
-  KIOSK_API_BASE: process.env.REACT_APP_KIOSK_API_BASE || 'http://localhost:8000/api/kiosk/v1',
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.REACT_APP_API_URL ?? 'http://localhost:8000',
   TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,
-  ORGANIZATION_ID: process.env.REACT_APP_ORGANIZATION_ID || '0ujsszwN8NRY24YaXiTIE2VWDTS',
-  DEFAULT_PROPERTY_ID: process.env.REACT_APP_PROPERTY_ID || 'BER',
+  ORGANIZATION_ID: process.env.REACT_APP_ORGANIZATION_ID ?? '0ujsszwN8NRY24YaXiTIE2VWDTS',
+  DEFAULT_PROPERTY_ID: process.env.REACT_APP_PROPERTY_ID ?? 'BER',
 };
 
 /**
@@ -47,48 +46,6 @@ export const STORAGE_KEYS = {
   KIOSK_PROPERTY: 'kioskProperty',
 };
 
-// API Endpoints
-export const API_ENDPOINTS = {
-  AUTH: {
-    LOGIN: '/login',
-    LOGOUT: '/logout',
-    REFRESH: '/refresh-token',
-    PROFILE: '/profile',
-  },
-  RESERVATIONS: {
-    BASE: '/reservations',
-    SEARCH: '/reservations/search',
-  },
-  GUESTS: {
-    BASE: '/guests',
-  },
-  CHECKIN: {
-    BASE: '/api/kiosk/v1/check-in',
-    STATUS: '/api/kiosk/v1/check-in/:id/status',
-    VALIDATE_RESERVATION: '/api/kiosk/v1/reservations/:reservationId',
-  },
-  CHECKOUT: {
-    BASE: '/api/kiosk/v1/checkout',
-    STATUS: '/api/kiosk/v1/checkout/:id/status',
-  },
-  DIGITAL_KEY: {
-    ISSUE: '/api/kiosk/v1/key/issue',
-    GET: '/api/kiosk/v1/key/:id',
-    REVOKE: '/api/kiosk/v1/key/:id',
-    REGENERATE: '/api/kiosk/v1/key/:id/regenerate',
-  },
-  PAYMENTS: {
-    BASE: '/api/kiosk/v1/payment',
-    STATUS: '/api/kiosk/v1/payment/status/:id',
-    HISTORY: '/api/kiosk/v1/payment/history',
-    REFUND: '/api/kiosk/v1/payment/:id/refund',
-  },
-  REPORTS: {
-    OCCUPANCY: '/reports/occupancy',
-    REVENUE: '/reports/revenue',
-    GUESTS: '/reports/guests',
-  },
-};
 
 // Form Validation Rules
 export const VALIDATION_RULES = {
@@ -174,24 +131,6 @@ export const EARLY_ARRIVAL_STYLES = {
   },
 };
 
-// Early Arrival Flow Configurations
-export const EARLY_ARRIVAL_FLOW_CONFIGS = {
-  checkin: {
-    title: 'Early Arrival',
-    message: 'Card cannot be given before 2pm. Please return after 2pm.',
-    backPath: '/checkin',
-  },
-  reservation: {
-    title: 'Early Arrival',
-    message: 'Room cards cannot be issued before 2pm. Please return after 2pm.',
-    backPath: '/reservation/search',
-  },
-  'lost-card': {
-    title: 'Early Arrival',
-    message: 'Card replacement cannot be done before 2pm. Please return after 2pm.',
-    backPath: '/lost-card',
-  },
-};
 
 // Main Menu Button Styles
 export const MAIN_MENU_BUTTON_STYLES = {
