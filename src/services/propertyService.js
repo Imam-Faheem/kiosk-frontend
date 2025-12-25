@@ -1,5 +1,4 @@
 import { apiClient } from './api/apiClient';
-import { getDefaultCapabilities } from '../lib/propertyUtils';
 
 export const getProperties = async (params) => {
   try {
@@ -94,7 +93,12 @@ export const getProperties = async (params) => {
 
 export const getKioskCapabilities = async (propertyId, kioskId = null) => {
   // Return default capabilities since the endpoint doesn't exist
-  return getDefaultCapabilities();
+  return {
+    checkIn: true,
+    reservations: true,
+    cardIssuance: true,
+    lostCard: true,
+  };
 };
 
 export const getPropertyById = async (propertyId) => {
@@ -107,9 +111,9 @@ export const getPropertyById = async (propertyId) => {
       message: 'Property fetched successfully',
     };
   } catch (err) {
-    const errorMessage = err?.response?.data?.error || 
-                         err?.response?.data?.message || 
-                         err?.message || 
+    const errorMessage = err?.response?.data?.error ?? 
+                         err?.response?.data?.message ?? 
+                         err?.message ?? 
                          'Failed to fetch property';
     throw new Error(errorMessage);
   }

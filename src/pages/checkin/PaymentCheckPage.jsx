@@ -28,7 +28,6 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { usePaymentMutation } from '../../hooks/usePaymentMutation';
-import { isPaymentCompleted, getPaymentStatus } from '../../lib/paymentUtils';
 import '../../styles/animations.css';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
@@ -37,6 +36,15 @@ const PaymentCheckPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+
+  const isPaymentCompleted = (status) => {
+    return status === 'completed' || status === 'paid';
+  };
+
+  const getPaymentStatus = (reservation) => {
+    if (reservation.paymentStatus) return reservation.paymentStatus;
+    return reservation.balance <= 0 ? 'paid' : 'pending';
+  };
   usePaymentMutation('checkStatus', {
     onSuccess: (result) => {
       if (result.success) {

@@ -14,12 +14,6 @@ import { IconAlertCircle } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import usePropertyStore from "../stores/propertyStore";
 import { getProperties, getKioskCapabilities } from "../services/propertyService";
-import {
-  getDefaultCapabilities,
-  formatPropertyLabel,
-  findPropertyById,
-  extractPropertyId,
-} from "../lib/propertyUtils";
 import { getPrimaryButtonStyles, getInputStyles } from "../constants/style.constants";
 import { STORAGE_KEYS, REVERSE_CAPABILITY_MAP } from "../config/constants";
 import UnoLogo from "../assets/uno.jpg";
@@ -36,11 +30,15 @@ const convertCapabilitiesToArray = (capabilitiesObj) => {
 const PropertySelect = React.memo(({ properties, selectedPropertyId, onPropertySelect }) => {
   const selectData = useMemo(() => {
     return properties
-      .filter((property) => extractPropertyId(property))
-      .map((property) => ({
-        value: extractPropertyId(property),
-        label: formatPropertyLabel(property),
-      }));
+      .filter((property) => property?.id ?? property?.property_id)
+      .map((property) => {
+        const propertyId = property?.id ?? property?.property_id;
+        const label = property?.name ?? property?.property_id ?? property?.id ?? "";
+        return {
+          value: propertyId,
+          label,
+        };
+      });
   }, [properties]);
 
   return (
@@ -61,10 +59,10 @@ PropertySelect.displayName = 'PropertySelect';
 
 // Property Details Component
 const PropertyDetails = React.memo(({ properties, selectedPropertyId }) => {
-  const selectedProperty = useMemo(() => 
-    findPropertyById(properties, selectedPropertyId),
-    [properties, selectedPropertyId]
-  );
+  const selectedProperty = useMemo(() => {
+    if (!Array.isArray(properties) || !selectedPropertyId) return null;
+    return properties.find((p) => (p.id === selectedPropertyId) || (p.property_id === selectedPropertyId)) ?? null;
+  }, [properties, selectedPropertyId]);
 
   if (!selectedPropertyId || !selectedProperty) return null;
 
@@ -73,7 +71,7 @@ const PropertyDetails = React.memo(({ properties, selectedPropertyId }) => {
       <Stack gap="xs">
         <Text size="sm" fw={600}>Property Details:</Text>
         <Text size="sm" c="dimmed">
-          <strong>Name:</strong> {selectedProperty.name ?? extractPropertyId(selectedProperty)}
+          <strong>Name:</strong> {selectedProperty.name ?? selectedProperty?.id ?? selectedProperty?.property_id ?? ""}
         </Text>
       </Stack>
     </Box>
@@ -110,7 +108,12 @@ const PropertySelectionPage = () => {
   
   const [properties, setProperties] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(currentPropertyId ?? null);
-  const [capabilities, setCapabilities] = useState(getDefaultCapabilities());
+  const [capabilities, setCapabilities] = useState({
+    checkIn: true,
+    reservations: true,
+    cardIssuance: true,
+    lostCard: true,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -146,7 +149,7 @@ const PropertySelectionPage = () => {
         setProperties(propertiesData);
         
         if (propertiesData.length > 0) {
-          const firstPropertyId = extractPropertyId(propertiesData[0]);
+          const firstPropertyId = propertiesData[0]?.id ?? propertiesData[0]?.property_id;
           if (!currentPropertyId && firstPropertyId) {
             setSelectedPropertyId(firstPropertyId);
           }
@@ -175,7 +178,9 @@ const PropertySelectionPage = () => {
       setSaving(true);
       setError(null);
 
-      const selectedProperty = findPropertyById(properties, selectedPropertyId);
+      const selectedProperty = Array.isArray(properties) && selectedPropertyId
+        ? properties.find((p) => (p.id === selectedPropertyId) || (p.property_id === selectedPropertyId)) ?? null
+        : null;
       if (!selectedProperty) {
         throw new Error("Selected property not found");
       }

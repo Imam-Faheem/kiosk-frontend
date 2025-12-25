@@ -22,7 +22,6 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useRoomMutation } from '../../hooks/useRoomMutation';
 import { roomSearchValidationSchema, roomSearchInitialValues } from '../../schemas/reservation.schema';
-import { isBeforeTargetTime } from '../../lib/timeUtils';
 import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES, FORM_INPUT_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
@@ -36,7 +35,13 @@ const SearchRoomsPage = () => {
   const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
-    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+    const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
+    const now = new Date();
+    const [time, period] = targetTime.split(' ');
+    const [hours, minutes] = time.split(':').map(Number);
+    const target = new Date();
+    target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
+    if (now < target) {
       navigate('/reservation/early-arrival');
     }
   }, [navigate]);
@@ -73,26 +78,28 @@ const SearchRoomsPage = () => {
     setLoading(true);
     setErrorMessage(null);
     setSearchResults(null);
-    
-    // Convert Date objects to ISO string format for API and coerce guests to number
+
     const searchData = {
       ...values,
       checkIn: values.checkIn ? (values.checkIn instanceof Date ? values.checkIn.toISOString().split('T')[0] : values.checkIn) : null,
       checkOut: values.checkOut ? (values.checkOut instanceof Date ? values.checkOut.toISOString().split('T')[0] : values.checkOut) : null,
       guests: values.guests ? Number(values.guests) : null,
     };
-    await searchAvailability.mutateAsync(searchData);
-    setLoading(false);
+
+    try {
+      await searchAvailability.mutateAsync(searchData);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSelectRoom = (room) => {
-    // Convert Date objects to ISO string format for navigation state
     const searchCriteria = {
       ...form.values,
       checkIn: form.values.checkIn ? (form.values.checkIn instanceof Date ? form.values.checkIn.toISOString().split('T')[0] : form.values.checkIn) : null,
       checkOut: form.values.checkOut ? (form.values.checkOut instanceof Date ? form.values.checkOut.toISOString().split('T')[0] : form.values.checkOut) : null,
     };
-    
+
     navigate('/reservation/guest-details', {
       state: {
         room,

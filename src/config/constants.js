@@ -1,15 +1,22 @@
 import { IconCreditCard, IconMail, IconLock } from '@tabler/icons-react';
 
-// API Configuration
+/**
+ * API Configuration
+ * Centralized configuration for API endpoints and settings
+ */
 export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000',
   KIOSK_API_BASE: process.env.REACT_APP_KIOSK_API_BASE || 'http://localhost:8000/api/kiosk/v1',
   TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,
   ORGANIZATION_ID: process.env.REACT_APP_ORGANIZATION_ID || '0ujsszwN8NRY24YaXiTIE2VWDTS',
+  DEFAULT_PROPERTY_ID: process.env.REACT_APP_PROPERTY_ID || 'BER',
 };
 
-// Application Constants
+/**
+ * Application Configuration
+ * General application settings and metadata
+ */
 export const APP_CONFIG = {
   NAME: 'Hotel Management System',
   VERSION: '1.0.0',
@@ -27,14 +34,17 @@ export const LANGUAGE_OPTIONS = [
   { value: "pt", label: "Português", flag: "/flags/pt.png" },
 ];
 
-// Storage Keys
+/**
+ * LocalStorage Keys
+ * Centralized keys for localStorage operations
+ */
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
   USER_DATA: 'user_data',
   LANGUAGE: 'language',
   THEME: 'theme',
-  KIOSK_PROPERTY: 'kioskProperty', // Property selection data
+  KIOSK_PROPERTY: 'kioskProperty',
 };
 
 // API Endpoints

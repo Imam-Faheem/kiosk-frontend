@@ -12,7 +12,6 @@ import {
 } from '@mantine/core';
 import { IconAlertCircle, IconHome, IconClock } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { formatTime } from '../../lib/timeUtils';
 import { buttonStyles } from '../../constants/style.constants';
 import { EARLY_ARRIVAL_CONFIG, EARLY_ARRIVAL_STYLES, EARLY_ARRIVAL_FLOW_CONFIGS } from '../../config/constants';
 import BackButton from '../../components/BackButton';
@@ -71,6 +70,14 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
   const pageMessage = message || flowConfig.message;
   const defaultBackPath = backPath || flowConfig.backPath;
   
+  const formatTime = useCallback((date = new Date()) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }, []);
+
   const [currentTime, setCurrentTime] = useState(() => formatTime());
   const [countdown, setCountdown] = useState(EARLY_ARRIVAL_CONFIG.COUNTDOWN_DURATION);
   const countdownIntervalRef = useRef(null);
@@ -78,7 +85,7 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
 
   const updateTime = useCallback(() => {
     setCurrentTime(formatTime());
-  }, []);
+  }, [formatTime]);
 
   const clearAllIntervals = useCallback(() => {
     if (timeIntervalRef.current) {

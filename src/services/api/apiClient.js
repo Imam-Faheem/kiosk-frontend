@@ -8,24 +8,31 @@ const generateIdempotencyKey = (prefix = 'req') => {
   return `${prefix}-${timestamp}-${random}`;
 };
 
-// Helper to get property and organization IDs from localStorage
+/**
+ * Get property and organization IDs from localStorage
+ * @returns {Object} Property context with propertyId and organizationId
+ */
 const getPropertyContext = () => {
-  try {
-    const propertyData = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
-    if (propertyData) {
-      const parsed = JSON.parse(propertyData);
-      return {
-        propertyId: parsed.propertyId || API_CONFIG.DEFAULT_PROPERTY_ID,
-        organizationId: parsed.organizationId || API_CONFIG.DEFAULT_ORGANIZATION_ID,
-      };
-    }
-  } catch (error) {
-    console.error('Failed to parse property data:', error);
-  }
-  return {
+  const defaultContext = {
     propertyId: API_CONFIG.DEFAULT_PROPERTY_ID,
     organizationId: API_CONFIG.DEFAULT_ORGANIZATION_ID,
   };
+
+  try {
+    const propertyData = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
+    if (!propertyData) {
+      return defaultContext;
+    }
+
+    const parsed = JSON.parse(propertyData);
+    return {
+      propertyId: parsed.propertyId ?? defaultContext.propertyId,
+      organizationId: parsed.organizationId ?? defaultContext.organizationId,
+    };
+  } catch {
+    // Silently fail and return defaults
+    return defaultContext;
+  }
 };
 
 // Create axios instance with default config
@@ -92,16 +99,9 @@ apiClient.interceptors.request.use(
       }
     } else {
       // For non-kiosk endpoints, try to add X-Property-ID from localStorage
-      try {
-        const propertyData = localStorage.getItem('kioskProperty');
-        if (propertyData) {
-          const { propertyId } = JSON.parse(propertyData);
-          if (propertyId) {
-            config.headers['X-Property-ID'] = propertyId;
-          }
-        }
-      } catch (error) {
-        console.error('Failed to parse property data:', error);
+      const { propertyId } = getPropertyContext();
+      if (propertyId) {
+        config.headers['X-Property-ID'] = propertyId;
       }
     }
 

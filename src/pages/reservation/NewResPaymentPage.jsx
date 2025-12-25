@@ -17,7 +17,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { createBooking } from '../../services/bookingService';
 import { updateApaleoReservationWithGuest } from '../../services/guestService';
-import { getPropertyIdFromStore } from '../../lib/propertyIdUtils';
+import usePropertyStore from '../../stores/propertyStore';
 
 const NewResPaymentPage = () => {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ const NewResPaymentPage = () => {
         hasProcessed.current = true;
         setPaymentStatus('processing');
         
-        const propertyId = getPropertyIdFromStore();
+        const propertyId = usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
         const hotelId = propertyId; // Use propertyId as hotelId for the endpoint
         
         // Prepare booking data for Apaleo

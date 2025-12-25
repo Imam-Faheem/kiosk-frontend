@@ -182,7 +182,7 @@ const ReservationCompletePage = () => {
           </Title>
 
           <Text size="lg" fw={600} c="#C8653D">
-            {t('reservationComplete.reservationNumber') || 'Reservation Number'}: {reservation.reservationId || reservation.id}
+            {t('reservationComplete.reservationNumber') || 'Reservation Number'}: {reservation.reservationId || reservation.id || 'N/A'}
           </Text>
 
           {/* Reservation Details Card */}

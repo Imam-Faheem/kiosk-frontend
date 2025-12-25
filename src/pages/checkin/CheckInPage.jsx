@@ -15,7 +15,6 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
 import { checkinInitialValues } from '../../schemas/checkin.schema';
-import { isBeforeTargetTime } from '../../lib/timeUtils';
 import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
 import { mockData, shouldUseMock, simulateApiDelay } from '../../services/mockData';
@@ -29,7 +28,13 @@ const CheckInPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+    const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
+    const now = new Date();
+    const [time, period] = targetTime.split(' ');
+    const [hours, minutes] = time.split(':').map(Number);
+    const target = new Date();
+    target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
+    if (now < target) {
       navigate('/checkin/early-arrival');
     }
   }, [navigate]);
@@ -54,30 +59,29 @@ const CheckInPage = () => {
   const handleSubmit = async (values) => {
     setError(null);
     setIsLoading(true);
-    
+
     try {
       const result = await validateReservation.mutateAsync(values);
-      
+
       if (result.success && result.data) {
         const reservationId = result.data.reservation_id ?? result.data.id;
         if (!reservationId) {
           setError('Invalid reservation data. Please try again.');
           return;
         }
-        
+
         navigate('/checkin/payment-check', {
           state: { reservation: result.data },
         });
       } else {
         setError('Reservation validation failed. Please check your credentials.');
       }
-    } catch (err) {
-      // Use mock data on network errors or other errors
-      if (shouldUseMock(err)) {
+    } catch (error) {
+      if (shouldUseMock(error)) {
         try {
           await simulateApiDelay(600);
           const mockResult = mockData.reservation(values);
-          
+
           if (mockResult.success && mockResult.data) {
             const reservationId = mockResult.data.reservation_id ?? mockResult.data.id;
             if (reservationId) {
@@ -87,14 +91,13 @@ const CheckInPage = () => {
               return;
             }
           }
-        } catch (mockErr) {
+        } catch {
           setError('Failed to load reservation data. Please try again.');
           return;
         }
       }
-      
-      // Show error for validation failures (404, 403) or other errors
-      setError(err.message ?? t('error.reservationNotFound'));
+
+      setError(error.message ?? t('error.reservationNotFound'));
     } finally {
       setIsLoading(false);
     }

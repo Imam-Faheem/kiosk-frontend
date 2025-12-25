@@ -9,7 +9,6 @@ import {
 } from '@mantine/core';
 import { IconKey, IconCalendar, IconCreditCardOff } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { isBeforeTargetTime } from '../lib/timeUtils';
 import { EARLY_ARRIVAL_CONFIG, MAIN_MENU_BUTTON_STYLES, CONTAINER_STYLES, PAPER_STYLES } from '../config/constants';
 import useLanguage from '../hooks/useLanguage';
 import usePropertyStore from '../stores/propertyStore';
@@ -33,7 +32,13 @@ const MainMenuPage = () => {
   };
 
   const handleCheckIn = () => {
-    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+    const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
+    const now = new Date();
+    const [time, period] = targetTime.split(' ');
+    const [hours, minutes] = time.split(':').map(Number);
+    const target = new Date();
+    target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
+    if (now < target) {
       navigate('/checkin/early-arrival');
     } else {
       navigate('/checkin');

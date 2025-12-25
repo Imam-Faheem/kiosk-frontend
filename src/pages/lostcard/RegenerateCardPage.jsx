@@ -14,7 +14,7 @@ import { IconCheck, IconX, IconKey, IconHome, IconLoader2 } from '@tabler/icons-
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
-import { getPropertyId } from '../../lib/utils';
+import usePropertyStore from '../../stores/propertyStore';
 import UnoLogo from '../../assets/uno.jpg';
 import '../../styles/animations.css';
 import BackButton from '../../components/BackButton';
@@ -69,14 +69,14 @@ const RegenerateCardPage = () => {
       reservationId: guestData?.reservationId ?? guestData?.reservationNumber,
       roomNumber: guestData?.roomNumber,
       guestName,
-      propertyId: getPropertyId(guestData),
+      propertyId: guestData?.propertyId ?? usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER',
     };
   }, [guestData, guestName]);
 
   const processStep = async (stepIndex, status) => {
     setCurrentStep(stepIndex);
     setCardStatus(status);
-    await new Promise(resolve => setTimeout(resolve, STEP_DELAY));
+    await new Promise((resolve) => setTimeout(resolve, STEP_DELAY));
   };
 
   useEffect(() => {
@@ -98,13 +98,12 @@ const RegenerateCardPage = () => {
 
         if (result.success) {
           setCardData(result.data);
-          await new Promise(resolve => setTimeout(resolve, STEP_DELAY));
+          await new Promise((resolve) => setTimeout(resolve, STEP_DELAY));
           setCardStatus('completed');
-          
-          // Navigate to card issued page after showing completion
+
           setTimeout(() => {
             navigate('/lost-card/issued', {
-              state: { guestData, cardData: result.data }
+              state: { guestData, cardData: result.data },
             });
           }, 2000);
         } else {

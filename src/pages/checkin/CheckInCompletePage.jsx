@@ -21,7 +21,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../services/api/apiClient';
 import { useCheckInMutation } from '../../hooks/useCheckInMutation';
-import { formatCheckOut, calculateDisplayData, getGuestName } from '../../lib/checkinUtils';
 import UnoLogo from '../../assets/uno.jpg';
 import '../../styles/animations.css';
 
@@ -40,6 +39,37 @@ const CheckInCompletePage = () => {
   const cardData = location.state?.cardData;
   const checkInResult = location.state?.checkInResult;
 
+  const formatCheckOut = (dateStr) => {
+    if (!dateStr || dateStr === 'N/A') return 'N/A';
+    try {
+      if (typeof dateStr === 'string' && dateStr.includes('T')) {
+        return new Date(dateStr).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+      }
+      return dateStr;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const getGuestName = (reservation, checkInInfo = null) => {
+    if (!reservation) return 'Guest';
+    if (typeof reservation.guest_name === 'string') {
+      return reservation.guest_name;
+    }
+    if (reservation.guest_name) {
+      const firstName = reservation.guest_name.first_name ?? '';
+      const lastName = reservation.guest_name.last_name ?? '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      if (fullName) return fullName;
+    }
+    if (checkInInfo?.guest_name) return checkInInfo.guest_name;
+    return reservation.guestName ?? 'Guest';
+  };
+
   const checkInStatusMutation = useCheckInMutation('getStatus', {
     onSuccess: (result) => {
       if (result.success) {
@@ -55,10 +85,20 @@ const CheckInCompletePage = () => {
   });
 
   // Calculate display data from all available sources
-  const displayData = useMemo(() => 
-    calculateDisplayData(reservation, checkInData, checkInResult),
-    [reservation, checkInData, checkInResult]
-  );
+  const displayData = useMemo(() => {
+    if (!reservation) return null;
+    const checkInInfo = checkInData ?? checkInResult?.data ?? {};
+    const checkOutDate = checkInInfo.check_out_date ?? reservation.check_out_date;
+    
+    return {
+      reservationId: reservation.reservation_id ?? reservation.id,
+      guestName: getGuestName(reservation, checkInInfo),
+      roomNumber: checkInInfo.room_number ?? reservation.room_number ?? 'TBD',
+      checkOut: checkOutDate ? formatCheckOut(checkOutDate) : 'N/A',
+      checkInTime: checkInInfo.checked_in_at ?? new Date().toISOString(),
+      status: checkInInfo.status ?? checkInResult?.data?.status ?? 'checked_in',
+    };
+  }, [reservation, checkInData, checkInResult]);
 
   // Log completion event
   const logCompletionMutation = useMutation({
