@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom";
 import usePropertyStore from "../stores/propertyStore";
 import { getProperties } from "../services/propertyService";
 import { getPrimaryButtonStyles, getInputStyles } from "../constants/style.constants";
-import { STORAGE_KEYS, REVERSE_CAPABILITY_MAP } from "../config/constants";
-import UnoLogo from "../assets/uno.jpg";
+import { REVERSE_CAPABILITY_MAP } from "../config/constants";
+import PropertyHeader from "../components/PropertyHeader";
 import useLanguage from "../hooks/useLanguage";
 
 const convertCapabilitiesToArray = (capabilitiesObj) =>
@@ -85,7 +85,7 @@ ContinueButton.displayName = 'ContinueButton';
 const PropertySelectionPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { configureProperty, propertyId: currentPropertyId, kioskId: currentKioskId } = usePropertyStore();
+  const { configureProperty, propertyId: currentPropertyId, kioskId: currentKioskId, isConfigured } = usePropertyStore();
   const [properties, setProperties] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(currentPropertyId ?? null);
   const [capabilities] = useState({ checkIn: true, reservations: true, cardIssuance: true, lostCard: true });
@@ -94,11 +94,8 @@ const PropertySelectionPage = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
-      if (stored && JSON.parse(stored).propertyId) navigate("/welcome", { replace: true });
-    } catch {}
-  }, [navigate]);
+    if (isConfigured) navigate("/welcome", { replace: true });
+  }, [isConfigured, navigate]);
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -133,15 +130,12 @@ const PropertySelectionPage = () => {
       setError(null);
       const selectedProperty = properties.find((p) => (p.id === selectedPropertyId) || (p.property_id === selectedPropertyId));
       if (!selectedProperty) throw new Error(t('error.selectedPropertyNotFound'));
-      const propertyConfig = {
-        propertyId: selectedPropertyId,
-        kioskId: currentKioskId ?? null,
-        capabilities: convertCapabilitiesToArray(capabilities),
-        propertyName: selectedProperty.name ?? '',
-        currency: selectedProperty.currency ?? 'USD',
-      };
-      localStorage.setItem(STORAGE_KEYS.KIOSK_PROPERTY, JSON.stringify(propertyConfig));
-      configureProperty({ propertyId: selectedPropertyId, kioskId: currentKioskId ?? null, capabilities, propertyData: selectedProperty });
+      configureProperty({ 
+        propertyId: selectedPropertyId, 
+        kioskId: currentKioskId ?? null, 
+        capabilities, 
+        propertyData: selectedProperty 
+      });
       navigate("/welcome");
     } catch (err) {
       setError(err.message ?? t('error.failedToSaveProperty'));
@@ -169,12 +163,9 @@ const PropertySelectionPage = () => {
   return (
     <Container size="lg" style={containerStyle}>
       <Paper withBorder shadow="md" p={40} radius="xl" style={paperStyle}>
-        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <Group>
-            <img src={UnoLogo} alt={t('common.unoHotelLogo')} style={{ width: '50px', height: '50px', borderRadius: '8px', marginRight: '0px', objectFit: 'cover' }} />
-            <Title order={2} style={{ fontSize: '30px !important', color: 'rgb(34, 34, 34)', fontWeight: '600', letterSpacing: '1px', marginLeft: '-9px' }}>{t('mainMenu.title')}</Title>
-          </Group>
-        </Group>
+        <Box mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
+        </Box>
         <Title order={3} style={{ fontSize: '24px', fontWeight: 800, color: '#222', marginBottom: '24px' }}>{t('propertySelection.title')}</Title>
         {error && (
           <Box maw={600} mx="auto" mb="xl">

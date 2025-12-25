@@ -15,7 +15,7 @@ import { useForm } from '@mantine/form';
 import { guestValidationSchema, guestInitialValues } from '../../schemas/guest.schema';
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
-import UnoLogo from '../../assets/uno.jpg';
+import PropertyHeader from '../../components/PropertyHeader';
 import { saveGuestDetails } from '../../services/guestService';
 
 const GuestDetailsPage = () => {
@@ -115,31 +115,7 @@ const GuestDetailsPage = () => {
         }}
       >
         <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <Group>
-            <img
-              src={UnoLogo}
-              alt={t('common.unoHotelLogo')}
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              {t('mainMenu.title')}
-            </Title>
-          </Group>
+          <PropertyHeader />
         </Group>
 
         <form onSubmit={form.onSubmit(handleSubmit)}>

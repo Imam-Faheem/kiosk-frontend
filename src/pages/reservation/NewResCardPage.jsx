@@ -15,7 +15,7 @@ import { IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
-import UnoLogo from '../../assets/uno.jpg';
+import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 
 const NewResCardPage = () => {
@@ -94,31 +94,7 @@ const NewResCardPage = () => {
         }}
       >
         <Group justify="space-between" mb="xl">
-          <Group>
-            <img
-              src={UnoLogo}
-              alt={t('common.unoHotelLogo')}
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              {t('mainMenu.title')}
-            </Title>
-          </Group>
+          <PropertyHeader />
         </Group>
 
         {/* Page title under logo */}

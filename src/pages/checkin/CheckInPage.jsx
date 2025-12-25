@@ -9,6 +9,8 @@ import {
   TextInput,
   Alert,
   Box,
+  Loader,
+  Text,
 } from '@mantine/core';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +20,7 @@ import { checkinInitialValues } from '../../schemas/checkin.schema';
 import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
 import { mockData, shouldUseMock, simulateApiDelay } from '../../services/mockData';
-import UnoLogo from '../../assets/uno.jpg';
+import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 
 const CheckInPage = () => {
@@ -135,31 +137,8 @@ const CheckInPage = () => {
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
         }}
       >
-        {/* Header */}
         <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <Group>
-            <img
-              src={UnoLogo}
-              alt={t('common.unoHotelLogo')}
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              fz={30}
-              c="rgb(34, 34, 34)"
-              fw={600}
-              lts={1}
-              ml={-9}
-            >
-              {t('mainMenu.title')}
-            </Title>
-          </Group>
+          <PropertyHeader />
         </Group>
 
         {/* Context Title */}
@@ -238,14 +217,24 @@ const CheckInPage = () => {
               type="submit"
               size="lg"
               leftSection={<IconCheck size={20} />}
-              loading={isLoading}
+              disabled={isLoading}
               styles={BUTTON_STYLES.primarySmall}
               radius="md"
             >
-              {isLoading ? t('checkIn.loading') : t('checkIn.submit')}
+              {t('checkIn.submit')}
             </Button>
           </Group>
         </form>
+
+        {/* Loader */}
+        {isLoading && (
+          <Stack align="center" gap="md" mt="xl">
+            <Loader size="lg" color="#C8653D" />
+            <Text size="lg" c="#666666">
+              {t('checkIn.loading')}
+            </Text>
+          </Stack>
+        )}
       </Paper>
     </Container>
   );

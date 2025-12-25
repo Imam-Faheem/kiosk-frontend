@@ -25,8 +25,9 @@ import { roomSearchValidationSchema, roomSearchInitialValues } from '../../schem
 import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES, FORM_INPUT_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
 import usePropertyStore from '../../stores/propertyStore';
-import UnoLogo from '../../assets/uno.jpg';
+import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
+import UnoLogo from '../../assets/uno.jpg';
 
 const SearchRoomsPage = () => {
   const navigate = useNavigate();
@@ -58,6 +59,8 @@ const SearchRoomsPage = () => {
       setErrorMessage(msg);
     }
   });
+
+  const isSearching = loading || searchAvailability.isPending;
 
   const form = useForm({
     initialValues: roomSearchInitialValues,
@@ -152,28 +155,8 @@ const SearchRoomsPage = () => {
           },
         }}
       >
-        {/* Header */}
         <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <Group>
-            <Box
-              component="img"
-              src={UnoLogo}
-                  alt={t('common.unoHotelLogo')}
-              w={50}
-              h={50}
-              style={{ borderRadius: '8px', marginRight: '0px', objectFit: 'cover' }}
-            />
-            <Title 
-              order={2}
-              fz={30}
-              c="rgb(34, 34, 34)"
-              fw={600}
-              lts={1}
-              ml="-9px"
-            >
-              {t('mainMenu.title')}
-            </Title>
-          </Group>
+          <PropertyHeader />
         </Group>
 
         {/* Search Form */}
@@ -222,7 +205,7 @@ const SearchRoomsPage = () => {
               type="submit"
               size="lg"
               leftSection={<IconSearch size={20} />}
-              loading={loading}
+              disabled={!!searchResults || isSearching}
               styles={BUTTON_STYLES.primary}
               radius="md"
             >
@@ -231,8 +214,8 @@ const SearchRoomsPage = () => {
           </Stack>
         </form>
 
-        {/* Search Results */}
-        {loading && (
+        {/* Search Results Loader */}
+        {isSearching && (
           <Stack align="center" gap="md">
             <Loader size="lg" color="#C8653D" />
             <Text size="lg" c="#666666">
@@ -242,14 +225,14 @@ const SearchRoomsPage = () => {
         )}
 
         {/* Error message from backend */}
-        {errorMessage && !loading && (
+        {errorMessage && !isSearching && (
           <Alert color="red" variant="light">
             {errorMessage}
           </Alert>
         )}
 
         {/* No rooms available message */}
-        {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length === 0 && !loading && (
+        {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length === 0 && !isSearching && (
           <Alert color="yellow" variant="light">
             {t('searchRooms.noRooms')}
           </Alert>

@@ -16,7 +16,7 @@ import { IconSignature, IconCheck, IconRefresh } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SignatureCanvas from 'react-signature-canvas';
 import useLanguage from '../../hooks/useLanguage';
-import UnoLogo from '../../assets/uno.jpg';
+import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 import '../../styles/signature.css';
 
@@ -146,31 +146,7 @@ const SignaturePage = () => {
         }}
       >
         <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <Group>
-            <img
-              src={UnoLogo}
-              alt={t('common.unoHotelLogo')}
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              {t('mainMenu.title')}
-            </Title>
-          </Group>
+          <PropertyHeader />
         </Group>
 
         <Stack gap="lg" mb="xl">

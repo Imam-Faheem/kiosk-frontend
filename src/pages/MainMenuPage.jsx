@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { EARLY_ARRIVAL_CONFIG, MAIN_MENU_BUTTON_STYLES, CONTAINER_STYLES, PAPER_STYLES } from '../config/constants';
 import useLanguage from '../hooks/useLanguage';
 import usePropertyStore from '../stores/propertyStore';
-import UnoLogo from '../assets/uno.jpg';
+import PropertyHeader from '../components/PropertyHeader';
 import BackButton from '../components/BackButton';
 
 const MainMenuPage = () => {
@@ -65,35 +65,8 @@ const MainMenuPage = () => {
         radius="xl"
         style={PAPER_STYLES.default}
       >
-        {/* Header */}
         <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <Group>
-            <img
-              src={UnoLogo}
-              alt={t('common.unoHotelLogo')}
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: 800,
-                letterSpacing: '1px',
-                marginLeft: '-9px',
-                fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif'
-              }}
-            >
-              {t('mainMenu.title')}
-            </Title>
-          </Group>
-          
+          <PropertyHeader titleStyle={{ fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif' }} />
         </Group>
 
         {/* Main Buttons Section */}

@@ -15,7 +15,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
 import usePropertyStore from '../../stores/propertyStore';
-import UnoLogo from '../../assets/uno.jpg';
+import PropertyHeader from '../../components/PropertyHeader';
 import '../../styles/animations.css';
 import BackButton from '../../components/BackButton';
 
@@ -163,31 +163,8 @@ const RegenerateCardPage = () => {
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
         }}
       >
-          {/* Header */}
           <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-            <Group>
-              <img
-                src={UnoLogo}
-                alt={t('common.unoHotelLogo')}
-                style={{
-                  width: '50px',
-                  height: '50px',
-                  borderRadius: '8px',
-                  marginRight: '0px',
-                  objectFit: 'cover',
-                }}
-              />
-              <Title 
-                order={2} 
-                fz={30}
-                c="rgb(34, 34, 34)"
-                fw={600}
-                lts={1}
-                ml={-9}
-              >
-                {t('mainMenu.title')}
-              </Title>
-            </Group>
+            <PropertyHeader />
           </Group>
 
           <Stack gap="lg" mb="xl">

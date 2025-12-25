@@ -16,6 +16,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import '../../styles/animations.css';
 import { BUTTON_STYLES, CONTAINER_STYLES, PAPER_STYLES } from '../../config/constants';
+import PropertyHeader from '../../components/PropertyHeader';
 
 const ReservationCompletePage = () => {
   const navigate = useNavigate();
@@ -77,28 +78,10 @@ const ReservationCompletePage = () => {
         style={PAPER_STYLES.medium}
       >
         <Group justify="space-between" mb="xl" pb="md" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <Group>
-            <Box
-              style={{
-                width: '50px',
-                height: '50px',
-                backgroundColor: '#C8653D',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                marginRight: '0px',
-              }}
-            >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('reservationComplete.title')}
-            </Title>
-          </Group>
+          <PropertyHeader />
+          <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
+            {t('reservationComplete.title')}
+          </Title>
         </Group>
 
         <Stack gap="lg" mb="xl" align="center">
