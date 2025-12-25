@@ -36,7 +36,15 @@
   },
   "roomDetail": {
     "title": "Detalhes do Quarto",
-    "amenities": "Comodidades",
+    "amenities": {
+      "title": "Comodidades",
+      "wifi": "WiFi",
+      "airConditioning": "Ar Condicionado",
+      "tv": "TV",
+      "safe": "Cofre",
+      "miniBar": "Frigobar"
+    },
+    "capacity": "Capacidade",
     "bookingSummary": "Resumo da Reserva",
     "nights": "noites",
     "checkInDate": "Data de Check-In",
@@ -47,7 +55,11 @@
     "terms": "Aceito os termos e condições",
     "confirmBooking": "Confirmar Reserva",
     "editDetails": "Editar Detalhes",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "errorMissingData": "Faltam dados do quarto ou do hóspede. Por favor, volte e tente novamente.",
+    "guestName": "Nome do Hóspede",
+    "numberOfNights": "Número de Noites",
+    "maxGuests": "Hóspedes Máximos"
   },
   "signature": {
     "title": "Assinatura digital necessária",
@@ -79,6 +91,32 @@
     "submit": "Enviar",
     "confirm": "Confirmar",
     "yes": "Sim",
-    "no": "Não"
+    "no": "Não",
+    "select": "Selecionar",
+    "choose": "Escolher",
+    "save": "Salvar",
+    "saving": "Salvando...",
+    "guest": "Hóspede",
+    "guests": "Hóspedes",
+    "unoHotelLogo": "Logo UNO Hotel",
+    "returnToMenu": "Voltar ao Menu",
+    "notAvailable": "N/D",
+    "returnToHome": "Voltar ao Início"
+  },
+  "propertySelection": {
+    "title": "Seleção de Propriedade",
+    "selectProperty": "Selecionar Propriedade",
+    "chooseProperty": "Escolha uma propriedade",
+    "save": "Salvar",
+    "saving": "Salvando...",
+    "failedToLoadProperties": "Falha ao carregar propriedades. Tente novamente.",
+    "pleaseSelectProperty": "Selecione uma propriedade para continuar",
+    "selectedPropertyNotFound": "Propriedade selecionada não encontrada",
+    "failedToSaveProperty": "Falha ao salvar a seleção da propriedade. Tente novamente.",
+    "propertyDetails": "Detalhes da Propriedade",
+    "name": "Nome",
+    "address": "Endereço",
+    "property": "Propriedade",
+    "noPropertiesAvailable": "Nenhuma propriedade disponível. Entre em contato com o suporte."
   }
 }

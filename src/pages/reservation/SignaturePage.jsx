@@ -249,7 +249,7 @@ const SignaturePage = () => {
                     borderRadius: '12px',
                   }}
                 >
-                  {t('signature.clear') || 'Clear'}
+                  {t('signature.clear')}
                 </Button>
                 
                 <Button
@@ -263,7 +263,7 @@ const SignaturePage = () => {
                     borderRadius: '12px',
                   }}
                 >
-                  {t('signature.save') || 'Save Signature'}
+                  {t('signature.save')}
                 </Button>
               </Group>
             </Stack>
@@ -273,10 +273,10 @@ const SignaturePage = () => {
           <Card withBorder p="lg" radius="md" style={{ backgroundColor: '#f8f9fa' }}>
             <Stack gap="sm">
               <Text size="md" fw={600} c="#C8653D">
-                {t('signature.termsTitle') || 'Terms and Conditions'}
+                {t('signature.termsTitle')}
               </Text>
               <Text size="sm" c="#666666">
-                {t('signature.termsText') || 'By signing above, you agree to the hotel\'s terms and conditions, including cancellation policies, check-in/check-out times, and any applicable fees. Your signature serves as electronic consent for this reservation.'}
+                {t('signature.termsText')}
               </Text>
             </Stack>
           </Card>
@@ -309,7 +309,7 @@ const SignaturePage = () => {
                 e.currentTarget.style.color = '#C8653D';
               }}
             >
-              {t('signature.editDetails') || 'Edit Details'}
+              {t('signature.editDetails')}
             </Button>
             
             <Button
@@ -337,7 +337,7 @@ const SignaturePage = () => {
                 }
               }}
             >
-              {t('signature.continue') || 'Continue to Payment'}
+              {t('signature.continue')}
             </Button>
           </Group>
         </Group>

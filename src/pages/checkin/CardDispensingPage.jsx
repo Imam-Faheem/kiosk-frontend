@@ -54,6 +54,7 @@ const CardDispensingPage = () => {
     CARD_DISPENSING_STEPS.map(step => ({
       ...step,
       label: t(step.labelKey) ?? step.defaultLabel,
+      description: t(`${step.labelKey}.description`) ?? step.description,
       icon: STEP_ICONS[step.iconKey],
     })), [t]
   );
@@ -121,7 +122,7 @@ const CardDispensingPage = () => {
         
         const result = await issueCard.mutateAsync({
           reservationId: reservation.reservation_id ?? reservation.reservationId ?? reservation.id,
-          roomNumber: checkInResult?.data?.room_number ?? reservation.room_number ?? reservation.roomNumber ?? reservation.roomType ?? 'TBD',
+          roomNumber: checkInResult?.data?.room_number ?? reservation.room_number ?? reservation.roomNumber ?? reservation.roomType ?? t('common.notAvailable'),
           guestName: (() => {
             if (reservation.guest_name) {
               if (typeof reservation.guest_name === 'string') {

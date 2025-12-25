@@ -280,6 +280,8 @@
     "failedToSaveProperty": "Failed to save property selection. Please try again.",
     "propertyDetails": "Property Details",
     "name": "Name",
+    "address": "Address",
+    "property": "Property",
     "noPropertiesAvailable": "No properties available. Please contact support."
   },
   "paymentCheck": {
@@ -321,8 +323,11 @@
     "title": "Preparing Your Card",
     "steps": {
       "preparing": "Preparing card",
+      "preparing.description": "Preparing your access card",
       "encoding": "Encoding card",
-      "sending": "Sending details"
+      "encoding.description": "Securing your access credentials",
+      "sending": "Sending details",
+      "sending.description": "Delivering to your email"
     },
     "takeCard": "Please take your card",
     "loading": "Please wait...",
@@ -380,11 +385,24 @@
     "cardUpdateComplete": "Card Update Complete",
     "updatingRoomAccess": "Updating Room Access",
     "newCardDetails": "New Card Details",
-    "newAccessCode": "New Access Code"
+    "newAccessCode": "New Access Code",
+    "processing": "Processing...",
+    "cardRegeneratedSuccessfully": "Card regenerated successfully!",
+    "newCardReady": "Your new card is ready.",
+    "room": "Room",
+    "status": "Status"
   },
   "roomDetail": {
     "title": "Room Details",
-    "amenities": "Amenities",
+    "amenities": {
+      "title": "Amenities",
+      "wifi": "WiFi",
+      "airConditioning": "Air Conditioning",
+      "tv": "TV",
+      "safe": "Safe",
+      "miniBar": "Mini Bar"
+    },
+    "capacity": "Capacity",
     "bookingSummary": "Booking Summary",
     "nights": "nights",
     "checkInDate": "Check-In Date",

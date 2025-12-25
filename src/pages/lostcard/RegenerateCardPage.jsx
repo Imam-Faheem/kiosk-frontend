@@ -336,7 +336,7 @@ const RegenerateCardPage = () => {
                               fw={600}
                               ff="Inter, sans-serif"
                             >
-                              Processing...
+                              {t('regenerateCard.processing')}
                             </Text>
                           )}
                         </Group>
@@ -431,7 +431,7 @@ const RegenerateCardPage = () => {
                         letterSpacing: '-0.3px',
                       }}
                     >
-                      Card regenerated successfully!
+                      {t('regenerateCard.cardRegeneratedSuccessfully')}
                     </Text>
                     <Text 
                       size="sm" 
@@ -441,7 +441,7 @@ const RegenerateCardPage = () => {
                         fontFamily: 'Inter, sans-serif',
                       }}
                     >
-                      Your new card is ready.
+                      {t('regenerateCard.newCardReady')}
                     </Text>
                   </Stack>
                 )}
@@ -463,10 +463,10 @@ const RegenerateCardPage = () => {
                         <strong>{t('regenerateCard.newAccessCode')}:</strong> {cardData.accessCode}
                       </Text>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        <strong>Room:</strong> {guestData.roomNumber}
+                        <strong>{t('regenerateCard.room')}:</strong> {guestData.roomNumber}
                       </Text>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        <strong>Status:</strong> {cardData.status}
+                        <strong>{t('regenerateCard.status')}:</strong> {cardData.status}
                       </Text>
                     </Stack>
                   </Alert>
@@ -497,7 +497,7 @@ const RegenerateCardPage = () => {
                   },
                 }}
               >
-                Return to Home
+                {t('common.returnToHome')}
               </Button>
             </Group>
           )}

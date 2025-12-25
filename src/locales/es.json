@@ -44,8 +44,11 @@
     "title": "Preparando Su Tarjeta",
     "steps": {
       "preparing": "Preparando tarjeta",
+      "preparing.description": "Preparando su tarjeta de acceso",
       "encoding": "Codificando tarjeta",
-      "sending": "Enviando detalles"
+      "encoding.description": "Asegurando sus credenciales de acceso",
+      "sending": "Enviando detalles",
+      "sending.description": "Enviando a su correo electrónico"
     },
     "takeCard": "Por favor tome su tarjeta",
     "loading": "Por favor espere..."
@@ -71,7 +74,15 @@
   },
   "roomDetail": {
     "title": "Detalles de la Habitación",
-    "amenities": "Comodidades",
+    "amenities": {
+      "title": "Comodidades",
+      "wifi": "WiFi",
+      "airConditioning": "Aire Acondicionado",
+      "tv": "TV",
+      "safe": "Caja Fuerte",
+      "miniBar": "Minibar"
+    },
+    "capacity": "Capacidad",
     "bookingSummary": "Resumen de Reserva",
     "nights": "noches",
     "checkInDate": "Fecha de Check In",
@@ -82,7 +93,11 @@
     "terms": "Acepto los términos y condiciones",
     "confirmBooking": "Confirmar Reserva",
     "editDetails": "Editar Detalles",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "errorMissingData": "Faltan datos de habitación o huésped. Por favor regrese e intente de nuevo.",
+    "guestName": "Nombre del Huésped",
+    "numberOfNights": "Número de Noches",
+    "maxGuests": "Huéspedes Máximos"
   },
   "guestDetails": {
     "title": "Detalles del Huésped",
@@ -106,19 +121,6 @@
     "postalPlaceholder": "Código postal",
     "continue": "Continuar",
     "back": "Atrás"
-  },
-  "roomDetail": {
-    "title": "Detalles de la Habitación",
-    "amenities": "Comodidades",
-    "bookingSummary": "Resumen de Reserva",
-    "nights": "noches",
-    "pricePerNight": "Precio por noche",
-    "taxes": "Impuestos",
-    "total": "Total",
-    "terms": "Acepto los términos y condiciones",
-    "confirmBooking": "Confirmar Reserva",
-    "editDetails": "Editar Detalles",
-    "cancel": "Cancelar"
   },
   "signature": {
     "title": "Firma digital requerida",
@@ -183,7 +185,18 @@
       "generating": "Generando nuevas credenciales",
       "programming": "Programando nueva tarjeta"
     },
-    "pleaseWait": "Por favor espere..."
+    "pleaseWait": "Por favor espere...",
+    "pleaseWaitMessage": "Por favor espere mientras actualizamos su tarjeta de acceso. No retire la tarjeta durante este proceso.",
+    "cardRegenerationError": "Error de Regeneración de Tarjeta",
+    "cardUpdateComplete": "Actualización de Tarjeta Completada",
+    "updatingRoomAccess": "Actualizando Acceso a la Habitación",
+    "newCardDetails": "Detalles de la Nueva Tarjeta",
+    "newAccessCode": "Nuevo Código de Acceso",
+    "processing": "Procesando...",
+    "cardRegeneratedSuccessfully": "¡Tarjeta regenerada exitosamente!",
+    "newCardReady": "Su nueva tarjeta está lista.",
+    "room": "Habitación",
+    "status": "Estado"
   },
   "cardIssued": {
     "title": "Nueva Tarjeta Emitida",
@@ -216,6 +229,32 @@
     "submit": "Enviar",
     "confirm": "Confirmar",
     "yes": "Sí",
-    "no": "No"
+    "no": "No",
+    "select": "Seleccionar",
+    "choose": "Elegir",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "guest": "Huésped",
+    "guests": "Huéspedes",
+    "unoHotelLogo": "Logo de UNO Hotel",
+    "returnToMenu": "Volver al Menú",
+    "notAvailable": "N/D",
+    "returnToHome": "Volver al Inicio"
+  },
+  "propertySelection": {
+    "title": "Selección de Propiedad",
+    "selectProperty": "Seleccionar Propiedad",
+    "chooseProperty": "Elija una propiedad",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "failedToLoadProperties": "No se pudieron cargar las propiedades. Por favor intente de nuevo.",
+    "pleaseSelectProperty": "Por favor seleccione una propiedad para continuar",
+    "selectedPropertyNotFound": "Propiedad seleccionada no encontrada",
+    "failedToSaveProperty": "No se pudo guardar la selección de propiedad. Por favor intente de nuevo.",
+    "propertyDetails": "Detalles de la Propiedad",
+    "name": "Nombre",
+    "address": "Dirección",
+    "property": "Propiedad",
+    "noPropertiesAvailable": "No hay propiedades disponibles. Por favor contacte al soporte."
   }
 }

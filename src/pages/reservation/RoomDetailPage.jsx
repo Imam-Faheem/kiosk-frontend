@@ -114,13 +114,23 @@ const RoomDetailPage = () => {
     });
   };
 
-  // Amenity icons mapping
   const amenityIcons = {
     'WiFi': <IconWifi size={16} />,
     'Air Conditioning': <IconSnowflake size={16} />,
     'TV': <IconDeviceTv size={16} />,
     'Safe': <IconShield size={16} />,
     'Mini Bar': <IconCoffee size={16} />,
+  };
+
+  const getAmenityTranslation = (amenity) => {
+    const amenityMap = {
+      'WiFi': t('roomDetail.amenities.wifi'),
+      'Air Conditioning': t('roomDetail.amenities.airConditioning'),
+      'TV': t('roomDetail.amenities.tv'),
+      'Safe': t('roomDetail.amenities.safe'),
+      'Mini Bar': t('roomDetail.amenities.miniBar'),
+    };
+    return amenityMap[amenity] || amenity;
   };
 
   const handleConfirm = () => {
@@ -217,7 +227,7 @@ const RoomDetailPage = () => {
               {/* Main Image */}
               {loading ? (
                 <Box style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
-                  <Text c="#666666">Loading images...</Text>
+                  <Text c="#666666">{t('common.loading')}</Text>
                 </Box>
               ) : (
                 <Box style={{ position: 'relative' }}>
@@ -277,7 +287,7 @@ const RoomDetailPage = () => {
 
               {/* Room Amenities */}
               <Stack gap="sm">
-                <Text size="md" fw={600}>Amenities:</Text>
+                <Text size="md" fw={600}>{t('roomDetail.amenities.title')}:</Text>
                 <Group gap="sm">
                   {(displayRoom.amenities || []).map((amenity, index) => (
                     <Badge
@@ -287,7 +297,7 @@ const RoomDetailPage = () => {
                       leftSection={amenityIcons[amenity] || null}
                       size="sm"
                     >
-                      {amenity}
+                      {getAmenityTranslation(amenity)}
                     </Badge>
                   ))}
                 </Group>
@@ -296,12 +306,12 @@ const RoomDetailPage = () => {
               {/* Room Details */}
               <Grid>
                 <Grid.Col span={6}>
-                  <Text size="sm" c="#666666">Capacity:</Text>
-                  <Text size="md" fw={600}>{displayRoom.capacity || displayRoom.maxGuests || 1} guests</Text>
+                  <Text size="sm" c="#666666">{t('roomDetail.capacity')}:</Text>
+                  <Text size="md" fw={600}>{displayRoom.capacity || displayRoom.maxGuests || 1} {t('common.guests')}</Text>
                 </Grid.Col>
                 <Grid.Col span={6}>
                   <Text size="sm" c="#666666">{t('roomDetail.maxGuests')}:</Text>
-                  <Text size="md" fw={600}>{displayRoom.maxGuests || displayRoom.capacity || 1} guests</Text>
+                  <Text size="md" fw={600}>{displayRoom.maxGuests || displayRoom.capacity || 1} {t('common.guests')}</Text>
                 </Grid.Col>
               </Grid>
 

@@ -44,8 +44,11 @@
     "title": "Préparation de Votre Carte",
     "steps": {
       "preparing": "Préparation de la carte",
+      "preparing.description": "Préparation de votre carte d'accès",
       "encoding": "Encodage de la carte",
-      "sending": "Envoi des détails"
+      "encoding.description": "Sécurisation de vos identifiants d'accès",
+      "sending": "Envoi des détails",
+      "sending.description": "Envoi à votre email"
     },
     "takeCard": "Veuillez prendre votre carte",
     "loading": "Veuillez patienter..."
@@ -94,7 +97,15 @@
   },
   "roomDetail": {
     "title": "Détails de la Chambre",
-    "amenities": "Équipements",
+    "amenities": {
+      "title": "Équipements",
+      "wifi": "WiFi",
+      "airConditioning": "Climatisation",
+      "tv": "TV",
+      "safe": "Coffre-fort",
+      "miniBar": "Mini-bar"
+    },
+    "capacity": "Capacité",
     "bookingSummary": "Résumé de la Réservation",
     "nights": "nuits",
     "checkInDate": "Date d'Arrivée",
@@ -105,7 +116,11 @@
     "terms": "J'accepte les termes et conditions",
     "confirmBooking": "Confirmer la Réservation",
     "editDetails": "Modifier les Détails",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "errorMissingData": "Données de chambre ou du client manquantes. Veuillez revenir en arrière et réessayer.",
+    "guestName": "Nom du Client",
+    "numberOfNights": "Nombre de Nuits",
+    "maxGuests": "Invités Maximum"
   },
   "signature": {
     "title": "Signature numérique requise",
@@ -170,7 +185,18 @@
       "generating": "Génération de nouvelles identifiants",
       "programming": "Programmation de la nouvelle carte"
     },
-    "pleaseWait": "Veuillez patienter..."
+    "pleaseWait": "Veuillez patienter...",
+    "pleaseWaitMessage": "Veuillez patienter pendant que nous mettons à jour votre carte d'accès. Ne retirez pas la carte pendant ce processus.",
+    "cardRegenerationError": "Erreur de Régénération de Carte",
+    "cardUpdateComplete": "Mise à Jour de Carte Terminée",
+    "updatingRoomAccess": "Mise à Jour de l'Accès à la Chambre",
+    "newCardDetails": "Détails de la Nouvelle Carte",
+    "newAccessCode": "Nouveau Code d'Accès",
+    "processing": "Traitement...",
+    "cardRegeneratedSuccessfully": "Carte régénérée avec succès !",
+    "newCardReady": "Votre nouvelle carte est prête.",
+    "room": "Chambre",
+    "status": "Statut"
   },
   "cardIssued": {
     "title": "Nouvelle Carte Émise",
@@ -203,6 +229,32 @@
     "submit": "Soumettre",
     "confirm": "Confirmer",
     "yes": "Oui",
-    "no": "Non"
+    "no": "Non",
+    "select": "Sélectionner",
+    "choose": "Choisir",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "guest": "Client",
+    "guests": "Clients",
+    "unoHotelLogo": "Logo UNO Hotel",
+    "returnToMenu": "Retour au Menu",
+    "notAvailable": "N/D",
+    "returnToHome": "Retour à l'Accueil"
+  },
+  "propertySelection": {
+    "title": "Sélection de Propriété",
+    "selectProperty": "Sélectionner une Propriété",
+    "chooseProperty": "Choisissez une propriété",
+    "save": "Enregistrer",
+    "saving": "Enregistrement...",
+    "failedToLoadProperties": "Impossible de charger les propriétés. Veuillez réessayer.",
+    "pleaseSelectProperty": "Veuillez sélectionner une propriété pour continuer",
+    "selectedPropertyNotFound": "Propriété sélectionnée introuvable",
+    "failedToSaveProperty": "Impossible d'enregistrer la sélection de propriété. Veuillez réessayer.",
+    "propertyDetails": "Détails de la Propriété",
+    "name": "Nom",
+    "address": "Adresse",
+    "property": "Propriété",
+    "noPropertiesAvailable": "Aucune propriété disponible. Veuillez contacter le support."
   }
 }

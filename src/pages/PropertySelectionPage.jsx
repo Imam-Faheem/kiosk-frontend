@@ -63,10 +63,10 @@ const PropertyDetails = React.memo(({ properties, selectedPropertyId, t }) => {
       <Stack gap="md">
         <Text size="sm" fw={600}>{t('propertySelection.propertyDetails')}:</Text>
         <Group gap="md" align="flex-start">
-          {imageUrl && <img src={imageUrl} alt={selectedProperty.name || 'Property'} style={{ width: '120px', height: '120px', borderRadius: '12px', objectFit: 'cover', border: '2px solid #E9ECEF' }} onError={(e) => e.target.style.display = 'none'} />}
+          {imageUrl && <img src={imageUrl} alt={selectedProperty.name || t('propertySelection.property')} style={{ width: '120px', height: '120px', borderRadius: '12px', objectFit: 'cover', border: '2px solid #E9ECEF' }} onError={(e) => e.target.style.display = 'none'} />}
           <Stack gap="xs" style={{ flex: 1 }}>
             <Text size="sm" c="dimmed"><strong>{t('propertySelection.name')}:</strong> {selectedProperty.name ?? selectedProperty?.id ?? selectedProperty?.property_id ?? ""}</Text>
-            {selectedProperty?.configuration?.address && <Text size="sm" c="dimmed"><strong>Address:</strong> {selectedProperty.configuration.address}</Text>}
+            {selectedProperty?.configuration?.address && <Text size="sm" c="dimmed"><strong>{t('propertySelection.address')}:</strong> {selectedProperty.configuration.address}</Text>}
           </Stack>
         </Group>
       </Stack>
@@ -75,9 +75,9 @@ const PropertyDetails = React.memo(({ properties, selectedPropertyId, t }) => {
 });
 PropertyDetails.displayName = 'PropertyDetails';
 
-const ContinueButton = React.memo(({ onClick, disabled, loading }) => (
+const ContinueButton = React.memo(({ onClick, disabled, loading, t }) => (
   <Button size="xl" onClick={onClick} disabled={disabled} loading={loading} fw={700} tt="uppercase" radius="xl" px={80} py={20} styles={getPrimaryButtonStyles}>
-    {loading ? "Saving..." : "Save"}
+    {loading ? t('common.saving') : t('common.save')}
   </Button>
 ));
 ContinueButton.displayName = 'ContinueButton';
@@ -153,7 +153,7 @@ const PropertySelectionPage = () => {
         <Paper withBorder shadow="md" p={40} radius="xl" style={paperStyle}>
           <Stack align="center" gap="md">
             <Loader size="lg" color="#C8653D" />
-            <Text c="dimmed">Loading properties...</Text>
+            <Text c="dimmed">{t('common.loading')}</Text>
           </Stack>
         </Paper>
       </Container>
@@ -183,7 +183,7 @@ const PropertySelectionPage = () => {
           )}
         </Stack>
         <Stack align="center" gap="md">
-          <ContinueButton onClick={handleContinue} disabled={!selectedPropertyId || saving} loading={saving} />
+          <ContinueButton onClick={handleContinue} disabled={!selectedPropertyId || saving} loading={saving} t={t} />
         </Stack>
       </Paper>
     </Container>

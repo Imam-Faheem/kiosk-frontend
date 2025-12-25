@@ -79,8 +79,8 @@ const WelcomePage = () => {
         <Box style={{ position: "absolute", top: "20px", left: "30px" }}>
           <PropertyHeader showName={true} />
         </Box>
-
-        <PropertyLogo size={110} alt={t('common.unoHotelLogo')} style={{ marginBottom: "20px" }} />
+ 
+        <PropertyLogo size={110} alt={t('common.unoHotelLogo')} style={{ marginBottom: "20px", marginTop: "60px" }} />
 
         {/* ✅ Main heading with dynamic language text */}
         <h3
