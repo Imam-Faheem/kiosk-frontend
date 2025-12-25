@@ -185,7 +185,7 @@ const PaymentCheckPage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -202,7 +202,7 @@ const PaymentCheckPage = () => {
               lts={1}
               ml={-9}
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
         </Group>
@@ -221,7 +221,7 @@ const PaymentCheckPage = () => {
                   fz={24}
                   lts={-0.3}
                 >
-                  Verifying Payment Status
+                  {t('paymentCheck.verifyingPaymentStatus')}
                 </Title>
                 <Text 
                   size="sm" 
@@ -230,7 +230,7 @@ const PaymentCheckPage = () => {
                   maw={500}
                   lh={1.6}
                 >
-                  Please wait while we check your payment information...
+                  {t('paymentCheck.pleaseWaitCheckingPayment')}
                 </Text>
               </Stack>
 
@@ -255,10 +255,10 @@ const PaymentCheckPage = () => {
                   </Box>
                   <Stack align="center" gap={8}>
                     <Text size="sm" c="dimmed" ta="center">
-                      Processing payment verification...
+                      {t('paymentCheck.processingPaymentVerification')}
                     </Text>
                     <Text size="xs" c="dimmed" ta="center">
-                      Estimated time: {processingTime < 3 ? '~3 seconds' : 'Almost done'}
+                      {t('paymentCheck.estimatedTime', { time: processingTime < 3 ? t('paymentCheck.threeSeconds') : t('paymentCheck.almostDone') })}
                     </Text>
                   </Stack>
                   {/* Progress Bar */}
@@ -287,7 +287,7 @@ const PaymentCheckPage = () => {
           ) : error ? (
             <Alert
                 icon={<IconX size={20} />}
-                title="Verification Error"
+                title={t('paymentCheck.verificationError')}
               color="red"
               variant="light"
                 radius="md"
@@ -297,7 +297,7 @@ const PaymentCheckPage = () => {
               {error}
                 </Text>
                 <Text size="sm" c="dimmed" mt={8}>
-                  Please try again or contact front desk for assistance.
+                  {t('paymentCheck.pleaseTryAgainOrContact')}
                 </Text>
             </Alert>
           ) : (
@@ -313,10 +313,10 @@ const PaymentCheckPage = () => {
                   lts={-0.3}
                 >
                   {isPaymentCompleted(paymentStatus?.status) 
-                    ? 'Payment Completed' 
+                    ? t('paymentCheck.paymentCompleted') 
                     : paymentFailed 
-                    ? 'Payment Failed' 
-                    : 'Payment Verification'}
+                    ? t('paymentCheck.paymentFailed') 
+                    : t('paymentCheck.paymentVerification')}
                 </Title>
                 <Text 
                   size="sm" 
@@ -326,10 +326,10 @@ const PaymentCheckPage = () => {
                   lh={1.6}
                 >
                   {isPaymentCompleted(paymentStatus?.status)
-                    ? 'Your payment has been confirmed. Proceeding to card issuance...'
+                    ? t('paymentCheck.paymentConfirmed')
                     : paymentFailed
-                    ? 'Unable to verify payment. Please retry or contact support.'
-                    : 'Payment verification in progress. Please wait...'}
+                    ? t('paymentCheck.unableToVerifyPayment')
+                    : t('paymentCheck.paymentVerificationInProgress')}
                 </Text>
               </Stack>
 
@@ -400,10 +400,10 @@ const PaymentCheckPage = () => {
                         }}
                       >
                         {isPaymentCompleted(paymentStatus.status) 
-                          ? 'Payment Completed' 
+                          ? t('paymentCheck.paymentCompleted') 
                           : paymentFailed 
-                          ? 'Payment Failed' 
-                          : 'Payment Required'}
+                          ? t('paymentCheck.paymentFailed') 
+                          : t('paymentCheck.paymentRequired')}
                       </Text>
                       {!isPaymentCompleted(paymentStatus.status) && !paymentFailed && loading && (
                         <Text 
@@ -412,7 +412,7 @@ const PaymentCheckPage = () => {
                           fw={600}
                           ff="Inter, sans-serif"
                         >
-                          Processing...
+                          {t('paymentCheck.processing')}
                         </Text>
                       )}
                     </Group>
@@ -442,7 +442,7 @@ const PaymentCheckPage = () => {
                         </Box>
                         <Box style={{ flex: 1 }}>
                           <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" lts={0.5}>
-                            {paymentStatus.balance > 0 ? 'Amount Due' : 'Amount Paid'}
+                            {paymentStatus.balance > 0 ? t('paymentCheck.amountDue') : t('paymentCheck.amountPaid')}
                           </Text>
                           <Group gap={8} align="baseline">
                             <Text size="lg" fw={700} c="dark.9" lh={1}>
@@ -459,12 +459,12 @@ const PaymentCheckPage = () => {
                           </Group>
                           {paymentStatus.balance > 0 && (
                             <Text size="xs" c="#C8653D" fw={600} mt={4}>
-                              Payment required to proceed
+                              {t('paymentCheck.paymentRequiredToProceed')}
                             </Text>
                           )}
                           {isPaymentCompleted(paymentStatus.status) && paymentStatus.balance <= 0 && (
                             <Text size="xs" c="green" fw={600} mt={4}>
-                              Payment completed
+                              {t('paymentCheck.paymentCompleted')}
                             </Text>
                           )}
                         </Box>
@@ -501,7 +501,7 @@ const PaymentCheckPage = () => {
                           flex: 1,
                         }}
                       >
-                        Reservation Details
+                        {t('paymentCheck.reservationDetails')}
                       </Text>
                     </Group>
 
@@ -514,7 +514,7 @@ const PaymentCheckPage = () => {
                       <IconUser size={20} color="#666666" />
                       <Box style={{ flex: 1 }}>
                         <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" lts={0.5}>
-                          Guest Name
+                          {t('paymentCheck.guestName')}
                         </Text>
                         <Text size="md" fw={500} c="dark.9">
                           {(() => {
@@ -536,7 +536,7 @@ const PaymentCheckPage = () => {
                         <IconBed size={20} color="#666666" />
                         <Box style={{ flex: 1 }}>
                           <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" lts={0.5}>
-                            Room
+                            {t('paymentCheck.room')}
                           </Text>
                           <Text size="md" fw={500} c="dark.9">
                             {reservation.roomNumber}
@@ -555,7 +555,7 @@ const PaymentCheckPage = () => {
                         <IconBed size={20} color="#666666" />
                         <Box style={{ flex: 1 }}>
                           <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" lts={0.5}>
-                            Room Type
+                            {t('paymentCheck.roomType')}
                           </Text>
                           <Text size="md" fw={500} c="dark.9">
                             {reservation.roomType}
@@ -588,7 +588,7 @@ const PaymentCheckPage = () => {
               px={24}
               py={10}
             >
-              Contact Support
+              {t('paymentCheck.contactSupport')}
             </Button>
           )}
         </Group>

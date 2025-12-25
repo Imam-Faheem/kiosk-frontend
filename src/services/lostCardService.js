@@ -1,5 +1,6 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
+import { translateError } from '../utils/translations';
 
 export const validateLostCardGuest = async (data) => {
   try {
@@ -12,12 +13,12 @@ export const validateLostCardGuest = async (data) => {
     const reservationLastName = reservation?.primaryGuest?.lastName?.trim().toLowerCase();
 
     if (!lastNameLower || !reservationLastName || lastNameLower !== reservationLastName) {
-      throw new Error('Last name does not match reservation records');
+      throw new Error(translateError('lastNameMismatch'));
     }
 
     const assignedRoom = reservation?.unit?.code ?? reservation?.unit?.name ?? reservation?.unit?.id;
     if (roomNumber && assignedRoom && assignedRoom.toLowerCase() !== roomNumber.toLowerCase()) {
-      throw new Error('Room number does not match reservation records');
+      throw new Error(translateError('roomNumberMismatch'));
     }
 
     return reservationResponse.data;
@@ -28,7 +29,7 @@ export const validateLostCardGuest = async (data) => {
     }
 
     if (error?.response?.status === 404) {
-      throw new Error('Reservation not found. Please check your reservation number.');
+      throw new Error(translateError('reservationNotFoundByNumber'));
     }
 
     const message = error?.response?.data?.message ??

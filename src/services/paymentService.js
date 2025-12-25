@@ -1,5 +1,6 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock } from './mockData';
+import { translateError } from '../utils/translations';
 
 /**
  * Process payment for a reservation
@@ -38,10 +39,10 @@ export const getPaymentStatus = async (reservationId) => {
     }
     
     if (err?.response?.status === 404) {
-      throw new Error('Payment status not found');
+      throw new Error(translateError('paymentStatusNotFound'));
     }
     
-    const errorMessage = err?.response?.data?.message ?? err?.message ?? 'Failed to fetch payment status';
+    const errorMessage = err?.response?.data?.message ?? err?.message ?? translateError('generic');
     throw new Error(errorMessage);
   }
 };

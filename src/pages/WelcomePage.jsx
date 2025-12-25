@@ -15,6 +15,7 @@ import { IconCheck } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
+import useLanguage from "../hooks/useLanguage";
 import usePropertyStore from "../stores/propertyStore";
 import { STORAGE_KEYS } from "../config/constants";
 import UnoLogo from "../assets/uno.jpg";
@@ -22,7 +23,7 @@ import { BUTTON_STYLES, LANGUAGE_OPTIONS } from "../config/constants";
 
 const WelcomePage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const { language, setLanguage, initializeLanguage } = useLanguageStore();
   const { isConfigured, propertyId } = usePropertyStore();
 
@@ -107,14 +108,14 @@ const WelcomePage = () => {
             marginLeft: "-9px"
           }}
         >
-          UNO HOTELS
+          {t('mainMenu.title')}
         </h2>
 
 
         {/* ✅ Centered Logo */}
         <img
           src={UnoLogo}
-          alt="UNO Hotel Logo"
+          alt={t('common.unoHotelLogo')}
           style={{
             width: "110px",
             height: "auto",
@@ -132,12 +133,7 @@ const WelcomePage = () => {
             fontWeight: "500",
           }}
         >
-          {language === "de" && "Sprache wählen"}
-          {language === "en" && "Select language"}
-          {language === "es" && "Seleccionar idioma"}
-          {language === "fr" && "Sélectionner la langue"}
-          {language === "it" && "Seleziona lingua"}
-          {language === "pt" && "Selecionar idioma"}
+          {t('welcome.selectLanguage')}
         </h3>
 
         {/* ✅ Language Selection - Centered Grid */}
@@ -234,7 +230,7 @@ const WelcomePage = () => {
             uppercase
             radius="xl"
           >
-            {t("welcome.continue") || "Continue"}
+            {t("welcome.continue")}
           </Button>
         </Box>
       </Paper>

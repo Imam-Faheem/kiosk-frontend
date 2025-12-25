@@ -10,7 +10,7 @@ import {
   Alert,
   Box,
 } from '@mantine/core';
-import { IconAlertCircle, IconArrowRight } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
@@ -51,8 +51,8 @@ const CheckInPage = () => {
   const form = useForm({
     initialValues: checkinInitialValues,
     validate: {
-      reservationId: (value) => (!value ? 'Reservation ID is required' : null),
-      lastName: (value) => (!value ? 'Last name is required' : null),
+      reservationId: (value) => (!value ? t('error.reservationIdRequired') : null),
+      lastName: (value) => (!value ? t('error.lastNameRequired') : null),
     },
   });
 
@@ -69,7 +69,7 @@ const CheckInPage = () => {
       if (result.success && result.data) {
         const reservationId = result.data.reservation_id ?? result.data.id;
         if (!reservationId) {
-          setError('Invalid reservation data. Please try again.');
+          setError(t('error.invalidReservationData'));
           return;
         }
 
@@ -77,7 +77,7 @@ const CheckInPage = () => {
           state: { reservation: result.data },
         });
       } else {
-        setError('Reservation validation failed. Please check your credentials.');
+        setError(t('error.reservationValidationFailed'));
       }
     } catch (error) {
       if (shouldUseMock(error)) {
@@ -95,7 +95,7 @@ const CheckInPage = () => {
             }
           }
         } catch {
-          setError('Failed to load reservation data. Please try again.');
+          setError(t('error.failedToLoadReservation'));
           return;
         }
       }
@@ -140,7 +140,7 @@ const CheckInPage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -157,7 +157,7 @@ const CheckInPage = () => {
               lts={1}
               ml={-9}
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
         </Group>
@@ -171,7 +171,7 @@ const CheckInPage = () => {
           mb={16}
           lts={0.5}
         >
-          Find Your Reservation
+          {t('checkIn.title')}
         </Title>
 
         {/* Form */}
@@ -180,7 +180,7 @@ const CheckInPage = () => {
             {error && (
               <Alert
                 icon={<IconAlertCircle size={16} />}
-                title="Error"
+                title={t('error.title')}
                 color="red"
                 variant="light"
                 radius="md"
@@ -191,7 +191,7 @@ const CheckInPage = () => {
 
             <TextInput
               label={t('checkIn.reservationId')}
-              placeholder="Enter your 10-digit reservation number"
+              placeholder={t('checkIn.enterReservationNumber')}
               required
               size="lg"
               {...form.getInputProps('reservationId')}
@@ -211,7 +211,7 @@ const CheckInPage = () => {
 
             <TextInput
               label={t('checkIn.lastName')}
-              placeholder="Enter your last name"
+              placeholder={t('checkIn.enterLastName')}
               required
               size="lg"
               {...form.getInputProps('lastName')}
@@ -237,13 +237,12 @@ const CheckInPage = () => {
             <Button
               type="submit"
               size="lg"
-              rightSection={<IconArrowRight size={20} />}
+              leftSection={<IconCheck size={20} />}
               loading={isLoading}
-              disabled={isLoading}
-              styles={BUTTON_STYLES.primary}
+              styles={BUTTON_STYLES.primarySmall}
               radius="md"
             >
-              {isLoading ? 'Validating...' : t('checkIn.submit')}
+              {isLoading ? t('checkIn.loading') : t('checkIn.submit')}
             </Button>
           </Group>
         </form>

@@ -97,7 +97,7 @@ const NewResCardPage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -116,7 +116,7 @@ const NewResCardPage = () => {
                 marginLeft: '-9px'
               }}
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
         </Group>
@@ -135,16 +135,16 @@ const NewResCardPage = () => {
           <Stepper active={0} orientation="vertical" size="sm" style={{ width: '100%' }} allowNextStepsSelect={false}>
             <Stepper.Step 
               label={t('newResCard.steps.preparing')} 
-              description="Preparing your new card"
+              description={t('newResCard.steps.preparingDescription')}
               icon={<Loader size="sm" color="#C8653D" />}
             />
             <Stepper.Step 
               label={t('newResCard.steps.encoding')} 
-              description="Encoding card with your details"
+              description={t('newResCard.steps.encodingDescription')}
             />
             <Stepper.Step 
               label={t('newResCard.steps.sending')} 
-              description="Sending confirmation"
+              description={t('newResCard.steps.sendingDescription')}
             />
           </Stepper>
           {/* No final message on in-progress screen */}

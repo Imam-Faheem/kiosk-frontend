@@ -104,7 +104,7 @@ const SignaturePage = () => {
           }}
         >
           <Text size="lg" c="red">
-            {t('signature.errorMissingData') || 'Missing room or guest details. Please go back and try again.'}
+            {t('signature.errorMissingData')}
           </Text>
           <Button
             variant="outline"
@@ -149,7 +149,7 @@ const SignaturePage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -168,7 +168,7 @@ const SignaturePage = () => {
                 marginLeft: '-9px'
               }}
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
         </Group>
@@ -178,10 +178,10 @@ const SignaturePage = () => {
           <Box style={{ textAlign: 'center' }}>
             <Title order={1} size="h2" mb="md" c="#C8653D">
               <IconSignature size={32} style={{ marginRight: '10px', verticalAlign: 'middle' }} />
-              {t('signature.title') || 'Digital Signature Required'}
+              {t('signature.title')}
             </Title>
             <Text size="lg" c="#666666">
-              {t('signature.subtitle') || 'Please sign below to confirm your reservation agreement'}
+              {t('signature.subtitle')}
             </Text>
           </Box>
 
@@ -189,22 +189,22 @@ const SignaturePage = () => {
           <Card withBorder p="lg" radius="md" style={{ backgroundColor: '#f8f9fa' }}>
             <Stack gap="sm">
               <Text size="lg" fw={600} c="#C8653D">
-                {t('signature.guestInfo') || 'Guest Information'}
+                {t('signature.guestInfo')}
               </Text>
               <Group justify="space-between">
-                <Text size="md" c="#666666">{t('signature.guestName') || 'Guest Name'}:</Text>
+                <Text size="md" c="#666666">{t('signature.guestName')}:</Text>
                 <Text size="md" fw={600}>{guestDetails.firstName} {guestDetails.lastName}</Text>
               </Group>
               <Group justify="space-between">
-                <Text size="md" c="#666666">{t('signature.room') || 'Room'}:</Text>
+                <Text size="md" c="#666666">{t('signature.room')}:</Text>
                 <Text size="md" fw={600}>{room.name}</Text>
               </Group>
               <Group justify="space-between">
-                <Text size="md" c="#666666">{t('signature.checkIn') || 'Check-in'}:</Text>
+                <Text size="md" c="#666666">{t('signature.checkIn')}:</Text>
                 <Text size="md" fw={600}>{formatDate(searchCriteria.checkIn)}</Text>
               </Group>
               <Group justify="space-between">
-                <Text size="md" c="#666666">{t('signature.checkOut') || 'Check-out'}:</Text>
+                <Text size="md" c="#666666">{t('signature.checkOut')}:</Text>
                 <Text size="md" fw={600}>{formatDate(searchCriteria.checkOut)}</Text>
               </Group>
             </Stack>
@@ -214,7 +214,7 @@ const SignaturePage = () => {
           <Card withBorder p="lg" radius="md">
             <Stack gap="md">
               <Text size="md" fw={600}>
-                {t('signature.signatureLabel') || 'Please sign in the box below:'}
+                {t('signature.signatureLabel')}
               </Text>
               
               <Box className="signature-container">
@@ -243,7 +243,7 @@ const SignaturePage = () => {
                 
                 {sigCanvas.current && sigCanvas.current.isEmpty() && (
                   <Box className="signature-placeholder">
-                    {t('signature.signHere') || 'Sign here...'}
+                    {t('signature.signHere')}
                   </Box>
                 )}
               </Box>
@@ -252,11 +252,11 @@ const SignaturePage = () => {
               {isSigned && (
                 <Alert
                   icon={<IconCheck size={16} />}
-                  title={t('signature.signed') || 'Signature Captured'}
+                  title={t('signature.signed')}
                   color="green"
                   variant="light"
                 >
-                  {t('signature.signedMessage') || 'Your signature has been successfully captured.'}
+                  {t('signature.signedMessage')}
                 </Alert>
               )}
 

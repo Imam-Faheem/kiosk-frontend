@@ -18,6 +18,7 @@ import { getPrimaryButtonStyles, getInputStyles } from "../constants/style.const
 import { STORAGE_KEYS, REVERSE_CAPABILITY_MAP } from "../config/constants";
 import UnoLogo from "../assets/uno.jpg";
 import { Select, Button } from "@mantine/core";
+import useLanguage from "../hooks/useLanguage";
 
 // Convert capabilities object to array for storage
 const convertCapabilitiesToArray = (capabilitiesObj) => {
@@ -27,7 +28,7 @@ const convertCapabilitiesToArray = (capabilitiesObj) => {
 };
 
 // Property Select Component
-const PropertySelect = React.memo(({ properties, selectedPropertyId, onPropertySelect }) => {
+const PropertySelect = React.memo(({ properties, selectedPropertyId, onPropertySelect, t }) => {
   const selectData = useMemo(() => {
     return properties
       .filter((property) => property?.id ?? property?.property_id)
@@ -43,8 +44,8 @@ const PropertySelect = React.memo(({ properties, selectedPropertyId, onPropertyS
 
   return (
     <Select
-      label="Select Property"
-      placeholder="Choose a property"
+      label={t('propertySelection.selectProperty')}
+      placeholder={t('propertySelection.chooseProperty')}
       data={selectData}
       value={selectedPropertyId}
       onChange={onPropertySelect}
@@ -58,7 +59,7 @@ const PropertySelect = React.memo(({ properties, selectedPropertyId, onPropertyS
 PropertySelect.displayName = 'PropertySelect';
 
 // Property Details Component
-const PropertyDetails = React.memo(({ properties, selectedPropertyId }) => {
+const PropertyDetails = React.memo(({ properties, selectedPropertyId, t }) => {
   const selectedProperty = useMemo(() => {
     if (!Array.isArray(properties) || !selectedPropertyId) return null;
     return properties.find((p) => (p.id === selectedPropertyId) || (p.property_id === selectedPropertyId)) ?? null;
@@ -69,9 +70,9 @@ const PropertyDetails = React.memo(({ properties, selectedPropertyId }) => {
   return (
     <Box p="md" bg="gray.0" style={{ borderRadius: 12, border: "1px solid #E9ECEF" }}>
       <Stack gap="xs">
-        <Text size="sm" fw={600}>Property Details:</Text>
+        <Text size="sm" fw={600}>{t('propertySelection.propertyDetails')}:</Text>
         <Text size="sm" c="dimmed">
-          <strong>Name:</strong> {selectedProperty.name ?? selectedProperty?.id ?? selectedProperty?.property_id ?? ""}
+          <strong>{t('propertySelection.name')}:</strong> {selectedProperty.name ?? selectedProperty?.id ?? selectedProperty?.property_id ?? ""}
         </Text>
       </Stack>
     </Box>
@@ -81,7 +82,7 @@ const PropertyDetails = React.memo(({ properties, selectedPropertyId }) => {
 PropertyDetails.displayName = 'PropertyDetails';
 
 // Continue Button Component
-const ContinueButton = React.memo(({ onClick, disabled, loading }) => {
+const ContinueButton = React.memo(({ onClick, disabled, loading, t }) => {
   return (
     <Button
       size="xl"
@@ -104,6 +105,7 @@ ContinueButton.displayName = 'ContinueButton';
 
 const PropertySelectionPage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { configureProperty, propertyId: currentPropertyId, kioskId: currentKioskId } = usePropertyStore();
   
   const [properties, setProperties] = useState([]);
@@ -143,7 +145,7 @@ const PropertySelectionPage = () => {
         const propertiesData = response.data ?? [];
         
         if (!response.success && response.message) {
-          setError(response.message ?? 'Failed to load properties. Please try again.');
+          setError(response.message ?? t('error.failedToLoadProperties'));
         }
         
         setProperties(propertiesData);
@@ -155,7 +157,7 @@ const PropertySelectionPage = () => {
           }
         }
       } catch {
-        setError("Failed to load properties. Please try again.");
+        setError(t('error.failedToLoadProperties'));
       } finally {
         setLoading(false);
       }
@@ -170,7 +172,7 @@ const PropertySelectionPage = () => {
 
   const handleContinue = useCallback(async () => {
     if (!selectedPropertyId) {
-      setError("Please select a property to continue");
+      setError(t('error.pleaseSelectProperty'));
       return;
     }
 
@@ -182,7 +184,7 @@ const PropertySelectionPage = () => {
         ? properties.find((p) => (p.id === selectedPropertyId) || (p.property_id === selectedPropertyId)) ?? null
         : null;
       if (!selectedProperty) {
-        throw new Error("Selected property not found");
+        throw new Error(t('error.selectedPropertyNotFound'));
       }
 
       // Convert capabilities to array format for storage
@@ -209,7 +211,7 @@ const PropertySelectionPage = () => {
 
       navigate("/welcome");
     } catch (err) {
-      setError(err.message ?? "Failed to save property selection. Please try again.");
+      setError(err.message ?? t('error.failedToSaveProperty'));
     } finally {
       setSaving(false);
     }
@@ -281,7 +283,7 @@ const PropertySelectionPage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -300,18 +302,18 @@ const PropertySelectionPage = () => {
                 marginLeft: '-9px'
               }}
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
         </Group>
 
         <Title order={3} style={{ fontSize: '24px', fontWeight: 800, color: '#222', marginBottom: '24px' }}>
-          Property Setup
+          {t('propertySelection.title')}
         </Title>
 
         {error && (
           <Box maw={600} mx="auto" mb="xl">
-            <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+            <Alert icon={<IconAlertCircle size={16} />} title={t('error.title')} color="red">
               {error}
             </Alert>
           </Box>
@@ -324,16 +326,18 @@ const PropertySelectionPage = () => {
                 properties={properties}
                 selectedPropertyId={selectedPropertyId}
                 onPropertySelect={handlePropertySelect}
+                t={t}
               />
               <PropertyDetails
                 properties={properties}
                 selectedPropertyId={selectedPropertyId}
+                t={t}
               />
             </>
           ) : (
             <Box mb="xl">
               <Text c="dimmed" ta="center">
-                No properties available. Please contact support.
+                {t('propertySelection.noPropertiesAvailable')}
               </Text>
             </Box>
           )}
@@ -344,6 +348,7 @@ const PropertySelectionPage = () => {
             onClick={handleContinue}
             disabled={!selectedPropertyId || saving}
             loading={saving}
+            t={t}
           />
         </Stack>
       </Paper>

@@ -70,7 +70,7 @@ const MainMenuPage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -90,7 +90,7 @@ const MainMenuPage = () => {
                 fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif'
               }}
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
           

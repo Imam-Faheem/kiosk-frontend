@@ -31,9 +31,9 @@ const LostCardPage = () => {
       lastName: ''
     },
     validate: {
-      roomType: (value) => (!value ? 'Room type is required' : null),
-      reservationNumber: (value) => (!value ? 'Reservation number is required' : null),
-      lastName: (value) => (!value ? 'Last name is required' : null),
+      roomType: (value) => (!value ? t('error.roomTypeRequired') : null),
+      reservationNumber: (value) => (!value ? t('error.reservationNumberRequired') : null),
+      lastName: (value) => (!value ? t('error.lastNameRequired') : null),
     },
   });
 
@@ -58,7 +58,7 @@ const LostCardPage = () => {
           },
         });
       } else {
-        throw new Error(result.message || 'Validation failed');
+        throw new Error(result.message || t('error.validationFailed'));
       }
     } catch (err) {
       const errorMessage = err?.message || t('error.guestValidationFailed');
@@ -103,7 +103,7 @@ const LostCardPage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -122,7 +122,7 @@ const LostCardPage = () => {
                 marginLeft: '-9px'
               }}
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
         </Group>
@@ -134,7 +134,7 @@ const LostCardPage = () => {
             {error && (
               <Alert
                 icon={<IconAlertCircle size={16} />}
-                title="Validation Failed"
+                title={t('error.title')}
                 color="red"
                 variant="light"
                 style={{ borderRadius: '8px' }}
@@ -144,8 +144,8 @@ const LostCardPage = () => {
             )}
 
             <TextInput
-              label="Room type"
-              placeholder="Enter room type (e.g., Double, Single, Suite)"
+              label={t('lostCard.roomType')}
+              placeholder={t('lostCard.roomTypePlaceholder')}
               required
               size="lg"
               {...form.getInputProps('roomType')}
@@ -174,7 +174,7 @@ const LostCardPage = () => {
 
             <TextInput
               label={t('lostCard.reservationNumber')}
-              placeholder="Enter your reservation number"
+              placeholder={t('lostCard.reservationNumberPlaceholder')}
               required
               size="lg"
               {...form.getInputProps('reservationNumber')}
@@ -203,7 +203,7 @@ const LostCardPage = () => {
 
             <TextInput
               label={t('lostCard.lastName')}
-              placeholder="Enter your last name"
+              placeholder={t('lostCard.lastNamePlaceholder')}
               required
               size="lg"
               {...form.getInputProps('lastName')}
@@ -243,7 +243,7 @@ const LostCardPage = () => {
               styles={BUTTON_STYLES.primarySmall}
               radius="md"
             >
-              {isLoading ? 'Validating...' : t('lostCard.submit')}
+              {isLoading ? t('lostCard.validating') : t('lostCard.submit')}
             </Button>
           </Group>
         </form>

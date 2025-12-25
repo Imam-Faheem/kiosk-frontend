@@ -22,7 +22,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
 import { useCheckInMutation } from '../../hooks/useCheckInMutation';
-import { CARD_DISPENSING_STEPS, CARD_STATUS_MESSAGES, STEP_ICONS } from '../../config/constants';
+import { CARD_DISPENSING_STEPS, STEP_ICONS } from '../../config/constants';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
 import '../../styles/animations.css';
@@ -58,7 +58,27 @@ const CardDispensingPage = () => {
     })), [t]
   );
 
-  const statusMessage = useMemo(() => CARD_STATUS_MESSAGES[cardStatus], [cardStatus]);
+  const statusMessage = useMemo(() => {
+    const messages = {
+      preparing: {
+        title: t('cardDispensing.status.preparing.title'),
+        description: t('cardDispensing.status.preparing.description'),
+      },
+      encoding: {
+        title: t('cardDispensing.status.encoding.title'),
+        description: t('cardDispensing.status.encoding.description'),
+      },
+      sending: {
+        title: t('cardDispensing.status.sending.title'),
+        description: t('cardDispensing.status.sending.description'),
+      },
+      completed: {
+        title: t('cardDispensing.status.completed.title'),
+        description: t('cardDispensing.status.completed.description'),
+      },
+    };
+    return messages[cardStatus] ?? messages.preparing;
+  }, [cardStatus, t]);
 
   useEffect(() => {
     if (!reservation) {
@@ -110,9 +130,9 @@ const CardDispensingPage = () => {
               const firstName = reservation.guest_name.first_name ?? '';
               const lastName = reservation.guest_name.last_name ?? '';
               const fullName = `${firstName} ${lastName}`.trim();
-              return fullName ?? 'Guest';
+              return fullName ?? t('common.guest');
             }
-            return reservation.guestName ?? 'Guest';
+            return reservation.guestName ?? t('common.guest');
           })(),
           email: reservation.guest_email ?? reservation.email ?? reservation.guestEmail
         });
@@ -197,7 +217,7 @@ const CardDispensingPage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -214,7 +234,7 @@ const CardDispensingPage = () => {
               lts={1}
               ml={-9}
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
         </Group>
@@ -224,7 +244,7 @@ const CardDispensingPage = () => {
           {error ? (
             <Alert
               icon={<IconCreditCard size={20} />}
-                title="Processing Error"
+                title={t('error.title')}
               color="red"
               variant="light"
                 radius="md"
@@ -234,7 +254,7 @@ const CardDispensingPage = () => {
                 {error}
               </Text>
                 <Text size="sm" c="dimmed" mt={8}>
-                  Please try again or contact front desk for assistance.
+                  {t('paymentCheck.pleaseTryAgainOrContact')}
                 </Text>
             </Alert>
           ) : (
@@ -356,7 +376,7 @@ const CardDispensingPage = () => {
                           styles={{ root: { padding: '6px 16px', fontSize: '12px', fontWeight: 500 } }}
                         >
                           <IconMail size={14} style={{ marginRight: 6 }} />
-                          {reservation.guest_email ?? reservation.email ?? 'your email'}
+                          {reservation.guest_email ?? reservation.email ?? t('cardDispensing.yourEmail')}
                         </Badge>
                       )}
                     </Stack>

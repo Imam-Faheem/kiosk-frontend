@@ -1,5 +1,6 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock } from './mockData';
+import { translateError } from '../utils/translations';
 
 export const processCheckIn = async (data) => {
   try {
@@ -28,10 +29,10 @@ export const getCheckInStatus = async (reservationId) => {
     }
     
     if (error?.response?.status === 404) {
-      throw new Error('Check-in not found');
+      throw new Error(translateError('checkinNotFound'));
     }
     
-    const message = error?.response?.data?.message ?? error?.message ?? 'Failed to fetch check-in status';
+    const message = error?.response?.data?.message ?? error?.message ?? translateError('generic');
     throw new Error(message);
   }
 };
@@ -40,10 +41,10 @@ export const validateReservation = async (data) => {
   const { reservationId, lastName } = data;
   
   if (!reservationId) {
-    throw new Error('Reservation ID is required');
+    throw new Error(translateError('reservationIdRequired'));
   }
   if (!lastName) {
-    throw new Error('Last name is required');
+    throw new Error(translateError('lastNameRequired'));
   }
   
   try {
@@ -60,17 +61,17 @@ export const validateReservation = async (data) => {
     }
     
     if (error?.response?.status === 404) {
-      throw new Error('Reservation not found. Please check your reservation ID and last name.');
+      throw new Error(translateError('reservationNotFound'));
     }
     
     if (error?.response?.status === 403) {
-      throw new Error('Invalid last name. Please verify your information.');
+      throw new Error(translateError('invalidLastName'));
     }
     
     const message = error?.response?.data?.message ??
                    error?.response?.data?.error ??
                    error?.message ??
-                         'Failed to validate reservation';
+                   translateError('generic');
     throw new Error(message);
   }
 };

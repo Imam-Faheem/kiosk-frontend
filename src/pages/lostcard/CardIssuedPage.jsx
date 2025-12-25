@@ -153,7 +153,7 @@ const CardIssuedPage = () => {
             <Group>
               <img
                 src={UnoLogo}
-                alt="UNO Hotel Logo"
+                alt={t('common.unoHotelLogo')}
                 style={{
                   width: '50px',
                   height: '50px',
@@ -170,7 +170,7 @@ const CardIssuedPage = () => {
                 lts={1}
                 ml={-9}
               >
-                UNO HOTELS
+                {t('mainMenu.title')}
               </Title>
             </Group>
           </Group>
@@ -253,7 +253,7 @@ const CardIssuedPage = () => {
           {/* Headline */}
           <Stack gap={10} align="center">
             <Title order={1} c="#16a34a" fw={700} ta="center" fz={32} lh={1.3}>
-              New card issued successfully
+              {t('cardIssued.newCardIssued')}
             </Title>
           </Stack>
 
@@ -261,7 +261,7 @@ const CardIssuedPage = () => {
           <Card withBorder p={24} radius="md" w="100%" bg="#f0fdf4" style={{ border: '2px solid #16a34a' }}>
             <Stack gap={10} align="center">
               <Text size="xs" fw={600} c="dimmed" tt="uppercase" lts={0.5} lh={1.4}>
-                Room Number
+                {t('cardIssued.roomNumber')}
               </Text>
               <Text size="xl" fw={700} c="#16a34a" fz={36} lh={1.2}>
                 {guestData.roomNumber}
@@ -273,13 +273,13 @@ const CardIssuedPage = () => {
           <Card withBorder p={24} radius="md" w="100%" bg="white" style={{ border: '1px solid rgba(22, 163, 74, 0.2)' }}>
             <Stack gap={12}>
               <Text size="sm" fw={600} c="dark.7" lts={0.2} lh={1.4}>
-                Digital Access Code
+                {t('cardIssued.digitalAccessCode')}
               </Text>
               <Text size="lg" fw={600} c="#16a34a" ff="monospace" lts={2} lh={1.3}>
                 {cardData.accessCode}
               </Text>
               <Text size="xs" c="dimmed" ta="center" lh={1.6}>
-                Use this code if you need to access your room digitally
+                {t('cardIssued.digitalAccessCodeDescription')}
               </Text>
             </Stack>
           </Card>
@@ -295,7 +295,7 @@ const CardIssuedPage = () => {
             }}
           >
             <Text size="md" c="#16a34a" ta="center" fw={600} lh={1.6} lts={0.1}>
-              Please take your card from the slot
+              {t('cardIssued.takeCardFromSlot')}
             </Text>
           </Box>
 
@@ -305,9 +305,9 @@ const CardIssuedPage = () => {
               icon={<IconShield size={18} />}
               title={
                 <Group gap={8}>
-                  <Text size="md" fw={700}>Security Notice</Text>
+                  <Text size="md" fw={700}>{t('cardIssued.securityNotice')}</Text>
                   <Badge color="green" variant="filled" size="sm">
-                    Secure
+                    {t('cardIssued.secure')}
                   </Badge>
                 </Group>
               }
@@ -319,10 +319,10 @@ const CardIssuedPage = () => {
             >
               <Stack gap={4}>
                 <Text size="sm" fw={500} style={{ lineHeight: 1.5 }}>
-                  Old card has been deactivated
+                  {t('cardIssued.oldCardDeactivated')}
                 </Text>
                 <Text size="xs" c="dimmed" style={{ lineHeight: 1.4 }}>
-                  Deactivated at {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  {t('cardIssued.deactivatedAt', { time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) })}
                 </Text>
               </Stack>
             </Alert>
@@ -331,7 +331,7 @@ const CardIssuedPage = () => {
           {/* Digital Key */}
           <Alert
             icon={<IconMail size={20} />}
-            title={<Text size="md" fw={700}>Digital Key</Text>}
+            title={<Text size="md" fw={700}>{t('cardIssued.digitalKey')}</Text>}
             color="blue"
             variant="light"
             radius={8}
@@ -339,10 +339,10 @@ const CardIssuedPage = () => {
           >
             <Stack gap={8}>
               <Text size="md" fw={500} style={{ lineHeight: 1.5 }}>
-                New key sent to your email
+                {t('cardIssued.newKeySentToEmail')}
               </Text>
               <Text size="sm" c="#666666" style={{ lineHeight: 1.5 }}>
-                Check your email for detailed instructions and backup access.
+                {t('cardIssued.checkEmailForInstructions')}
               </Text>
             </Stack>
           </Alert>
@@ -351,7 +351,7 @@ const CardIssuedPage = () => {
 
         {/* Auto-return countdown */}
         <Text size="sm" c="dimmed" ta="center" mt={8}>
-          Returning to main menu in {countdown} {countdown === 1 ? 'second' : 'seconds'}...
+          {t('cardIssued.returningToMenu', { countdown, seconds: countdown === 1 ? t('cardIssued.second') : t('cardIssued.seconds') })}
         </Text>
 
         {/* Return Home Button */}
@@ -375,7 +375,7 @@ const CardIssuedPage = () => {
               },
             }}
           >
-            Return to Home
+            {t('common.returnToHome')}
           </Button>
         </Group>
       </Paper>

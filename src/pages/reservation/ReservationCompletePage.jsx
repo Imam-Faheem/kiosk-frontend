@@ -178,11 +178,11 @@ const ReservationCompletePage = () => {
           </Box>
 
           <Title order={1} c="#0B152A" fw={700} ta="center">
-            {t('reservationComplete.success') || 'Reservation Confirmed!'}
+            {t('reservationComplete.success')}
           </Title>
 
           <Text size="lg" fw={600} c="#C8653D">
-            {t('reservationComplete.reservationNumber') || 'Reservation Number'}: {reservation.reservationId || reservation.id || 'N/A'}
+            {t('reservationComplete.reservationNumber')}: {reservation.reservationId || reservation.id || t('common.notAvailable')}
           </Text>
 
           {/* Reservation Details Card */}
@@ -192,7 +192,7 @@ const ReservationCompletePage = () => {
                 {guestDetails && (
                   <Group gap="sm">
                     <IconUser size={20} color="#C8653D" />
-                    <Text size="md" fw={600}>Guest:</Text>
+                    <Text size="md" fw={600}>{t('reservationComplete.guest')}:</Text>
                     <Text size="md">{guestDetails.firstName} {guestDetails.lastName}</Text>
                   </Group>
                 )}
@@ -200,7 +200,7 @@ const ReservationCompletePage = () => {
                 {room && (
                   <Group gap="sm">
                     <IconCreditCard size={20} color="#C8653D" />
-                    <Text size="md" fw={600}>Room:</Text>
+                    <Text size="md" fw={600}>{t('reservationComplete.room')}:</Text>
                     <Text size="md">{room.name}</Text>
                   </Group>
                 )}
@@ -210,13 +210,13 @@ const ReservationCompletePage = () => {
                     <Divider />
                     <Group gap="sm">
                       <IconCalendar size={20} color="#C8653D" />
-                      <Text size="md" fw={600}>Check-in:</Text>
+                      <Text size="md" fw={600}>{t('reservationComplete.checkIn')}:</Text>
                       <Text size="md">{formatDate(reservation.checkIn)}</Text>
                     </Group>
                     {reservation.checkOut && (
                       <Group gap="sm">
                         <IconCalendar size={20} color="#C8653D" />
-                        <Text size="md" fw={600}>Check-out:</Text>
+                        <Text size="md" fw={600}>{t('reservationComplete.checkOut')}:</Text>
                         <Text size="md">{formatDate(reservation.checkOut)}</Text>
                       </Group>
                     )}
@@ -227,7 +227,7 @@ const ReservationCompletePage = () => {
                   <>
                     <Divider />
                     <Group justify="space-between">
-                      <Text size="md" fw={600}>Total Amount:</Text>
+                      <Text size="md" fw={600}>{t('reservationComplete.totalAmount')}:</Text>
                       <Text size="lg" fw={700} c="#C8653D">
                         {reservation.currency || 'EUR'} {reservation.totalAmount}
                       </Text>

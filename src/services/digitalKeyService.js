@@ -1,5 +1,6 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock } from './mockData';
+import { translateError } from '../utils/translations';
 
 /**
  * Issue a digital key for a reservation
@@ -38,10 +39,10 @@ export const getDigitalKey = async (keyId) => {
     }
     
     if (err?.response?.status === 404) {
-      throw new Error('Digital key not found');
+      throw new Error(translateError('digitalKeyNotFound'));
     }
     
-    const errorMessage = err?.response?.data?.message ?? err?.message ?? 'Failed to fetch digital key';
+    const errorMessage = err?.response?.data?.message ?? err?.message ?? translateError('generic');
     throw new Error(errorMessage);
   }
 };

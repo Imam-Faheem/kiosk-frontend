@@ -1,6 +1,7 @@
 import { apiClient } from './api/apiClient';
 import { simulateApiDelay, mockReservations } from './mockData';
 import { validateReservation as validateReservationApaleo } from './checkinService';
+import { translateError } from '../utils/translations';
 
 // Validate reservation for check-in using Apaleo API
 export const validateReservation = async (data) => {
@@ -52,7 +53,7 @@ export const getReservationById = async (reservationId) => {
     const reservation = mockReservations.find(r => r.reservationId === reservationId);
     
     if (!reservation) {
-      throw new Error('Reservation not found');
+      throw new Error(translateError('reservationNotFound'));
     }
     
     return {

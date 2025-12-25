@@ -54,7 +54,7 @@ const SearchRoomsPage = () => {
     },
     onError: (err) => {
       const details = err?.response?.data;
-      const msg = (details && (details.message || details.error)) || err?.message || 'Request failed';
+      const msg = (details && (details.message || details.error)) || err?.message || t('error.requestFailed');
       setErrorMessage(msg);
     }
   });
@@ -119,7 +119,7 @@ const SearchRoomsPage = () => {
 
   const guestOptions = Array.from({ length: 8 }, (_, i) => ({
     value: (i + 1).toString(),
-    label: `${i + 1} ${i === 0 ? 'Guest' : 'Guests'}`,
+    label: `${i + 1} ${i === 0 ? t('common.guest') : t('common.guests')}`,
   }));
 
   return (
@@ -158,7 +158,7 @@ const SearchRoomsPage = () => {
             <Box
               component="img"
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+                  alt={t('common.unoHotelLogo')}
               w={50}
               h={50}
               style={{ borderRadius: '8px', marginRight: '0px', objectFit: 'cover' }}
@@ -171,7 +171,7 @@ const SearchRoomsPage = () => {
               lts={1}
               ml="-9px"
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
         </Group>
@@ -183,7 +183,7 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <DateInput
                   label={t('searchRooms.checkIn')}
-                  placeholder="Select check-in date"
+                  placeholder={t('searchRooms.selectCheckInDate')}
                   required
                   size="lg"
                   valueFormat="YYYY-MM-DD"
@@ -196,7 +196,7 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <DateInput
                   label={t('searchRooms.checkOut')}
-                  placeholder="Select check-out date"
+                  placeholder={t('searchRooms.selectCheckOutDate')}
                   required
                   size="lg"
                   valueFormat="YYYY-MM-DD"
@@ -236,7 +236,7 @@ const SearchRoomsPage = () => {
           <Stack align="center" gap="md">
             <Loader size="lg" color="#C8653D" />
             <Text size="lg" c="#666666">
-              Searching available rooms
+              {t('searchRooms.loading')}
             </Text>
           </Stack>
         )}
@@ -258,7 +258,7 @@ const SearchRoomsPage = () => {
         {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length > 0 && (
           <Stack gap="lg" mb="xl">
             <Text size="xl" fw={600} c="#0B152A">
-              Available Rooms ({typeof searchResults.totalAvailable === 'number' ? searchResults.totalAvailable : (Array.isArray(searchResults.availableRooms) ? searchResults.availableRooms.length : 0)})
+              {t('searchRooms.availableRooms')} ({typeof searchResults.totalAvailable === 'number' ? searchResults.totalAvailable : (Array.isArray(searchResults.availableRooms) ? searchResults.availableRooms.length : 0)})
             </Text>
             
             <Grid>
@@ -295,7 +295,7 @@ const SearchRoomsPage = () => {
                             {room.name}
                           </Text>
                           <Badge color="green" size="lg">
-                            Available
+                            {t('searchRooms.available')}
                           </Badge>
                         </Group>
                         
@@ -306,7 +306,7 @@ const SearchRoomsPage = () => {
                         <Group gap="xs">
                           <IconUsers size={16} color="#666666" />
                           <Text size="sm" c="#666666">
-                            {room.capacity} guests
+                            {room.capacity} {t('common.guests')}
                           </Text>
                         </Group>
                         
@@ -321,10 +321,10 @@ const SearchRoomsPage = () => {
                         <Group justify="space-between" align="center">
                           <Stack gap="xs">
                             <Text size="sm" c="#666666">
-                              {room.currency} {room.pricePerNight} per night
+                              {room.currency} {room.pricePerNight} {t('searchRooms.perNight')}
                             </Text>
                             <Text size="xl" fw={700} c="#0B152A">
-                              {room.currency} {room.totalPrice} total
+                              {room.currency} {room.totalPrice} {t('searchRooms.total')}
                             </Text>
                           </Stack>
                           
@@ -334,7 +334,7 @@ const SearchRoomsPage = () => {
                             c="white"
                             radius="md"
                           >
-                            Select
+                            {t('common.select')}
                           </Button>
                         </Group>
                       </Stack>

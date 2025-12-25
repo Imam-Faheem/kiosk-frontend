@@ -8,6 +8,9 @@ const useLanguageStore = create(
       language: 'en',
       setLanguage: (language) => {
         i18n.changeLanguage(language);
+        if (typeof document !== 'undefined') {
+          document.documentElement.lang = language;
+        }
         set({ language });
         // Force a re-render by updating a timestamp
         set({ lastUpdated: Date.now() });
@@ -16,6 +19,9 @@ const useLanguageStore = create(
         const currentLanguage = get().language;
         if (currentLanguage) {
           i18n.changeLanguage(currentLanguage);
+          if (typeof document !== 'undefined') {
+            document.documentElement.lang = currentLanguage;
+          }
         }
       },
       lastUpdated: Date.now(),

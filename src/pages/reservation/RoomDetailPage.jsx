@@ -163,7 +163,7 @@ const RoomDetailPage = () => {
           }}
         >
           <Text size="lg" c="red">
-            {t('roomDetail.errorMissingData') || 'Missing room or guest details. Please go back and try again.'}
+            {t('roomDetail.errorMissingData')}
           </Text>
           <Button
             variant="outline"
@@ -208,7 +208,7 @@ const RoomDetailPage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -227,7 +227,7 @@ const RoomDetailPage = () => {
                 marginLeft: '-9px'
               }}
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
         </Group>
@@ -323,7 +323,7 @@ const RoomDetailPage = () => {
                   <Text size="md" fw={600}>{displayRoom.capacity || displayRoom.maxGuests || 1} guests</Text>
                 </Grid.Col>
                 <Grid.Col span={6}>
-                  <Text size="sm" c="#666666">Max Guests:</Text>
+                  <Text size="sm" c="#666666">{t('roomDetail.maxGuests')}:</Text>
                   <Text size="md" fw={600}>{displayRoom.maxGuests || displayRoom.capacity || 1} guests</Text>
                 </Grid.Col>
               </Grid>
@@ -335,24 +335,24 @@ const RoomDetailPage = () => {
                   
                   {/* Guest Name */}
                   <Group justify="space-between">
-                    <Text size="md" c="#666666">Guest Name:</Text>
+                    <Text size="md" c="#666666">{t('roomDetail.guestName')}:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{guestDetails.firstName} {guestDetails.lastName}</Text>
                   </Group>
                   
                   {/* Dates */}
                   <Group justify="space-between">
-                    <Text size="md" c="#666666">{t('roomDetail.checkInDate') || 'Check-In Date'}:</Text>
+                    <Text size="md" c="#666666">{t('roomDetail.checkInDate')}:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{formatDate(searchCriteria.checkIn)}</Text>
                   </Group>
                   
                   <Group justify="space-between">
-                    <Text size="md" c="#666666">{t('roomDetail.checkOutDate') || 'Check-Out Date'}:</Text>
+                    <Text size="md" c="#666666">{t('roomDetail.checkOutDate')}:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{formatDate(searchCriteria.checkOut)}</Text>
                   </Group>
                   
                   {/* Number of Nights */}
                   <Group justify="space-between">
-                    <Text size="md" c="#666666">Number of Nights:</Text>
+                    <Text size="md" c="#666666">{t('roomDetail.numberOfNights')}:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
                       {Math.ceil((new Date(searchCriteria.checkOut) - new Date(searchCriteria.checkIn)) / (1000 * 60 * 60 * 24))} {t('roomDetail.nights')}
                     </Text>

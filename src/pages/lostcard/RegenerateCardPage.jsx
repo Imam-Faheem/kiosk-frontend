@@ -168,7 +168,7 @@ const RegenerateCardPage = () => {
             <Group>
               <img
                 src={UnoLogo}
-                alt="UNO Hotel Logo"
+                alt={t('common.unoHotelLogo')}
                 style={{
                   width: '50px',
                   height: '50px',
@@ -185,7 +185,7 @@ const RegenerateCardPage = () => {
                 lts={1}
                 ml={-9}
               >
-                UNO HOTELS
+                {t('mainMenu.title')}
               </Title>
             </Group>
           </Group>
@@ -194,7 +194,7 @@ const RegenerateCardPage = () => {
             {error ? (
               <Alert
                 icon={<IconX size={18} />}
-                title="Card Regeneration Error"
+                title={t('error.title')}
                 color="red"
                 variant="light"
                 radius="md"
@@ -215,7 +215,7 @@ const RegenerateCardPage = () => {
                     fz={24}
                     lts={-0.3}
                   >
-                    {cardStatus === 'completed' ? 'Card Update Complete' : 'Updating Room Access'}
+                    {cardStatus === 'completed' ? t('regenerateCard.cardUpdateComplete') : t('regenerateCard.updatingRoomAccess')}
                   </Title>
                   {cardStatus !== 'completed' && (
                     <Text 
@@ -225,7 +225,7 @@ const RegenerateCardPage = () => {
                       maw={500}
                       lh={1.6}
                     >
-                      Please wait while we update your access card. Do not remove the card during this process.
+                      {t('regenerateCard.pleaseWaitMessage')}
                     </Text>
                   )}
                 </Stack>
@@ -472,7 +472,7 @@ const RegenerateCardPage = () => {
                 {cardData && (
                   <Alert
                     icon={<IconCheck size={16} />}
-                    title="New Card Details"
+                    title={t('regenerateCard.newCardDetails')}
                     color="green"
                     variant="light"
                     radius="md"
@@ -483,7 +483,7 @@ const RegenerateCardPage = () => {
                   >
                     <Stack gap={8}>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        <strong>New Access Code:</strong> {cardData.accessCode}
+                        <strong>{t('regenerateCard.newAccessCode')}:</strong> {cardData.accessCode}
                       </Text>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
                         <strong>Room:</strong> {guestData.roomNumber}

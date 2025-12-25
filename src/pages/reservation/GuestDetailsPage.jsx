@@ -69,10 +69,10 @@ const GuestDetailsPage = () => {
           },
         });
       } else {
-        setError(result.message || 'Failed to save guest details');
+        setError(result.message || t('error.failedToSaveGuestDetails'));
       }
     } catch (err) {
-      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to save guest details';
+      const errorMessage = err?.response?.data?.message || err?.message || t('error.failedToSaveGuestDetails');
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -118,7 +118,7 @@ const GuestDetailsPage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -137,7 +137,7 @@ const GuestDetailsPage = () => {
                 marginLeft: '-9px'
               }}
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
         </Group>
@@ -154,21 +154,21 @@ const GuestDetailsPage = () => {
 
             <TextInput
               label={t('guestDetails.firstName')}
-              placeholder="Enter your first name"
+              placeholder={t('guestDetails.firstNamePlaceholder')}
               required
               size="lg"
               {...form.getInputProps('firstName')}
             />
             <TextInput
               label={t('guestDetails.lastName')}
-              placeholder="Enter your last name"
+              placeholder={t('guestDetails.lastNamePlaceholder')}
               required
               size="lg"
               {...form.getInputProps('lastName')}
             />
             <TextInput
               label={t('guestDetails.email')}
-              placeholder="Enter your email"
+              placeholder={t('guestDetails.emailPlaceholder')}
               required
               size="lg"
               type="email"
@@ -181,13 +181,13 @@ const GuestDetailsPage = () => {
                 required
                 size="lg"
                 data={[
-                  { value: 'US', label: 'United States (+1)' },
-                  { value: 'GB', label: 'United Kingdom (+44)' },
-                  { value: 'DE', label: 'Germany (+49)' },
-                  { value: 'FR', label: 'France (+33)' },
-                  { value: 'IT', label: 'Italy (+39)' },
-                  { value: 'ES', label: 'Spain (+34)' },
-                  { value: 'PT', label: 'Portugal (+351)' },
+                  { value: 'US', label: t('guestDetails.countries.us') },
+                  { value: 'GB', label: t('guestDetails.countries.gb') },
+                  { value: 'DE', label: t('guestDetails.countries.de') },
+                  { value: 'FR', label: t('guestDetails.countries.fr') },
+                  { value: 'IT', label: t('guestDetails.countries.it') },
+                  { value: 'ES', label: t('guestDetails.countries.es') },
+                  { value: 'PT', label: t('guestDetails.countries.pt') },
                 ]}
                 {...form.getInputProps('country')}
               />
@@ -262,7 +262,7 @@ const GuestDetailsPage = () => {
                 }
               }}
             >
-              {loading ? 'Saving...' : t('guestDetails.continue')}
+              {loading ? t('common.saving') : t('guestDetails.continue')}
             </Button>
           </Group>
         </form>

@@ -21,12 +21,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../services/api/apiClient';
 import { useCheckInMutation } from '../../hooks/useCheckInMutation';
+import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
 import '../../styles/animations.css';
 
 const CheckInCompletePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
   const [countdown, setCountdown] = useState(15);
   const [loading, setLoading] = useState(false);
   const [checkInData, setCheckInData] = useState(null);
@@ -56,7 +58,7 @@ const CheckInCompletePage = () => {
   };
 
   const getGuestName = (reservation, checkInInfo = null) => {
-    if (!reservation) return 'Guest';
+    if (!reservation) return t('common.guest');
     if (typeof reservation.guest_name === 'string') {
       return reservation.guest_name;
     }
@@ -67,7 +69,7 @@ const CheckInCompletePage = () => {
       if (fullName) return fullName;
     }
     if (checkInInfo?.guest_name) return checkInInfo.guest_name;
-    return reservation.guestName ?? 'Guest';
+    return reservation.guestName ?? t('common.guest');
   };
 
   const checkInStatusMutation = useCheckInMutation('getStatus', {
@@ -263,7 +265,7 @@ const CheckInCompletePage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -280,7 +282,7 @@ const CheckInCompletePage = () => {
               lts={1}
               ml={-9}
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
         </Group>
@@ -395,7 +397,7 @@ const CheckInCompletePage = () => {
                 lts={-0.5}
                 lh={1.2}
               >
-                Check-In Complete
+                {t('checkInComplete.title')}
               </Title>
               <Text 
                 size="lg" 
@@ -404,14 +406,14 @@ const CheckInCompletePage = () => {
                 maw={500}
                 lh={1.6}
               >
-                Your room is ready. We're delighted to welcome you to UNO Hotels.
+                {t('checkInComplete.welcomeMessage')}
               </Text>
             </Stack>
 
             {loading ? (
               <Stack align="center" gap="md">
                 <Loader size="lg" color="#C8653D" />
-                <Text size="md" c="dimmed">Loading your details...</Text>
+                <Text size="md" c="dimmed">{t('checkInComplete.loadingDetails')}</Text>
               </Stack>
             ) : (
               <>
@@ -445,7 +447,7 @@ const CheckInCompletePage = () => {
                   <Stack gap={20}>
                     <Box>
                       <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" lts={0.5}>
-                        Room Number
+                        {t('checkInComplete.roomNumber')}
                       </Text>
                       <Text size="xl" fw={700} c="dark.9">
                         {displayData.roomNumber}
@@ -459,7 +461,7 @@ const CheckInCompletePage = () => {
                         <Group gap={8} mb={4}>
                           <IconCalendar size={16} color="#666666" />
                           <Text size="xs" fw={600} c="dimmed" tt="uppercase" lts={0.5}>
-                            Check-In Time
+                            {t('checkInComplete.checkInTime')}
                           </Text>
                         </Group>
                         <Text size="md" fw={500} c="dark.9">
@@ -483,7 +485,7 @@ const CheckInCompletePage = () => {
                         <Group gap={8} mb={4}>
                           <IconCalendar size={16} color="#666666" />
                           <Text size="xs" fw={600} c="dimmed" tt="uppercase" lts={0.5}>
-                            Check-Out
+                            {t('checkInComplete.checkOut')}
                           </Text>
                         </Group>
                         <Text size="md" fw={500} c="dark.9">
@@ -496,7 +498,7 @@ const CheckInCompletePage = () => {
                     
                     <Box>
                       <Text size="xs" fw={600} c="dimmed" mb={4} tt="uppercase" lts={0.5}>
-                        Guest
+                        {t('checkInComplete.guest')}
                       </Text>
                       <Text size="md" fw={500} c="dark.9">
                         {displayData.guestName}
@@ -514,7 +516,7 @@ const CheckInCompletePage = () => {
                   mt={8}
                   lh={1.6}
                 >
-                  We hope you enjoy your stay with us.
+                  {t('checkInComplete.enjoyStay')}
                 </Text>
 
                 {/* Auto-return countdown */}
@@ -528,7 +530,7 @@ const CheckInCompletePage = () => {
                   }}
                 >
                   <Text size="md" fw={600} c="#C8653D" ta="center">
-                    Returning to main menu in {countdown} {countdown === 1 ? 'second' : 'seconds'}...
+                    {t('checkInComplete.returningToMenu', { countdown, seconds: countdown === 1 ? t('checkInComplete.second') : t('checkInComplete.seconds') })}
                   </Text>
                 </Box>
               </>
@@ -556,7 +558,7 @@ const CheckInCompletePage = () => {
                 },
               }}
             >
-              Return to Home
+              {t('common.returnToHome')}
             </Button>
           </Group>
         </Paper>

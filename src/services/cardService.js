@@ -1,5 +1,6 @@
 import { apiClient } from './api/apiClient';
 import { simulateHardwareDelay, simulateApiDelay, mockData, shouldUseMock } from './mockData';
+import { translateError } from '../utils/translations';
 
 export const issueCard = async (data) => {
   try {
@@ -47,12 +48,12 @@ export const regenerateCard = async (data) => {
 
     if (!error.response) {
       if (error.code === 'ECONNREFUSED' || error.message?.includes('Network Error')) {
-        throw new Error('Cannot connect to server. Please ensure the backend server is running.');
+        throw new Error(translateError('cannotConnectToServer'));
       }
       if (error.code === 'ETIMEDOUT') {
-        throw new Error('Request timed out. Please check your connection and try again.');
+        throw new Error(translateError('requestTimedOut'));
       }
-      throw new Error('Network error. Please check your connection.');
+      throw new Error(translateError('networkError'));
     }
 
     const message = error?.response?.data?.message ??
