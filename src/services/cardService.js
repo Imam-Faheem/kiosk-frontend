@@ -1,5 +1,6 @@
 import { apiClient } from './api/apiClient';
 import { simulateHardwareDelay, simulateApiDelay, mockData, shouldUseMock } from './mockData';
+import { getPropertyIdFromStore } from '../lib/propertyIdUtils';
 
 // Issue new card
 export const issueCard = async (data) => {
@@ -46,7 +47,7 @@ export const regenerateCard = async (data) => {
   try {
     const response = await apiClient.post('/lost-card/regenerate', {
       reservation_id: data.reservationId || data.reservation_id,
-      property_id: data.propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
+      property_id: data.propertyId || getPropertyIdFromStore(),
       room_number: data.roomNumber || data.room_number,
     });
     

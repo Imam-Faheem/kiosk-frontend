@@ -34,13 +34,41 @@ const apiClient = axios.create({
   timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
+    // Explicitly do not set Authorization header here
   },
 });
 
-// Request interceptor to add headers
+// Request interceptor to add auth token and X-Property-ID
 apiClient.interceptors.request.use(
   (config) => {
-    // Add auth token if available
+    // Check if this is a truly public endpoint (no auth required)
+    const url = config.url || '';
+    const method = config.method?.toLowerCase() || '';
+    const isPublicPropertyEndpoint = (
+      url.includes('/api/kiosk/v1/properties') ||
+      (url.includes('/api/core/v1/organizations') && url.includes('/apaleo/properties'))
+    ) && method === 'get';
+    
+    // For public endpoint, explicitly ensure no Authorization header is sent
+    if (isPublicPropertyEndpoint) {
+      // Remove Authorization header completely from all possible locations
+      if (config.headers) {
+        delete config.headers.Authorization;
+        delete config.headers.authorization;
+        // Also remove from common headers if axios sets it there
+        if (config.headers.common) {
+          delete config.headers.common.Authorization;
+          delete config.headers.common.authorization;
+        }
+        // Set to undefined to ensure it's not sent
+        config.headers.Authorization = undefined;
+        config.headers.authorization = undefined;
+      }
+      // Don't add X-Property-ID for public endpoint
+      return config;
+    }
+    
+    // Add auth token for all other endpoints
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -61,6 +89,19 @@ apiClient.interceptors.request.use(
                       config.url?.includes('/key') ? 'key' :
                       config.url?.includes('/check-in') ? 'checkin' : 'req';
         config.headers['X-Idempotency-Key'] = generateIdempotencyKey(prefix);
+      }
+    } else {
+      // For non-kiosk endpoints, try to add X-Property-ID from localStorage
+      try {
+        const propertyData = localStorage.getItem('kioskProperty');
+        if (propertyData) {
+          const { propertyId } = JSON.parse(propertyData);
+          if (propertyId) {
+            config.headers['X-Property-ID'] = propertyId;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to parse property data:', error);
       }
     }
 
@@ -173,6 +214,17 @@ export const api = {
     occupancy: (params) => apiClient.get('/reports/occupancy', { params }),
     revenue: (params) => apiClient.get('/reports/revenue', { params }),
     guests: (params) => apiClient.get('/reports/guests', { params }),
+  },
+
+  // Property endpoints
+  properties: {
+    getAll: () => apiClient.get('/properties'),
+    getById: (id) => apiClient.get(`/properties/${id}`),
+    getCapabilities: (propertyId, kioskId) => {
+      const params = { propertyId };
+      if (kioskId) params.kioskId = kioskId;
+      return apiClient.get('/kiosk/capabilities', { params });
+    },
   },
 };
 

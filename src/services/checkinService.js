@@ -1,6 +1,7 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock } from './mockData';
 import { normalizeReservationData } from '../lib/checkinUtils';
+import { getPropertyIdFromStore } from '../lib/propertyIdUtils';
 
 const isNetworkError = (error) => {
   return !error?.response || error?.code === 'ECONNABORTED' || error?.code === 'ERR_NETWORK';

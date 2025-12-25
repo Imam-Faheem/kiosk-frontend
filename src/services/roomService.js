@@ -1,15 +1,11 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
- 
+import { getPropertyIdFromStore } from '../lib/propertyIdUtils';
+
 // Search room availability
 export const searchRoomAvailability = async (data) => {
-  const getPropertyId = () => {
-    if (data?.propertyId) return data.propertyId;
-    if (process.env.REACT_APP_PROPERTY_ID) return process.env.REACT_APP_PROPERTY_ID;
-    return 'BER';
-  };
-
-  const propertyId = getPropertyId();
+  // Ensure propertyId is sent to backend if configured
+  const propertyId = data?.propertyId || getPropertyIdFromStore();
   
   const arrival = data.checkIn ?? data.arrival;
   const departure = data.checkOut ?? data.departure;
@@ -157,12 +153,7 @@ export const searchRoomAvailability = async (data) => {
 
 // Get room details
 export const getRoomDetails = async (roomTypeId, propertyIdArg) => {
-  const getPropertyId = () => {
-    if (propertyIdArg) return propertyIdArg;
-    if (process.env.REACT_APP_PROPERTY_ID) return process.env.REACT_APP_PROPERTY_ID;
-    return 'KIOSK_01';
-  };
-  const propertyId = getPropertyId();
+  const propertyId = propertyIdArg || getPropertyIdFromStore();
   try {
     const response = await apiClient.get(`/rooms/${roomTypeId}/details`, { params: { propertyId } });
     return response.data;
@@ -178,12 +169,7 @@ export const getRoomDetails = async (roomTypeId, propertyIdArg) => {
 
 // Get all room types
 export const getAllRoomTypes = async (propertyIdArg) => {
-  const getPropertyId = () => {
-    if (propertyIdArg) return propertyIdArg;
-    if (process.env.REACT_APP_PROPERTY_ID) return process.env.REACT_APP_PROPERTY_ID;
-    return 'KIOSK_01';
-  };
-  const propertyId = getPropertyId();
+  const propertyId = propertyIdArg || getPropertyIdFromStore();
   try {
     const response = await apiClient.get('/rooms/types', { params: { propertyId } });
     return response.data;

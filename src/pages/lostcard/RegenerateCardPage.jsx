@@ -17,6 +17,7 @@ import { useCardMutation } from '../../hooks/useCardMutation';
 import { getPropertyId } from '../../lib/utils';
 import UnoLogo from '../../assets/uno.jpg';
 import '../../styles/animations.css';
+import BackButton from '../../components/BackButton';
 
 const STEP_DELAY = 2000;
 

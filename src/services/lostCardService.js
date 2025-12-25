@@ -1,5 +1,6 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
+import { getPropertyIdFromStore } from '../lib/propertyIdUtils';
 
 /**
  * Validate guest for lost card replacement
@@ -45,7 +46,7 @@ export const validateLostCardGuest = async (data) => {
       guestName: `${reservation.primaryGuest?.firstName || ''} ${reservation.primaryGuest?.lastName || ''}`.trim(),
       checkIn: reservation.arrival,
       checkOut: reservation.departure,
-      propertyId: reservation.property?.id || 'BER',
+      propertyId: reservation.property?.id || getPropertyIdFromStore(),
       // Include full reservation for later use
       _apaleoReservation: reservation,
     };
@@ -83,7 +84,7 @@ export const validateLostCardGuest = async (data) => {
 export const regenerateLostCard = async (data) => {
   try {
     const { reservationId, roomNumber, propertyId } = data;
-    const property = propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
+    const property = propertyId || getPropertyIdFromStore();
     
     // Call backend endpoint to regenerate passcode
     // The backend will:

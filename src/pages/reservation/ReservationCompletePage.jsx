@@ -15,6 +15,7 @@ import { IconHome, IconCalendar, IconUser, IconCreditCard } from '@tabler/icons-
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import '../../styles/animations.css';
+import { BUTTON_STYLES, CONTAINER_STYLES, PAPER_STYLES } from '../../config/constants';
 
 const ReservationCompletePage = () => {
   const navigate = useNavigate();
@@ -64,32 +65,17 @@ const ReservationCompletePage = () => {
   }
 
   return (
-    <>
-      <Container
-        size="lg"
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '20px',
-          backgroundColor: '#FFFFFF',
-        }}
+    <Container
+      size="lg"
+      style={CONTAINER_STYLES.centered}
+    >
+      <Paper
+        withBorder
+        shadow="md"
+        p={40}
+        radius="xl"
+        style={PAPER_STYLES.medium}
       >
-        <Paper
-          withBorder
-          shadow="md"
-          p={40}
-          radius="xl"
-          style={{
-            width: '100%',
-            maxWidth: '600px',
-            backgroundColor: '#ffffff',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            borderRadius: '20px',
-          }}
-        >
         <Group justify="space-between" mb="xl" pb="md" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
             <Box
@@ -259,18 +245,14 @@ const ReservationCompletePage = () => {
             size="lg"
             leftSection={<IconHome size={20} />}
             onClick={handleReturnHome}
-            style={{
-              backgroundColor: '#C8653D',
-              color: '#FFFFFF',
-              borderRadius: '12px',
-            }}
+            styles={BUTTON_STYLES.primary}
+            radius="md"
           >
             {t('reservationComplete.returnHome')}
           </Button>
         </Group>
       </Paper>
     </Container>
-    </>
   );
 };
 

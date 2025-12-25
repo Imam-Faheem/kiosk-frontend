@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
@@ -15,6 +15,8 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
 import { checkinInitialValues } from '../../schemas/checkin.schema';
+import { isBeforeTargetTime } from '../../lib/timeUtils';
+import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
 import { mockData, shouldUseMock, simulateApiDelay } from '../../services/mockData';
 import UnoLogo from '../../assets/uno.jpg';
@@ -25,6 +27,12 @@ const CheckInPage = () => {
   const { t } = useLanguage();
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+      navigate('/checkin/early-arrival');
+    }
+  }, [navigate]);
   
   const validateReservation = useReservationMutation('validate', {
     onError: (err) => {
@@ -226,51 +234,8 @@ const CheckInPage = () => {
               rightSection={<IconArrowRight size={20} />}
               loading={isLoading}
               disabled={isLoading}
-              bg="#C8653D"
-              c="white"
-              fw={600}
+              styles={BUTTON_STYLES.primary}
               radius="md"
-              px={32}
-              py={12}
-              h="auto"
-              styles={{
-                root: {
-                  fontSize: '16px',
-                  minWidth: '180px',
-                  width: '180px',
-                  transition: 'background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease',
-                  boxShadow: '0 4px 12px rgba(200, 101, 61, 0.25)',
-                  '&:hover': {
-                    backgroundColor: '#B8552F !important',
-                    boxShadow: '0 6px 16px rgba(200, 101, 61, 0.35)',
-                    width: '180px',
-                    minWidth: '180px',
-                  },
-                  '&:active': {
-                    transform: 'translateY(1px)',
-                    boxShadow: '0 2px 8px rgba(200, 101, 61, 0.3)',
-                    width: '180px',
-                    minWidth: '180px',
-                  },
-                  '&:focus': {
-                    width: '180px',
-                    minWidth: '180px',
-                  },
-                  '&:disabled': {
-                    opacity: 0.7,
-                    cursor: 'not-allowed',
-                    width: '180px',
-                    minWidth: '180px',
-                  },
-                },
-                label: {
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                },
-              }}
             >
               {isLoading ? 'Validating...' : t('checkIn.submit')}
             </Button>

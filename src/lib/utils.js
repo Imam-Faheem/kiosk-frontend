@@ -1,4 +1,5 @@
 import { format, parseISO, isValid } from 'date-fns';
+import { getPropertyIdFromStore } from './propertyIdUtils';
 
 /**
  * Format a date string or Date object
@@ -199,6 +200,5 @@ export const formatFileSize = (bytes) => {
  */
 export const getPropertyId = (data = null) => {
   if (data?.propertyId) return data.propertyId;
-  if (process.env.REACT_APP_PROPERTY_ID) return process.env.REACT_APP_PROPERTY_ID;
-  return 'BER';
+  return getPropertyIdFromStore();
 };
