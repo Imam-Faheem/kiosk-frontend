@@ -87,3 +87,82 @@ export const calculateRoomPricing = (room, checkIn, checkOut) => {
     currency: room.currency ?? 'EUR',
   };
 };
+
+const validateChildrenAges = (children) => {
+  if (!Array.isArray(children)) return null;
+  if (children.length === 0) return null;
+  const validAges = children.filter(age => typeof age === 'number' && age > 0 && age <= 17);
+  return validAges.length > 0 ? validAges.join(',') : null;
+};
+
+const parseOffersResponse = (response) => {
+  const offers = response?.data?.data?.offers ?? response?.data?.offers ?? [];
+  return {
+    success: true,
+    property: response?.data?.data?.property ?? null,
+    offers,
+    totalOffers: offers.length,
+  };
+};
+
+const createError = (status, errorData) => {
+  const message = errorData?.message ?? errorData?.error;
+  const isCredentialError = message?.includes('credentials') ? true : message?.includes('Apaleo') ? true : false;
+  
+  let userMessage = message ?? `Server error (${status})`;
+  
+  if (status === 500) {
+    userMessage = isCredentialError 
+      ? 'This property is not configured with Apaleo credentials. Please contact support.'
+      : message ?? 'Server error occurred. Please try again later.';
+  } else if (status === 400) {
+    userMessage = message ?? 'Invalid request parameters. Please check your search criteria.';
+  } else if (status === 404) {
+    userMessage = 'Property or offers not found.';
+  }
+
+  const customError = new Error(userMessage);
+  customError.status = status;
+  customError.originalError = errorData;
+  return customError;
+};
+
+export const searchOffers = async (data) => {
+  const { organizationId, propertyId, searchParams } = data;
+  
+  try {
+    const childrenParam = validateChildrenAges(searchParams.children);
+    const params = {
+      apaleo_external_property_id: searchParams.apaleoPropertyId,
+      arrival: searchParams.arrival,
+      departure: searchParams.departure,
+      adults: searchParams.adults,
+      ...(childrenParam && { children: childrenParam }),
+    };
+
+    const response = await apiClient.get(
+      `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/offers`,
+      { params }
+    );
+
+    return parseOffersResponse(response);
+  } catch (error) {
+    if (shouldUseMock(error)) {
+      await simulateApiDelay(600);
+      return mockData.roomAvailability({ 
+        arrival: searchParams.arrival, 
+        departure: searchParams.departure, 
+        adults: searchParams.adults 
+      });
+    }
+
+    if (!error.response) {
+      const message = error.request 
+        ? 'Network error. Please check your connection and try again.'
+        : `Request failed: ${error.message}`;
+      throw new Error(message);
+    }
+
+    throw createError(error.response.status, error.response.data);
+  }
+};

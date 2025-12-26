@@ -1,6 +1,7 @@
 import { useMutation } from './useMutation';
 import { 
-  searchRoomAvailability, 
+  searchRoomAvailability,
+  searchOffers,
   getRoomDetails,
   getAllRoomTypes,
   calculateRoomPricing 
@@ -15,6 +16,7 @@ import {
 export const useRoomMutation = (action, { onSuccess, onError } = {}) => {
   const actionMap = {
     searchAvailability: searchRoomAvailability,
+    searchOffers: searchOffers,
     getDetails: getRoomDetails,
     getAll: getAllRoomTypes,
   };
@@ -29,7 +31,6 @@ export const useRoomMutation = (action, { onSuccess, onError } = {}) => {
     {
       onSuccess,
       onError: (error) => {
-        console.error(`Room ${action} failed:`, error);
         if (onError) onError(error);
       },
     }
