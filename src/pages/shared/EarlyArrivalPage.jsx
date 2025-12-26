@@ -12,11 +12,12 @@ import {
 } from '@mantine/core';
 import { IconAlertCircle, IconHome, IconClock } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { formatTime } from '../../lib/timeUtils';
 import { buttonStyles } from '../../constants/style.constants';
-import { EARLY_ARRIVAL_CONFIG, EARLY_ARRIVAL_STYLES, EARLY_ARRIVAL_FLOW_CONFIGS } from '../../config/constants';
+import { EARLY_ARRIVAL_CONFIG, EARLY_ARRIVAL_STYLES } from '../../config/constants';
+import { EARLY_ARRIVAL_FLOW_CONFIGS } from '../../config/routes';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
+import useLanguage from '../../hooks/useLanguage';
 
 const getFlowTypeFromPath = (pathname) => {
   if (pathname.includes('/checkin/early-arrival')) return 'checkin';
@@ -32,24 +33,24 @@ const WarningIcon = React.memo(() => (
 ));
 WarningIcon.displayName = 'WarningIcon';
 
-const TimeInfoCard = React.memo(({ currentTime }) => (
+const TimeInfoCard = React.memo(({ currentTime, t }) => (
   <Paper withBorder p="lg" radius="md" style={EARLY_ARRIVAL_STYLES.TIME_CARD}>
     <Stack gap="md" align="center">
       <Text size="lg" fw={600} c="#0B152A">
-        Current time: {currentTime}
+        {t('earlyArrival.currentTime', { time: currentTime })}
       </Text>
       <Text size="lg" fw={600} c="#0B152A">
-        Cards available after: {EARLY_ARRIVAL_CONFIG.TARGET_TIME}
+        {t('earlyArrival.cardsAvailableAfter', { time: EARLY_ARRIVAL_CONFIG.TARGET_TIME })}
       </Text>
     </Stack>
   </Paper>
 ));
 TimeInfoCard.displayName = 'TimeInfoCard';
 
-const CountdownDisplay = React.memo(({ countdown }) => (
+const CountdownDisplay = React.memo(({ countdown, t }) => (
   <Box style={EARLY_ARRIVAL_STYLES.COUNTDOWN_BOX}>
     <Text size="md" fw={600} c="white">
-      Returning to menu in: {countdown}...
+      {t('earlyArrival.returningToMenu', { countdown })}
     </Text>
   </Box>
 ));
@@ -58,6 +59,7 @@ CountdownDisplay.displayName = 'CountdownDisplay';
 const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, returnPath = '/home' }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
   
   const detectedFlowType = useMemo(() => {
     return propFlowType || getFlowTypeFromPath(location.pathname);
@@ -71,6 +73,14 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
   const pageMessage = message || flowConfig.message;
   const defaultBackPath = backPath || flowConfig.backPath;
   
+  const formatTime = useCallback((date = new Date()) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }, []);
+
   const [currentTime, setCurrentTime] = useState(() => formatTime());
   const [countdown, setCountdown] = useState(EARLY_ARRIVAL_CONFIG.COUNTDOWN_DURATION);
   const countdownIntervalRef = useRef(null);
@@ -78,7 +88,7 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
 
   const updateTime = useCallback(() => {
     setCurrentTime(formatTime());
-  }, []);
+  }, [formatTime]);
 
   const clearAllIntervals = useCallback(() => {
     if (timeIntervalRef.current) {
@@ -157,7 +167,7 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
       <Paper withBorder shadow="md" p={40} radius="xl" style={EARLY_ARRIVAL_STYLES.PAPER}>
         <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
-            <img src={UnoLogo} alt="UNO Hotel Logo" style={EARLY_ARRIVAL_STYLES.LOGO} />
+            <img src={UnoLogo} alt={t('common.unoHotelLogo')} style={EARLY_ARRIVAL_STYLES.LOGO} />
             <Title order={1} c="#0B152A" fw={700} style={titleStyle}>
               {pageTitle}
             </Title>
@@ -179,9 +189,9 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
             </Text>
           </Alert>
 
-          <TimeInfoCard currentTime={currentTime} />
+          <TimeInfoCard currentTime={currentTime} t={t} />
 
-          <CountdownDisplay countdown={countdown} />
+          <CountdownDisplay countdown={countdown} t={t} />
         </Stack>
 
         {/* Action Buttons */}
@@ -194,7 +204,7 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
             onMouseEnter={(e) => handleButtonHover(e, true)}
             onMouseLeave={(e) => handleButtonHover(e, false)}
           >
-            Return to Menu
+            {t('earlyArrival.returnToMenu')}
           </Button>
 
           <Group justify="flex-start">

@@ -13,7 +13,7 @@ import {
 } from '@mantine/core';
 import { IconAlertCircle, IconHome, IconRefresh } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import useLanguage from '../hooks/useLanguage';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../services/api/apiClient';
 import UnoLogo from '../assets/uno.jpg';
@@ -21,7 +21,7 @@ import UnoLogo from '../assets/uno.jpg';
 const ErrorPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   
   const { errorMessage, errorType, previousPath } = location.state || {};
 
@@ -117,7 +117,7 @@ const ErrorPage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -166,13 +166,13 @@ const ErrorPage = () => {
           {/* Friendly Explanation */}
           <Card withBorder p="lg" radius="md" style={{ backgroundColor: '#f8f9fa', width: '100%' }}>
             <Stack gap="sm" align="center">
-              <Text size="lg" fw={600} c="#C8653D">What happened?</Text>
+              <Text size="lg" fw={600} c="#C8653D">{t('error.whatHappened')}</Text>
               <Text size="md" c="#666666" ta="center">
-                {errorType === 'paymentFailed' && 'Your payment could not be processed. Please check your card details and try again.'}
-                {errorType === 'cardDispenserError' && 'There was an issue with the card dispenser. Our technical team has been notified.'}
-                {errorType === 'reservationNotFound' && 'We could not find your reservation. Please verify your details and try again.'}
-                {errorType === 'roomNotAvailable' && 'The selected room is no longer available. Please choose a different room or dates.'}
-                {!errorType && 'Something unexpected happened. Don\'t worry, we\'re here to help!'}
+                {errorType === 'paymentFailed' && t('error.paymentFailedExplanation')}
+                {errorType === 'cardDispenserError' && t('error.cardDispenserErrorExplanation')}
+                {errorType === 'reservationNotFound' && t('error.reservationNotFoundExplanation')}
+                {errorType === 'roomNotAvailable' && t('error.roomNotAvailableExplanation')}
+                {!errorType && t('error.genericExplanation')}
               </Text>
             </Stack>
           </Card>
@@ -180,17 +180,17 @@ const ErrorPage = () => {
           {/* Contact Support Info */}
           <Card withBorder p="lg" radius="md" style={{ backgroundColor: '#C8653D', color: 'white', width: '100%' }}>
             <Stack gap="sm" align="center">
-              <Text size="lg" fw={600}>Need Help?</Text>
+              <Text size="lg" fw={600}>{t('error.needHelp')}</Text>
               <Text size="md" ta="center">
-                Our support team is available 24/7 to assist you
+                {t('error.supportAvailable')}
               </Text>
               <Group gap="xl" justify="center">
                 <Box ta="center">
-                  <Text size="sm" fw={500}>Phone</Text>
+                  <Text size="sm" fw={500}>{t('error.phone')}</Text>
                   <Text size="md" fw={600}>+1-800-UNO-HELP</Text>
                 </Box>
                 <Box ta="center">
-                  <Text size="sm" fw={500}>Email</Text>
+                  <Text size="sm" fw={500}>{t('error.email')}</Text>
                   <Text size="md" fw={600}>support@unohotels.com</Text>
                 </Box>
               </Group>

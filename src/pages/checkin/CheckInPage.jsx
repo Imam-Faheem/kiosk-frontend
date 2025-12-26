@@ -4,71 +4,107 @@ import {
   Paper,
   Group,
   Button,
-  Text,
   Title,
   Stack,
-  Box,
   TextInput,
   Alert,
+  Box,
+  Loader,
+  Text,
 } from '@mantine/core';
-import { IconAlertCircle, IconArrowRight } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
-import { checkinValidationSchema, checkinInitialValues } from '../../schemas/checkin.schema';
-import { isBeforeTargetTime } from '../../lib/timeUtils';
+import { checkinInitialValues } from '../../schemas/checkin.schema';
 import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
-import UnoLogo from '../../assets/uno.jpg';
+import { mockData, shouldUseMock, simulateApiDelay } from '../../services/mockData';
+import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 
 const CheckInPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+    const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
+    const now = new Date();
+    const [time, period] = targetTime.split(' ');
+    const [hours, minutes] = time.split(':').map(Number);
+    const target = new Date();
+    target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
+    if (now < target) {
       navigate('/checkin/early-arrival');
     }
   }, [navigate]);
   
   const validateReservation = useReservationMutation('validate', {
-    onSuccess: (result) => {
-      if (result.success) {
-        navigate('/checkin/payment-check', {
-          state: { reservation: result.data },
-        });
-      }
-    },
     onError: (err) => {
-      setError(err.message || t('error.reservationNotFound'));
+      // Don't set error here if we'll use mock data
+      if (!shouldUseMock(err)) {
+        setError(err.message ?? t('error.reservationNotFound'));
+      }
     },
   });
 
   const form = useForm({
     initialValues: checkinInitialValues,
     validate: {
-      reservationId: (value) => (!value ? 'Reservation ID is required' : null),
-      lastName: (value) => (!value ? 'Last name is required' : null),
+      reservationId: (value) => (!value ? t('error.reservationIdRequired') : null),
+      lastName: (value) => (!value ? t('error.lastNameRequired') : null),
     },
   });
 
   const handleSubmit = async (values) => {
     setError(null);
-    
+    setIsLoading(true);
+
     try {
-      // Call backend API to validate reservation with Apaleo
-      const result = await validateReservation.mutateAsync(values);
-      
-      if (result.success) {
-        // Navigate to payment check page with real reservation data
+      const result = await validateReservation.mutateAsync({
+        reservationId: values.reservationId ?? values.reservation_id,
+        lastName: values.lastName ?? values.last_name,
+      });
+
+      if (result.success && result.data) {
+        const reservationId = result.data.reservation_id ?? result.data.id;
+        if (!reservationId) {
+          setError(t('error.invalidReservationData'));
+          return;
+        }
+
         navigate('/checkin/payment-check', {
           state: { reservation: result.data },
         });
+      } else {
+        setError(t('error.reservationValidationFailed'));
       }
-    } catch (err) {
-      setError(err.message || t('error.reservationNotFound'));
+    } catch (error) {
+      if (shouldUseMock(error)) {
+        try {
+          await simulateApiDelay(600);
+          const mockResult = mockData.reservation(values);
+
+          if (mockResult.success && mockResult.data) {
+            const reservationId = mockResult.data.reservation_id ?? mockResult.data.id;
+            if (reservationId) {
+              navigate('/checkin/payment-check', {
+                state: { reservation: mockResult.data },
+              });
+              return;
+            }
+          }
+        } catch {
+          setError(t('error.failedToLoadReservation'));
+          return;
+        }
+      }
+
+      setError(error.message ?? t('error.reservationNotFound'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -85,61 +121,36 @@ const CheckInPage = () => {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '20px',
-        backgroundColor: '#FFFFFF',
       }}
+      p={20}
+      bg="#FFFFFF"
     >
       <Paper
         withBorder
         shadow="md"
         p={40}
         radius="xl"
+        w="100%"
+        maw={600}
+        bg="#ffffff"
         style={{
-          width: '100%',
-          maxWidth: '600px',
-          backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
         }}
       >
-        {/* Header */}
-        <Group justify="space-between" mb="xl">
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
+        <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
         </Group>
 
         {/* Context Title */}
-        <Title order={3} style={{
-          fontSize: '26px',
-          fontWeight: 800,
-          color: '#222',
-          marginBottom: '16px',
-          letterSpacing: '0.5px'
-        }}>
-          Find Your Reservation
+        <Title 
+          order={3}
+          fz={26}
+          fw={800}
+          c="#222"
+          mb={16}
+          lts={0.5}
+        >
+          {t('checkIn.title')}
         </Title>
 
         {/* Form */}
@@ -148,10 +159,10 @@ const CheckInPage = () => {
             {error && (
               <Alert
                 icon={<IconAlertCircle size={16} />}
-                title="Error"
+                title={t('error.title')}
                 color="red"
                 variant="light"
-                style={{ borderRadius: '8px' }}
+                radius="md"
               >
                 {error}
               </Alert>
@@ -159,11 +170,10 @@ const CheckInPage = () => {
 
             <TextInput
               label={t('checkIn.reservationId')}
-              placeholder="Enter your 10-digit reservation number"
+              placeholder={t('checkIn.enterReservationNumber')}
               required
               size="lg"
               {...form.getInputProps('reservationId')}
-              description="This can be found in your confirmation email."
               styles={{
                 input: {
                   borderRadius: '12px',
@@ -180,7 +190,7 @@ const CheckInPage = () => {
 
             <TextInput
               label={t('checkIn.lastName')}
-              placeholder="Enter your last name"
+              placeholder={t('checkIn.enterLastName')}
               required
               size="lg"
               {...form.getInputProps('lastName')}
@@ -206,15 +216,25 @@ const CheckInPage = () => {
             <Button
               type="submit"
               size="lg"
-              rightSection={<IconArrowRight size={20} />}
-              loading={validateReservation.isPending}
-              styles={BUTTON_STYLES.primary}
+              leftSection={<IconCheck size={20} />}
+              disabled={isLoading}
+              styles={BUTTON_STYLES.primarySmall}
               radius="md"
             >
-              {validateReservation.isPending ? t('checkIn.loading') : t('checkIn.submit')}
+              {t('checkIn.submit')}
             </Button>
           </Group>
         </form>
+
+        {/* Loader */}
+        {isLoading && (
+          <Stack align="center" gap="md" mt="xl">
+            <Loader size="lg" color="#C8653D" />
+            <Text size="lg" c="#666666">
+              {t('checkIn.loading')}
+            </Text>
+          </Stack>
+        )}
       </Paper>
     </Container>
   );

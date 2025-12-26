@@ -1,4 +1,5 @@
 import { apiClient } from './api/apiClient';
+import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
 
 /**
  * Save guest details to backend
@@ -17,18 +18,14 @@ import { apiClient } from './api/apiClient';
  * @returns {Promise<Object>} Saved guest details response
  */
 export const saveGuestDetails = async (guestData) => {
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-  
-  if (debug) console.log('[guests/details] saving guest details', guestData);
-  
   try {
     const response = await apiClient.post('/guests/details', guestData);
-    
-    if (debug) console.log('[guests/details] response', response.data);
-    
     return response.data;
   } catch (err) {
-    if (debug) console.error('[guests/details] error', err?.response?.data || err?.message);
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(500);
+      return mockData.saveGuestDetails(guestData);
+    }
     throw err;
   }
 };
@@ -41,18 +38,14 @@ export const saveGuestDetails = async (guestData) => {
  * @returns {Promise<Object>} Guest details response
  */
 export const getGuestDetails = async (params) => {
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-  
-  if (debug) console.log('[guests/details] fetching guest details', params);
-  
   try {
     const response = await apiClient.get('/guests/details', { params });
-    
-    if (debug) console.log('[guests/details] response', response.data);
-    
     return response.data;
   } catch (err) {
-    if (debug) console.error('[guests/details] error', err?.response?.data || err?.message);
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(400);
+      return mockData.getGuestDetails(params);
+    }
     throw err;
   }
 };
@@ -65,19 +58,15 @@ export const getGuestDetails = async (params) => {
  * @returns {Promise<Object>} Update response
  */
 export const updateApaleoReservationWithGuest = async (reservationId, guestData, propertyId) => {
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-  
-  if (debug) console.log('[guests/reservation] updating reservation', { reservationId, guestData, propertyId });
-  
   try {
     const params = propertyId ? { propertyId } : {};
     const response = await apiClient.patch(`/guests/reservation/${reservationId}`, guestData, { params });
-    
-    if (debug) console.log('[guests/reservation] response', response.data);
-    
     return response.data;
   } catch (err) {
-    if (debug) console.error('[guests/reservation] error', err?.response?.data || err?.message);
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(500);
+      return mockData.updateApaleoReservationWithGuest(reservationId, guestData);
+    }
     throw err;
   }
 };

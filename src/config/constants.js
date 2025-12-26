@@ -1,12 +1,21 @@
-// API Configuration
+import { IconCreditCard, IconMail, IconLock } from '@tabler/icons-react';
+
+/**
+ * API Configuration
+ * Centralized configuration for API endpoints and settings
+ */
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || process.env.REACT_APP_API_URL || 'http://localhost:8000',
+  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.REACT_APP_API_URL ?? 'http://localhost:8000',
   TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,
-  ORGANIZATION_ID: process.env.REACT_APP_ORGANIZATION_ID || '0ujsszwN8NRY24YaXiTIE2VWDTS',
+  ORGANIZATION_ID: process.env.REACT_APP_ORGANIZATION_ID ?? '0ujsszwN8NRY24YaXiTIE2VWDTS',
+  DEFAULT_PROPERTY_ID: process.env.REACT_APP_PROPERTY_ID ?? 'BER',
 };
 
-// Application Constants
+/**
+ * Application Configuration
+ * General application settings and metadata
+ */
 export const APP_CONFIG = {
   NAME: 'Hotel Management System',
   VERSION: '1.0.0',
@@ -24,54 +33,19 @@ export const LANGUAGE_OPTIONS = [
   { value: "pt", label: "Português", flag: "/flags/pt.png" },
 ];
 
-// Storage Keys
+/**
+ * LocalStorage Keys
+ * Centralized keys for localStorage operations
+ */
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
   USER_DATA: 'user_data',
   LANGUAGE: 'language',
   THEME: 'theme',
-  KIOSK_PROPERTY: 'kioskProperty', // Property selection data
+  KIOSK_PROPERTY: 'kioskProperty',
 };
 
-// API Endpoints
-export const API_ENDPOINTS = {
-  AUTH: {
-    LOGIN: '/login',
-    LOGOUT: '/logout',
-    REFRESH: '/refresh-token',
-    PROFILE: '/profile',
-  },
-  RESERVATIONS: {
-    BASE: '/reservations',
-    SEARCH: '/reservations/search',
-  },
-  GUESTS: {
-    BASE: '/guests',
-  },
-  ROOMS: {
-    BASE: '/rooms',
-    AVAILABLE: '/rooms/available',
-  },
-  CHECKIN: {
-    BASE: '/checkin',
-    STATUS: '/checkin/:id/status',
-  },
-  CHECKOUT: {
-    BASE: '/checkout',
-    STATUS: '/checkout/:id/status',
-  },
-  PAYMENTS: {
-    BASE: '/payments',
-    HISTORY: '/payments/history',
-    REFUND: '/payments/:id/refund',
-  },
-  REPORTS: {
-    OCCUPANCY: '/reports/occupancy',
-    REVENUE: '/reports/revenue',
-    GUESTS: '/reports/guests',
-  },
-};
 
 // Form Validation Rules
 export const VALIDATION_RULES = {
@@ -84,7 +58,7 @@ export const VALIDATION_RULES = {
     PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   },
   PHONE: {
-    PATTERN: /^\+?[\d\s\-\(\)]+$/,
+    PATTERN: /^\+?[\d\s\-()]+$/,
   },
 };
 
@@ -157,24 +131,6 @@ export const EARLY_ARRIVAL_STYLES = {
   },
 };
 
-// Early Arrival Flow Configurations
-export const EARLY_ARRIVAL_FLOW_CONFIGS = {
-  checkin: {
-    title: 'Early Arrival',
-    message: 'Card cannot be given before 2pm. Please return after 2pm.',
-    backPath: '/checkin',
-  },
-  reservation: {
-    title: 'Early Arrival',
-    message: 'Room cards cannot be issued before 2pm. Please return after 2pm.',
-    backPath: '/reservation/search',
-  },
-  'lost-card': {
-    title: 'Early Arrival',
-    message: 'Card replacement cannot be done before 2pm. Please return after 2pm.',
-    backPath: '/lost-card',
-  },
-};
 
 // Main Menu Button Styles
 export const MAIN_MENU_BUTTON_STYLES = {
@@ -400,6 +356,58 @@ export const STATUS = {
     COMPLETED: 'completed',
     FAILED: 'failed',
     REFUNDED: 'refunded',
+  },
+};
+
+// Card Dispensing Steps Configuration
+export const CARD_DISPENSING_STEPS = [
+  { 
+    key: 'preparing',
+    labelKey: 'cardDispensing.steps.preparing',
+    defaultLabel: 'Preparing Card', 
+    description: 'Preparing your access card',
+    iconKey: 'creditCard',
+  },
+  { 
+    key: 'encoding',
+    labelKey: 'cardDispensing.steps.encoding',
+    defaultLabel: 'Encoding Credentials', 
+    description: 'Securing your access credentials',
+    iconKey: 'lock',
+  },
+  { 
+    key: 'sending',
+    labelKey: 'cardDispensing.steps.sending',
+    defaultLabel: 'Sending Digital Key', 
+    description: 'Delivering to your email',
+    iconKey: 'mail',
+  },
+];
+
+// Card Dispensing Step Icons
+export const STEP_ICONS = {
+  creditCard: IconCreditCard,
+  lock: IconLock,
+  mail: IconMail,
+};
+
+// Status Messages Configuration
+export const CARD_STATUS_MESSAGES = {
+  preparing: {
+    title: 'Preparing Your Access Card',
+    description: 'Your personalized access card is being prepared. This usually takes about 10-15 seconds.',
+  },
+  encoding: {
+    title: 'Securing Your Credentials',
+    description: 'Encoding your access credentials with bank-level encryption. Almost ready...',
+  },
+  sending: {
+    title: 'Sending Digital Key',
+    description: 'Your digital key is being securely delivered to your email. You\'ll receive it within the next few moments.',
+  },
+  completed: {
+    title: 'Your Card is Ready',
+    description: 'Please take your access card from the slot. Your digital key has been sent to your email.',
   },
 };
 

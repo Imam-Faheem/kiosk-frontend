@@ -1,4 +1,5 @@
 import { apiClient } from './api/apiClient';
+import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
 
 /**
  * Create a booking in Apaleo
@@ -14,18 +15,14 @@ import { apiClient } from './api/apiClient';
  * @returns {Promise<Object>} Booking response from Apaleo
  */
 export const createBooking = async (bookingData, hotelId) => {
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-  
-  if (debug) console.log('[booking] creating booking', { bookingData, hotelId });
-  
   try {
     const response = await apiClient.post(`/booking/${hotelId}`, bookingData);
-    
-    if (debug) console.log('[booking] response', response.data);
-    
     return response.data;
   } catch (err) {
-    if (debug) console.error('[booking] error', err?.response?.data || err?.message);
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(800);
+      return mockData.createBooking(bookingData);
+    }
     throw err;
   }
 };
@@ -36,18 +33,14 @@ export const createBooking = async (bookingData, hotelId) => {
  * @returns {Promise<Object>} Reservation details
  */
 export const getReservation = async (reservationId) => {
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-  
-  if (debug) console.log('[reservation] fetching reservation', reservationId);
-  
   try {
     const response = await apiClient.get(`/reservation/${reservationId}`);
-    
-    if (debug) console.log('[reservation] response', response.data);
-    
     return response.data;
   } catch (err) {
-    if (debug) console.error('[reservation] error', err?.response?.data || err?.message);
+    if (shouldUseMock(err)) {
+      await simulateApiDelay(400);
+      return mockData.getReservation(reservationId);
+    }
     throw err;
   }
 };

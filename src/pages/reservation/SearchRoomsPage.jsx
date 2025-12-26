@@ -22,11 +22,12 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useRoomMutation } from '../../hooks/useRoomMutation';
 import { roomSearchValidationSchema, roomSearchInitialValues } from '../../schemas/reservation.schema';
-import { isBeforeTargetTime } from '../../lib/timeUtils';
 import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES, FORM_INPUT_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
-import UnoLogo from '../../assets/uno.jpg';
+import usePropertyStore from '../../stores/propertyStore';
+import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
+import UnoLogo from '../../assets/uno.jpg';
 
 const SearchRoomsPage = () => {
   const navigate = useNavigate();
@@ -36,7 +37,13 @@ const SearchRoomsPage = () => {
   const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
-    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+    const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
+    const now = new Date();
+    const [time, period] = targetTime.split(' ');
+    const [hours, minutes] = time.split(':').map(Number);
+    const target = new Date();
+    target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
+    if (now < target) {
       navigate('/reservation/early-arrival');
     }
   }, [navigate]);
@@ -47,12 +54,13 @@ const SearchRoomsPage = () => {
       setErrorMessage(null);
     },
     onError: (err) => {
-      console.error('Room search error:', err);
       const details = err?.response?.data;
-      const msg = (details && (details.message || details.error)) || err?.message || 'Request failed';
+      const msg = (details && (details.message || details.error)) || err?.message || t('error.requestFailed');
       setErrorMessage(msg);
     }
   });
+
+  const isSearching = loading || searchAvailability.isPending;
 
   const form = useForm({
     initialValues: roomSearchInitialValues,
@@ -74,26 +82,32 @@ const SearchRoomsPage = () => {
     setLoading(true);
     setErrorMessage(null);
     setSearchResults(null);
-    
-    // Convert Date objects to ISO string format for API and coerce guests to number
+
+    const checkInDate = values.checkIn ? (values.checkIn instanceof Date ? values.checkIn.toISOString().split('T')[0] : values.checkIn) : null;
+    const checkOutDate = values.checkOut ? (values.checkOut instanceof Date ? values.checkOut.toISOString().split('T')[0] : values.checkOut) : null;
+    const adults = values.guests ? Number(values.guests) : 1;
+
     const searchData = {
-      ...values,
-      checkIn: values.checkIn ? (values.checkIn instanceof Date ? values.checkIn.toISOString().split('T')[0] : values.checkIn) : null,
-      checkOut: values.checkOut ? (values.checkOut instanceof Date ? values.checkOut.toISOString().split('T')[0] : values.checkOut) : null,
-      guests: values.guests ? Number(values.guests) : null,
+      propertyId: usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER',
+      arrival: checkInDate,
+      departure: checkOutDate,
+      adults: adults || 1,
     };
-    await searchAvailability.mutateAsync(searchData);
-    setLoading(false);
+
+    try {
+      await searchAvailability.mutateAsync(searchData);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSelectRoom = (room) => {
-    // Convert Date objects to ISO string format for navigation state
     const searchCriteria = {
       ...form.values,
       checkIn: form.values.checkIn ? (form.values.checkIn instanceof Date ? form.values.checkIn.toISOString().split('T')[0] : form.values.checkIn) : null,
       checkOut: form.values.checkOut ? (form.values.checkOut instanceof Date ? form.values.checkOut.toISOString().split('T')[0] : form.values.checkOut) : null,
     };
-    
+
     navigate('/reservation/guest-details', {
       state: {
         room,
@@ -108,20 +122,20 @@ const SearchRoomsPage = () => {
 
   const guestOptions = Array.from({ length: 8 }, (_, i) => ({
     value: (i + 1).toString(),
-    label: `${i + 1} ${i === 0 ? 'Guest' : 'Guests'}`,
+    label: `${i + 1} ${i === 0 ? t('common.guest') : t('common.guests')}`,
   }));
 
   return (
     <Container
       size="lg"
-      h="100vh"
       style={{ 
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: 'center',
-        overflow: 'visible',
+        paddingTop: '20px',
+        paddingBottom: '20px',
       }}
       bg="white"
       p="20px"
@@ -138,32 +152,11 @@ const SearchRoomsPage = () => {
           root: {
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
             borderRadius: '20px',
-            overflow: 'visible',
           },
         }}
       >
-        {/* Header */}
-        <Group justify="space-between" mb="xl">
-          <Group>
-            <Box
-              component="img"
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              w={50}
-              h={50}
-              style={{ borderRadius: '8px', marginRight: '0px', objectFit: 'cover' }}
-            />
-            <Title 
-              order={2}
-              fz={30}
-              c="rgb(34, 34, 34)"
-              fw={600}
-              lts={1}
-              ml="-9px"
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
         </Group>
 
         {/* Search Form */}
@@ -173,7 +166,7 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <DateInput
                   label={t('searchRooms.checkIn')}
-                  placeholder="Select check-in date"
+                  placeholder={t('searchRooms.selectCheckInDate')}
                   required
                   size="lg"
                   valueFormat="YYYY-MM-DD"
@@ -186,7 +179,7 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <DateInput
                   label={t('searchRooms.checkOut')}
-                  placeholder="Select check-out date"
+                  placeholder={t('searchRooms.selectCheckOutDate')}
                   required
                   size="lg"
                   valueFormat="YYYY-MM-DD"
@@ -212,17 +205,17 @@ const SearchRoomsPage = () => {
               type="submit"
               size="lg"
               leftSection={<IconSearch size={20} />}
-              loading={loading}
+              disabled={!!searchResults || isSearching}
               styles={BUTTON_STYLES.primary}
               radius="md"
             >
-              {loading ? t('searchRooms.loading') : t('searchRooms.search')}
+              {t('searchRooms.search')}
             </Button>
           </Stack>
         </form>
 
-        {/* Search Results */}
-        {loading && (
+        {/* Search Results Loader */}
+        {isSearching && (
           <Stack align="center" gap="md">
             <Loader size="lg" color="#C8653D" />
             <Text size="lg" c="#666666">
@@ -232,14 +225,14 @@ const SearchRoomsPage = () => {
         )}
 
         {/* Error message from backend */}
-        {errorMessage && !loading && (
+        {errorMessage && !isSearching && (
           <Alert color="red" variant="light">
             {errorMessage}
           </Alert>
         )}
 
         {/* No rooms available message */}
-        {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length === 0 && !loading && (
+        {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length === 0 && !isSearching && (
           <Alert color="yellow" variant="light">
             {t('searchRooms.noRooms')}
           </Alert>
@@ -248,7 +241,7 @@ const SearchRoomsPage = () => {
         {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length > 0 && (
           <Stack gap="lg" mb="xl">
             <Text size="xl" fw={600} c="#0B152A">
-              Available Rooms ({typeof searchResults.totalAvailable === 'number' ? searchResults.totalAvailable : (Array.isArray(searchResults.availableRooms) ? searchResults.availableRooms.length : 0)})
+              {t('searchRooms.availableRooms')} ({typeof searchResults.totalAvailable === 'number' ? searchResults.totalAvailable : (Array.isArray(searchResults.availableRooms) ? searchResults.availableRooms.length : 0)})
             </Text>
             
             <Grid>
@@ -285,7 +278,7 @@ const SearchRoomsPage = () => {
                             {room.name}
                           </Text>
                           <Badge color="green" size="lg">
-                            Available
+                            {t('searchRooms.available')}
                           </Badge>
                         </Group>
                         
@@ -296,7 +289,7 @@ const SearchRoomsPage = () => {
                         <Group gap="xs">
                           <IconUsers size={16} color="#666666" />
                           <Text size="sm" c="#666666">
-                            {room.capacity} guests
+                            {room.capacity} {t('common.guests')}
                           </Text>
                         </Group>
                         
@@ -311,10 +304,10 @@ const SearchRoomsPage = () => {
                         <Group justify="space-between" align="center">
                           <Stack gap="xs">
                             <Text size="sm" c="#666666">
-                              {room.currency} {room.pricePerNight} per night
+                              {room.currency} {room.pricePerNight} {t('searchRooms.perNight')}
                             </Text>
                             <Text size="xl" fw={700} c="#0B152A">
-                              {room.currency} {room.totalPrice} total
+                              {room.currency} {room.totalPrice} {t('searchRooms.total')}
                             </Text>
                           </Stack>
                           
@@ -324,7 +317,7 @@ const SearchRoomsPage = () => {
                             c="white"
                             radius="md"
                           >
-                            Select
+                            {t('common.select')}
                           </Button>
                         </Group>
                       </Stack>

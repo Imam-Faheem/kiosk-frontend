@@ -9,11 +9,10 @@ import {
 } from '@mantine/core';
 import { IconKey, IconCalendar, IconCreditCardOff } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { isBeforeTargetTime } from '../lib/timeUtils';
 import { EARLY_ARRIVAL_CONFIG, MAIN_MENU_BUTTON_STYLES, CONTAINER_STYLES, PAPER_STYLES } from '../config/constants';
 import useLanguage from '../hooks/useLanguage';
 import usePropertyStore from '../stores/propertyStore';
-import UnoLogo from '../assets/uno.jpg';
+import PropertyHeader from '../components/PropertyHeader';
 import BackButton from '../components/BackButton';
 
 const MainMenuPage = () => {
@@ -33,7 +32,13 @@ const MainMenuPage = () => {
   };
 
   const handleCheckIn = () => {
-    if (isBeforeTargetTime(EARLY_ARRIVAL_CONFIG.TARGET_TIME)) {
+    const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
+    const now = new Date();
+    const [time, period] = targetTime.split(' ');
+    const [hours, minutes] = time.split(':').map(Number);
+    const target = new Date();
+    target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
+    if (now < target) {
       navigate('/checkin/early-arrival');
     } else {
       navigate('/checkin');
@@ -60,35 +65,8 @@ const MainMenuPage = () => {
         radius="xl"
         style={PAPER_STYLES.default}
       >
-        {/* Header */}
         <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: 800,
-                letterSpacing: '1px',
-                marginLeft: '-9px',
-                fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
-          
+          <PropertyHeader titleStyle={{ fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif' }} />
         </Group>
 
         {/* Main Buttons Section */}

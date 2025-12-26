@@ -12,62 +12,33 @@
     "lostCard": "I Lost My Card",
     "back": "Back"
   },
-  "checkIn": {
-    "title": "Check In",
-    "reservationId": "Reservation ID",
-    "lastName": "Last Name",
-    "submit": "Submit",
-    "back": "Back",
-    "loading": "Validating reservation..."
-  },
-  "paymentCheck": {
-    "title": "Payment Status",
-    "reservationSummary": "Reservation Summary",
-    "guestName": "Guest Name",
-    "roomType": "Room Type",
-    "checkIn": "Check In",
-    "checkOut": "Check Out",
-    "paymentStatus": "Payment Status",
-    "paid": "Paid",
-    "pending": "Pending",
-    "loading": "Checking payment status..."
-  },
   "paymentTerminal": {
     "title": "Payment Terminal",
     "amount": "Amount to Pay",
     "swipeCard": "Please swipe your card",
     "processing": "Processing payment...",
     "cancel": "Cancel",
-    "timeout": "Payment timeout. Please try again."
-  },
-  "cardDispensing": {
-    "title": "Preparing Your Card",
-    "steps": {
-      "preparing": "Preparing card",
-      "encoding": "Encoding card",
-      "sending": "Sending details"
-    },
-    "takeCard": "Please take your card",
-    "loading": "Please wait..."
+    "timeout": "Payment timeout. Please try again.",
+    "paymentSuccessful": "Payment Successful",
+    "paymentFailed": "Payment Failed",
+    "paymentTimeout": "Payment Timeout",
+    "insertOrSwipeCard": "Please insert or swipe your card at the terminal"
   },
   "checkInComplete": {
     "title": "Check-In Complete",
+    "welcomeMessage": "Your room is ready. We're delighted to welcome you to UNO Hotels.",
+    "loadingDetails": "Loading your details...",
     "success": "Welcome to Uno Hotels!",
     "roomNumber": "Room Number",
+    "checkInTime": "Check-In Time",
     "checkOut": "Check Out",
+    "guest": "Guest",
     "keySent": "Digital key sent to your email",
-    "enjoyStay": "Enjoy your stay!",
-    "returnHome": "Return to Home"
-  },
-  "searchRooms": {
-    "title": "Search Rooms",
-    "checkIn": "Check In Date",
-    "checkOut": "Check Out Date",
-    "guests": "Number of Guests",
-    "search": "Search Rooms",
-    "back": "Back",
-    "loading": "Searching available rooms...",
-    "noRooms": "No rooms available for selected dates"
+    "enjoyStay": "We hope you enjoy your stay with us.",
+    "returnHome": "Return to Home",
+    "returningToMenu": "Returning to main menu in {{countdown}} {{seconds}}...",
+    "second": "second",
+    "seconds": "seconds"
   },
   "guestDetails": {
     "title": "Guest Details",
@@ -90,22 +61,19 @@
     "statePlaceholder": "State or province",
     "postalPlaceholder": "ZIP or postal code",
     "continue": "Continue",
-    "back": "Back"
-  },
-  "roomDetail": {
-    "title": "Room Details",
-    "amenities": "Amenities",
-    "bookingSummary": "Booking Summary",
-    "nights": "nights",
-    "checkInDate": "Check-In Date",
-    "checkOutDate": "Check-Out Date",
-    "pricePerNight": "Price per night",
-    "taxes": "Taxes",
-    "total": "Total",
-    "terms": "I accept the terms and conditions",
-    "confirmBooking": "Confirm Booking",
-    "editDetails": "Edit Details",
-    "cancel": "Cancel"
+    "back": "Back",
+    "firstNamePlaceholder": "Enter your first name",
+    "lastNamePlaceholder": "Enter your last name",
+    "emailPlaceholder": "Enter your email",
+    "countries": {
+      "us": "United States (+1)",
+      "gb": "United Kingdom (+44)",
+      "de": "Germany (+49)",
+      "fr": "France (+33)",
+      "it": "Italy (+39)",
+      "es": "Spain (+34)",
+      "pt": "Portugal (+351)"
+    }
   },
   "signature": {
     "title": "Digital Signature Required",
@@ -127,20 +95,15 @@
     "continue": "Continue to Payment",
     "errorMissingData": "Missing room or guest details. Please go back and try again."
   },
-  "newResPayment": {
-    "title": "Payment",
-    "bookingSummary": "Booking Summary",
-    "totalAmount": "Total Amount",
-    "swipeCard": "Please swipe your card",
-    "processing": "Processing payment...",
-    "cancelBooking": "Cancel Booking"
-  },
   "newResCard": {
     "title": "Preparing Your Card",
     "steps": {
       "preparing": "Preparing card",
       "encoding": "Encoding card",
-      "sending": "Sending details"
+      "sending": "Sending details",
+      "preparingDescription": "Preparing your new card",
+      "encodingDescription": "Encoding card with your details",
+      "sendingDescription": "Sending confirmation"
     },
     "takeCard": "Please take your card"
   },
@@ -153,33 +116,45 @@
     "checkOut": "Check Out",
     "confirmationSent": "Confirmation sent to your email",
     "printReceipt": "Print Receipt",
-    "returnHome": "Return to Home"
+    "returnHome": "Return to Home",
+    "guest": "Guest",
+    "room": "Room",
+    "totalAmount": "Total Amount"
   },
   "lostCard": {
     "title": "Lost Card",
+    "roomType": "Room Type",
+    "roomTypePlaceholder": "Enter room type (e.g., Double, Single, Suite)",
     "roomNumber": "Room Number",
     "reservationNumber": "Reservation Number",
+    "reservationNumberPlaceholder": "Enter your reservation number",
     "lastName": "Last Name",
+    "lastNamePlaceholder": "Enter your last name",
     "submit": "Submit",
     "back": "Back",
+    "validating": "Validating...",
     "helpText": "Please provide your room number, reservation number, and last name to regenerate your card."
-  },
-  "regenerateCard": {
-    "title": "Regenerating Your Card",
-    "steps": {
-      "deactivating": "Deactivating old card",
-      "generating": "Generating new credentials",
-      "programming": "Programming new card"
-    },
-    "pleaseWait": "Please wait..."
   },
   "cardIssued": {
     "title": "New Card Issued",
+    "newCardIssued": "New card issued successfully",
     "success": "New card issued successfully",
     "takeCard": "Please take your card",
+    "takeCardFromSlot": "Please take your card from the slot",
     "oldCardDeactivated": "Old card has been deactivated",
     "roomNumber": "Room Number",
+    "digitalAccessCode": "Digital Access Code",
+    "digitalAccessCodeDescription": "Use this code if you need to access your room digitally",
+    "securityNotice": "Security Notice",
+    "secure": "Secure",
+    "deactivatedAt": "Deactivated at {{time}}",
+    "digitalKey": "Digital Key",
+    "newKeySentToEmail": "New key sent to your email",
     "keySent": "New key sent to your email",
+    "checkEmailForInstructions": "Check your email for detailed instructions and backup access.",
+    "returningToMenu": "Returning to main menu in {{countdown}} {{seconds}}...",
+    "second": "second",
+    "seconds": "seconds",
     "returnHome": "Return to Home"
   },
   "error": {
@@ -192,7 +167,47 @@
     "paymentFailed": "Payment failed. Please try again.",
     "cardDispenserError": "Card dispenser error. Please contact support.",
     "roomNotAvailable": "No rooms available for selected dates.",
-    "guestValidationFailed": "Guest validation failed. Please check your details."
+    "guestValidationFailed": "Guest validation failed. Please check your details.",
+    "cardRegenerationFailed": "Card regeneration failed. Please try again.",
+    "cardIssuanceFailed": "Card issuance failed. Please try again.",
+    "invalidReservationData": "Invalid reservation data. Please try again.",
+    "reservationValidationFailed": "Reservation validation failed. Please check your credentials.",
+    "failedToLoadReservation": "Failed to load reservation data. Please try again.",
+    "requestFailed": "Request failed",
+    "checkinNotFound": "Check-in not found",
+    "reservationIdRequired": "Reservation ID is required",
+    "lastNameRequired": "Last name is required",
+    "invalidLastName": "Invalid last name. Please verify your information.",
+    "lastNameMismatch": "Last name does not match reservation records",
+    "roomNumberMismatch": "Room number does not match reservation records",
+    "reservationNotFoundByNumber": "Reservation not found. Please check your reservation number.",
+    "paymentStatusNotFound": "Payment status not found",
+    "digitalKeyNotFound": "Digital key not found",
+    "checkoutNotFound": "Checkout not found",
+    "cannotConnectToServer": "Cannot connect to server. Please ensure the backend server is running.",
+    "requestTimedOut": "Request timed out. Please check your connection and try again.",
+    "networkError": "Network error. Please check your connection.",
+    "roomTypeRequired": "Room type is required",
+    "reservationNumberRequired": "Reservation number is required",
+    "failedToCreateBooking": "Failed to create booking",
+    "missingRoomInformation": "Missing room information. Please select a room again.",
+    "noReservationId": "Booking created but no reservation ID returned",
+    "failedToLoadProperties": "Failed to load properties. Please try again.",
+    "pleaseSelectProperty": "Please select a property to continue",
+    "selectedPropertyNotFound": "Selected property not found",
+    "failedToSaveProperty": "Failed to save property selection. Please try again.",
+    "failedToSaveGuestDetails": "Failed to save guest details",
+    "validationFailed": "Validation failed",
+    "whatHappened": "What happened?",
+    "paymentFailedExplanation": "Your payment could not be processed. Please check your card details and try again.",
+    "cardDispenserErrorExplanation": "There was an issue with the card dispenser. Our technical team has been notified.",
+    "reservationNotFoundExplanation": "We could not find your reservation. Please verify your details and try again.",
+    "roomNotAvailableExplanation": "The selected room is no longer available. Please choose a different room or dates.",
+    "genericExplanation": "Something unexpected happened. Don't worry, we're here to help!",
+    "needHelp": "Need Help?",
+    "supportAvailable": "Our support team is available 24/7 to assist you",
+    "phone": "Phone",
+    "email": "Email"
   },
   "common": {
     "loading": "Loading...",
@@ -204,6 +219,204 @@
     "submit": "Submit",
     "confirm": "Confirm",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "select": "Select",
+    "choose": "Choose",
+    "save": "Save",
+    "saving": "Saving...",
+    "guest": "Guest",
+    "guests": "Guests",
+    "unoHotelLogo": "UNO Hotel Logo",
+    "returnToMenu": "Return to Menu",
+    "notAvailable": "N/A",
+    "returnToHome": "Return to Home"
+  },
+  "searchRooms": {
+    "title": "Search Rooms",
+    "checkIn": "Check In Date",
+    "checkOut": "Check Out Date",
+    "guests": "Number of Guests",
+    "search": "Search Rooms",
+    "back": "Back",
+    "loading": "Searching available rooms...",
+    "noRooms": "No rooms available for selected dates",
+    "selectCheckInDate": "Select check-in date",
+    "selectCheckOutDate": "Select check-out date",
+    "availableRooms": "Available Rooms",
+    "available": "Available",
+    "perNight": "per night",
+    "total": "total"
+  },
+  "checkIn": {
+    "title": "Find Your Reservation",
+    "reservationId": "Reservation ID",
+    "lastName": "Last Name",
+    "submit": "Submit",
+    "back": "Back",
+    "loading": "Validating reservation...",
+    "enterReservationNumber": "Enter your 10-digit reservation number",
+    "enterLastName": "Enter your last name",
+    "invalidReservationData": "Invalid reservation data. Please try again.",
+    "reservationValidationFailed": "Reservation validation failed. Please check your credentials.",
+    "failedToLoadReservation": "Failed to load reservation data. Please try again."
+  },
+  "earlyArrival": {
+    "title": "Early Arrival",
+    "message": "Card cannot be given before 2pm. Please return after 2pm.",
+    "currentTime": "Current time: {{time}}",
+    "cardsAvailableAfter": "Cards available after: {{time}}",
+    "returningToMenu": "Returning to menu in: {{countdown}}...",
+    "returnToMenu": "Return to Menu"
+  },
+  "propertySelection": {
+    "title": "Property Selection",
+    "selectProperty": "Select Property",
+    "chooseProperty": "Choose a property",
+    "save": "Save",
+    "saving": "Saving...",
+    "failedToLoadProperties": "Failed to load properties. Please try again.",
+    "pleaseSelectProperty": "Please select a property to continue",
+    "selectedPropertyNotFound": "Selected property not found",
+    "failedToSaveProperty": "Failed to save property selection. Please try again.",
+    "propertyDetails": "Property Details",
+    "name": "Name",
+    "address": "Address",
+    "property": "Property",
+    "noPropertiesAvailable": "No properties available. Please contact support."
+  },
+  "paymentCheck": {
+    "title": "Payment Status",
+    "reservationSummary": "Reservation Summary",
+    "guestName": "Guest Name",
+    "roomType": "Room Type",
+    "checkIn": "Check In",
+    "checkOut": "Check Out",
+    "paymentStatus": "Payment Status",
+    "paid": "Paid",
+    "pending": "Pending",
+    "loading": "Checking payment status...",
+    "estimatedTime": "Estimated time: {{time}}",
+    "almostDone": "Almost done",
+    "verificationError": "Verification Error",
+    "paymentCompleted": "Payment Completed",
+    "paymentFailed": "Payment Failed",
+    "paymentVerification": "Payment Verification",
+    "paymentConfirmed": "Your payment has been confirmed. Proceeding to card issuance...",
+    "unableToVerifyPayment": "Unable to verify payment. Please retry or contact support.",
+    "paymentVerificationInProgress": "Payment verification in progress. Please wait...",
+    "paymentRequired": "Payment Required",
+    "amountDue": "Amount Due",
+    "amountPaid": "Amount Paid",
+    "processing": "Processing...",
+    "pleaseTryAgainOrContact": "Please try again or contact front desk for assistance.",
+    "threeSeconds": "~3 seconds",
+    "paymentRequiredToProceed": "Payment required to proceed",
+    "insertOrSwipeCard": "Please insert or swipe your card at the terminal",
+    "verifyingPaymentStatus": "Verifying Payment Status",
+    "pleaseWaitCheckingPayment": "Please wait while we check your payment information...",
+    "processingPaymentVerification": "Processing payment verification...",
+    "reservationDetails": "Reservation Details",
+    "room": "Room",
+    "contactSupport": "Contact Support"
+  },
+  "cardDispensing": {
+    "title": "Preparing Your Card",
+    "steps": {
+      "preparing": "Preparing card",
+      "preparing.description": "Preparing your access card",
+      "encoding": "Encoding card",
+      "encoding.description": "Securing your access credentials",
+      "sending": "Sending details",
+      "sending.description": "Delivering to your email"
+    },
+    "takeCard": "Please take your card",
+    "loading": "Please wait...",
+    "processingError": "Processing Error",
+    "keySentToEmail": "Digital key sent to {{email}}",
+    "yourEmail": "your email",
+    "status": {
+      "preparing": {
+        "title": "Preparing Your Access Card",
+        "description": "Your personalized access card is being prepared. This usually takes about 10-15 seconds."
+      },
+      "encoding": {
+        "title": "Securing Your Credentials",
+        "description": "Encoding your access credentials with bank-level encryption. Almost ready..."
+      },
+      "sending": {
+        "title": "Sending Digital Key",
+        "description": "Your digital key is being securely delivered to your email. You'll receive it within the next few moments."
+      },
+      "completed": {
+        "title": "Your Card is Ready",
+        "description": "Please take your access card from the slot. Your digital key has been sent to your email."
+      }
+    }
+  },
+  "newResPayment": {
+    "title": "Payment",
+    "bookingSummary": "Booking Summary",
+    "totalAmount": "Total Amount",
+    "swipeCard": "Please swipe your card",
+    "processing": "Processing payment...",
+    "cancelBooking": "Cancel Booking",
+    "readyToProcessPayment": "Ready to process payment",
+    "processingBooking": "Creating your reservation...",
+    "bookingSuccessful": "Booking Successful!",
+    "bookingFailed": "Booking Failed",
+    "missingRoomInformation": "Missing room information. Please select a room again.",
+    "noReservationId": "Booking created but no reservation ID returned",
+    "redirectingToConfirmation": "Redirecting to confirmation...",
+    "room": "Room",
+    "guest": "Guest",
+    "checkIn": "Check-in",
+    "checkOut": "Check-out"
+  },
+  "regenerateCard": {
+    "title": "Regenerating Your Card",
+    "steps": {
+      "deactivating": "Deactivating old card",
+      "generating": "Generating new credentials",
+      "programming": "Programming new card"
+    },
+    "pleaseWait": "Please wait...",
+    "pleaseWaitMessage": "Please wait while we update your access card. Do not remove the card during this process.",
+    "cardRegenerationError": "Card Regeneration Error",
+    "cardUpdateComplete": "Card Update Complete",
+    "updatingRoomAccess": "Updating Room Access",
+    "newCardDetails": "New Card Details",
+    "newAccessCode": "New Access Code",
+    "processing": "Processing...",
+    "cardRegeneratedSuccessfully": "Card regenerated successfully!",
+    "newCardReady": "Your new card is ready.",
+    "room": "Room",
+    "status": "Status"
+  },
+  "roomDetail": {
+    "title": "Room Details",
+    "amenities": {
+      "title": "Amenities",
+      "wifi": "WiFi",
+      "airConditioning": "Air Conditioning",
+      "tv": "TV",
+      "safe": "Safe",
+      "miniBar": "Mini Bar"
+    },
+    "capacity": "Capacity",
+    "bookingSummary": "Booking Summary",
+    "nights": "nights",
+    "checkInDate": "Check-In Date",
+    "checkOutDate": "Check-Out Date",
+    "pricePerNight": "Price per night",
+    "taxes": "Taxes",
+    "total": "Total",
+    "terms": "I accept the terms and conditions",
+    "confirmBooking": "Confirm Booking",
+    "editDetails": "Edit Details",
+    "cancel": "Cancel",
+    "errorMissingData": "Missing room or guest details. Please go back and try again.",
+    "guestName": "Guest Name",
+    "numberOfNights": "Number of Nights",
+    "maxGuests": "Max Guests"
   }
 }

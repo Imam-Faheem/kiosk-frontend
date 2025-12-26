@@ -36,7 +36,15 @@
   },
   "roomDetail": {
     "title": "Dettagli della Camera",
-    "amenities": "Servizi",
+    "amenities": {
+      "title": "Servizi",
+      "wifi": "WiFi",
+      "airConditioning": "Aria Condizionata",
+      "tv": "TV",
+      "safe": "Cassaforte",
+      "miniBar": "Minibar"
+    },
+    "capacity": "Capacità",
     "bookingSummary": "Riepilogo Prenotazione",
     "nights": "notti",
     "checkInDate": "Data di Check-In",
@@ -47,7 +55,11 @@
     "terms": "Accetto i termini e le condizioni",
     "confirmBooking": "Conferma Prenotazione",
     "editDetails": "Modifica Dettagli",
-    "cancel": "Annulla"
+    "cancel": "Annulla",
+    "errorMissingData": "Dati della camera o dell'ospite mancanti. Torna indietro e riprova.",
+    "guestName": "Nome dell'Ospite",
+    "numberOfNights": "Numero di Notti",
+    "maxGuests": "Ospiti Massimi"
   },
   "signature": {
     "title": "Firma digitale richiesta",
@@ -79,6 +91,32 @@
     "submit": "Invia",
     "confirm": "Conferma",
     "yes": "Sì",
-    "no": "No"
+    "no": "No",
+    "select": "Seleziona",
+    "choose": "Scegli",
+    "save": "Salva",
+    "saving": "Salvataggio...",
+    "guest": "Ospite",
+    "guests": "Ospiti",
+    "unoHotelLogo": "Logo UNO Hotel",
+    "returnToMenu": "Torna al Menu",
+    "notAvailable": "N/D",
+    "returnToHome": "Torna alla Home"
+  },
+  "propertySelection": {
+    "title": "Selezione Proprietà",
+    "selectProperty": "Seleziona Proprietà",
+    "chooseProperty": "Scegli una proprietà",
+    "save": "Salva",
+    "saving": "Salvataggio...",
+    "failedToLoadProperties": "Impossibile caricare le proprietà. Riprova.",
+    "pleaseSelectProperty": "Seleziona una proprietà per continuare",
+    "selectedPropertyNotFound": "Proprietà selezionata non trovata",
+    "failedToSaveProperty": "Impossibile salvare la selezione della proprietà. Riprova.",
+    "propertyDetails": "Dettagli Proprietà",
+    "name": "Nome",
+    "address": "Indirizzo",
+    "property": "Proprietà",
+    "noPropertiesAvailable": "Nessuna proprietà disponibile. Contatta il supporto."
   }
 }

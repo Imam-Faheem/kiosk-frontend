@@ -15,14 +15,15 @@ import { IconCheck } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
+import useLanguage from "../hooks/useLanguage";
 import usePropertyStore from "../stores/propertyStore";
-import { STORAGE_KEYS } from "../config/constants";
-import UnoLogo from "../assets/uno.jpg";
+import PropertyLogo from "../components/PropertyLogo";
+import PropertyHeader from "../components/PropertyHeader";
 import { BUTTON_STYLES, LANGUAGE_OPTIONS } from "../config/constants";
 
 const WelcomePage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const { language, setLanguage, initializeLanguage } = useLanguageStore();
   const { isConfigured, propertyId } = usePropertyStore();
 
@@ -31,28 +32,9 @@ const WelcomePage = () => {
     initializeLanguage();
   }, [initializeLanguage]);
 
-  // Check property configuration on mount
   useEffect(() => {
-    // Check localStorage for property selection
-    try {
-      const storedProperty = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
-      if (!storedProperty) {
-        // No property selected, redirect to property selector
-        navigate("/property-selector", { replace: true });
-        return;
-      }
-      
-      const propertyData = JSON.parse(storedProperty);
-      if (!propertyData.propertyId) {
-        // Invalid property data, redirect to property selector
-        navigate("/property-selector", { replace: true });
-        return;
-      }
-    } catch {
-      // On error, redirect to property selector
-      navigate("/property-selector", { replace: true });
-    }
-  }, [navigate]);
+    if (!isConfigured) navigate("/property-selector", { replace: true });
+  }, [isConfigured, navigate]);
 
   const handleLanguageChange = (value) => {
     setLanguage(value);
@@ -94,34 +76,11 @@ const WelcomePage = () => {
           paddingTop: "100px",
         }}
       >
-        {/* ✅ Top-left hotel name */}
-        <h2
-          style={{
-            position: "absolute",
-            top: "20px",
-            left: "30px",
-            fontSize: "30px !important",
-            color: "#222",
-            fontWeight: "600",
-            letterSpacing: "1px",
-            marginLeft: "-9px"
-          }}
-        >
-          UNO HOTELS
-        </h2>
-
-
-        {/* ✅ Centered Logo */}
-        <img
-          src={UnoLogo}
-          alt="UNO Hotel Logo"
-          style={{
-            width: "110px",
-            height: "auto",
-            borderRadius: "8px",
-            marginBottom: "20px",
-          }}
-        />
+        <Box style={{ position: "absolute", top: "20px", left: "30px" }}>
+          <PropertyHeader showName={true} />
+        </Box>
+ 
+        <PropertyLogo size={110} alt={t('common.unoHotelLogo')} style={{ marginBottom: "20px", marginTop: "60px" }} />
 
         {/* ✅ Main heading with dynamic language text */}
         <h3
@@ -132,12 +91,7 @@ const WelcomePage = () => {
             fontWeight: "500",
           }}
         >
-          {language === "de" && "Sprache wählen"}
-          {language === "en" && "Select language"}
-          {language === "es" && "Seleccionar idioma"}
-          {language === "fr" && "Sélectionner la langue"}
-          {language === "it" && "Seleziona lingua"}
-          {language === "pt" && "Selecionar idioma"}
+          {t('welcome.selectLanguage')}
         </h3>
 
         {/* ✅ Language Selection - Centered Grid */}
@@ -234,7 +188,7 @@ const WelcomePage = () => {
             uppercase
             radius="xl"
           >
-            {t("welcome.continue") || "Continue"}
+            {t("welcome.continue")}
           </Button>
         </Box>
       </Paper>

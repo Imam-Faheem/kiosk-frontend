@@ -4,10 +4,8 @@ import {
   Paper,
   Group,
   Button,
-  Text,
   Title,
   Stack,
-  Box,
   TextInput,
   Alert,
 } from '@mantine/core';
@@ -16,8 +14,8 @@ import { useNavigate } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import { useForm } from '@mantine/form';
-import { apiClient } from '../../services/api/apiClient';
-import UnoLogo from '../../assets/uno.jpg';
+import { validateLostCardGuest } from '../../services/lostCardService';
+import PropertyHeader from '../../components/PropertyHeader';
 import { BUTTON_STYLES } from '../../config/constants';
 
 const LostCardPage = () => {
@@ -33,9 +31,9 @@ const LostCardPage = () => {
       lastName: ''
     },
     validate: {
-      roomType: (value) => (!value ? 'Room type is required' : null),
-      reservationNumber: (value) => (!value ? 'Reservation number is required' : null),
-      lastName: (value) => (!value ? 'Last name is required' : null),
+      roomType: (value) => (!value ? t('error.roomTypeRequired') : null),
+      reservationNumber: (value) => (!value ? t('error.reservationNumberRequired') : null),
+      lastName: (value) => (!value ? t('error.lastNameRequired') : null),
     },
   });
 
@@ -44,29 +42,26 @@ const LostCardPage = () => {
     setIsLoading(true);
     
     try {
-      // Call backend API to validate guest with Apaleo
-      const response = await apiClient.post('/lost-card/validate', {
+      // Validate guest using service (with mock data fallback)
+      const result = await validateLostCardGuest({
         reservationNumber: values.reservationNumber,
-        roomType: values.roomType,
+        roomNumber: values.roomType,
         lastName: values.lastName,
       });
       
-      if (response.data.success) {
-        const guestData = response.data.data;
-        
+      if (result.success) {
         // Navigate to regenerate card page with validated data
         navigate('/lost-card/regenerate', {
           state: {
-            guestData: guestData,
+            guestData: result.data,
             validationData: values,
           },
         });
       } else {
-        throw new Error(response.data.message || 'Validation failed');
+        throw new Error(result.message || t('error.validationFailed'));
       }
     } catch (err) {
-      console.error('Guest validation error:', err);
-      const errorMessage = err?.response?.data?.message || err?.message || t('error.guestValidationFailed');
+      const errorMessage = err?.message || t('error.guestValidationFailed');
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -103,33 +98,8 @@ const LostCardPage = () => {
           borderRadius: '10px',
         }}
       >
-        {/* Header */}
-        <Group justify="space-between" mb="xl">
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
         </Group>
 
 
@@ -139,7 +109,7 @@ const LostCardPage = () => {
             {error && (
               <Alert
                 icon={<IconAlertCircle size={16} />}
-                title="Validation Failed"
+                title={t('error.title')}
                 color="red"
                 variant="light"
                 style={{ borderRadius: '8px' }}
@@ -149,12 +119,11 @@ const LostCardPage = () => {
             )}
 
             <TextInput
-              label={t('lostCard.roomType') || 'Room Type'}
-              placeholder="Enter room type (e.g., Double, Single, Suite)"
+              label={t('lostCard.roomType')}
+              placeholder={t('lostCard.roomTypePlaceholder')}
               required
               size="lg"
               {...form.getInputProps('roomType')}
-              description="Room type from your reservation (e.g., Double, Single, Suite)"
               styles={{
                 label: {
                   display: 'inline-flex',
@@ -180,7 +149,7 @@ const LostCardPage = () => {
 
             <TextInput
               label={t('lostCard.reservationNumber')}
-              placeholder="Enter your reservation number"
+              placeholder={t('lostCard.reservationNumberPlaceholder')}
               required
               size="lg"
               {...form.getInputProps('reservationNumber')}
@@ -209,7 +178,7 @@ const LostCardPage = () => {
 
             <TextInput
               label={t('lostCard.lastName')}
-              placeholder="Enter your last name"
+              placeholder={t('lostCard.lastNamePlaceholder')}
               required
               size="lg"
               {...form.getInputProps('lastName')}
@@ -249,7 +218,7 @@ const LostCardPage = () => {
               styles={BUTTON_STYLES.primarySmall}
               radius="md"
             >
-              {isLoading ? 'Validating...' : t('lostCard.submit')}
+              {isLoading ? t('lostCard.validating') : t('lostCard.submit')}
             </Button>
           </Group>
         </form>

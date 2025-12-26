@@ -228,7 +228,7 @@ const PaymentTerminalPage = () => {
           <Group>
             <img
               src={UnoLogo}
-              alt="UNO Hotel Logo"
+              alt={t('common.unoHotelLogo')}
               style={{
                 width: '50px',
                 height: '50px',
@@ -247,7 +247,7 @@ const PaymentTerminalPage = () => {
                 marginLeft: '-9px'
               }}
             >
-              UNO HOTELS
+              {t('mainMenu.title')}
             </Title>
           </Group>
         </Group>
@@ -296,7 +296,7 @@ const PaymentTerminalPage = () => {
                 {t('paymentTerminal.swipeCard')}
               </Text>
               <Text size="md" c="#666666" ta="center">
-                Please insert or swipe your card at the terminal
+                {t('paymentTerminal.insertOrSwipeCard')}
               </Text>
               
               {/* Progress bar */}
@@ -317,7 +317,7 @@ const PaymentTerminalPage = () => {
           {paymentStatus === 'completed' && (
             <Alert
               icon={<IconCheck size={20} />}
-              title="Payment Successful"
+              title={t('paymentTerminal.paymentSuccessful')}
               color="green"
               variant="light"
               style={{ borderRadius: '8px' }}
@@ -331,7 +331,7 @@ const PaymentTerminalPage = () => {
           {paymentStatus === 'failed' && (
             <Alert
               icon={<IconX size={20} />}
-              title="Payment Failed"
+              title={t('paymentTerminal.paymentFailed')}
               color="red"
               variant="light"
               style={{ borderRadius: '8px' }}
@@ -345,7 +345,7 @@ const PaymentTerminalPage = () => {
           {paymentStatus === 'timeout' && (
             <Alert
               icon={<IconX size={20} />}
-              title="Payment Timeout"
+              title={t('paymentTerminal.paymentTimeout')}
               color="orange"
               variant="light"
               style={{ borderRadius: '8px' }}

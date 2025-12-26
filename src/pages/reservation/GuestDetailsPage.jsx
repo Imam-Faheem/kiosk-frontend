@@ -4,21 +4,18 @@ import {
   Paper,
   Group,
   Button,
-  Text,
   Title,
   Stack,
-  Box,
   TextInput,
   Select,
   Alert,
-  Loader,
 } from '@mantine/core';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { guestValidationSchema, guestInitialValues } from '../../schemas/guest.schema';
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
-import UnoLogo from '../../assets/uno.jpg';
+import PropertyHeader from '../../components/PropertyHeader';
 import { saveGuestDetails } from '../../services/guestService';
 
 const GuestDetailsPage = () => {
@@ -72,11 +69,10 @@ const GuestDetailsPage = () => {
           },
         });
       } else {
-        setError(result.message || 'Failed to save guest details');
+        setError(result.message || t('error.failedToSaveGuestDetails'));
       }
     } catch (err) {
-      console.error('Error saving guest details:', err);
-      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to save guest details';
+      const errorMessage = err?.response?.data?.message || err?.message || t('error.failedToSaveGuestDetails');
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -118,32 +114,8 @@ const GuestDetailsPage = () => {
           borderRadius: '20px',
         }}
       >
-        <Group justify="space-between" mb="xl">
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
         </Group>
 
         <form onSubmit={form.onSubmit(handleSubmit)}>
@@ -158,21 +130,21 @@ const GuestDetailsPage = () => {
 
             <TextInput
               label={t('guestDetails.firstName')}
-              placeholder="Enter your first name"
+              placeholder={t('guestDetails.firstNamePlaceholder')}
               required
               size="lg"
               {...form.getInputProps('firstName')}
             />
             <TextInput
               label={t('guestDetails.lastName')}
-              placeholder="Enter your last name"
+              placeholder={t('guestDetails.lastNamePlaceholder')}
               required
               size="lg"
               {...form.getInputProps('lastName')}
             />
             <TextInput
               label={t('guestDetails.email')}
-              placeholder="Enter your email"
+              placeholder={t('guestDetails.emailPlaceholder')}
               required
               size="lg"
               type="email"
@@ -185,13 +157,13 @@ const GuestDetailsPage = () => {
                 required
                 size="lg"
                 data={[
-                  { value: 'US', label: 'United States (+1)' },
-                  { value: 'GB', label: 'United Kingdom (+44)' },
-                  { value: 'DE', label: 'Germany (+49)' },
-                  { value: 'FR', label: 'France (+33)' },
-                  { value: 'IT', label: 'Italy (+39)' },
-                  { value: 'ES', label: 'Spain (+34)' },
-                  { value: 'PT', label: 'Portugal (+351)' },
+                  { value: 'US', label: t('guestDetails.countries.us') },
+                  { value: 'GB', label: t('guestDetails.countries.gb') },
+                  { value: 'DE', label: t('guestDetails.countries.de') },
+                  { value: 'FR', label: t('guestDetails.countries.fr') },
+                  { value: 'IT', label: t('guestDetails.countries.it') },
+                  { value: 'ES', label: t('guestDetails.countries.es') },
+                  { value: 'PT', label: t('guestDetails.countries.pt') },
                 ]}
                 {...form.getInputProps('country')}
               />
@@ -266,7 +238,7 @@ const GuestDetailsPage = () => {
                 }
               }}
             >
-              {loading ? 'Saving...' : t('guestDetails.continue')}
+              {loading ? t('common.saving') : t('guestDetails.continue')}
             </Button>
           </Group>
         </form>
