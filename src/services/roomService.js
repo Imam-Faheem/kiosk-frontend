@@ -109,12 +109,18 @@ const createError = (status, errorData) => {
   const message = errorData?.message ?? errorData?.error;
   const isCredentialError = message?.includes('credentials') ? true : message?.includes('Apaleo') ? true : false;
   
+  if (status === 500 && isCredentialError) {
+    const silentError = new Error('Property not configured with Apaleo credentials');
+    silentError.status = status;
+    silentError.isCredentialError = true;
+    silentError.originalError = errorData;
+    return silentError;
+  }
+  
   let userMessage = message ?? `Server error (${status})`;
   
   if (status === 500) {
-    userMessage = isCredentialError 
-      ? 'This property is not configured with Apaleo credentials. Please contact support.'
-      : message ?? 'Server error occurred. Please try again later.';
+    userMessage = message ?? 'Server error occurred. Please try again later.';
   } else if (status === 400) {
     userMessage = message ?? 'Invalid request parameters. Please check your search criteria.';
   } else if (status === 404) {
@@ -161,6 +167,19 @@ export const searchOffers = async (data) => {
         ? 'Network error. Please check your connection and try again.'
         : `Request failed: ${error.message}`;
       throw new Error(message);
+    }
+
+    const errorData = error.response.data;
+    const message = errorData?.message ?? errorData?.error;
+    const isCredentialError = message?.includes('credentials') ? true : message?.includes('Apaleo') ? true : false;
+    
+    if (error.response.status === 500 && isCredentialError) {
+      return {
+        success: true,
+        property: null,
+        offers: [],
+        totalOffers: 0,
+      };
     }
 
     throw createError(error.response.status, error.response.data);

@@ -58,6 +58,9 @@ apiClient.interceptors.request.use(
       (url.includes('/api/core/v1/organizations') && url.includes('/apaleo/properties'))
     ) && method === 'get';
     
+    // Check if this is a reservations/bookings endpoint (IDs are in URL path, no headers needed)
+    const isReservationsEndpoint = (url.includes('/reservations') || url.includes('/bookings')) && url.includes('/api/kiosk/v1/organizations');
+    
     // For public endpoint, explicitly ensure no Authorization header is sent
     if (isPublicPropertyEndpoint) {
       // Remove Authorization header completely from all possible locations
@@ -74,6 +77,11 @@ apiClient.interceptors.request.use(
         config.headers.authorization = undefined;
       }
       // Don't add X-Property-ID for public endpoint
+      return config;
+    }
+    
+    // For reservations endpoint, don't add custom headers (IDs are in URL path)
+    if (isReservationsEndpoint) {
       return config;
     }
     

@@ -60,6 +60,14 @@ const SearchRoomsPage = () => {
       }
     },
     onError: (err) => {
+      const isCredentialError = err?.isCredentialError ? true : err?.message?.includes('not configured with Apaleo credentials') ? true : false;
+      
+      if (isCredentialError) {
+        setErrorMessage(null);
+        setSearchResults({ offers: [], totalOffers: 0 });
+        return;
+      }
+      
       const details = err?.response?.data;
       let msg = t('error.requestFailed');
       
@@ -148,6 +156,9 @@ const SearchRoomsPage = () => {
   };
 
   const handleSelectRoom = (room) => {
+    const selectedProperty = usePropertyStore.getState().selectedProperty;
+    const apaleoPropertyId = selectedProperty?.apaleo_external_property_id ?? 'STERN';
+    
     navigate('/reservation/guest-details', {
       state: {
         room,
@@ -156,6 +167,7 @@ const SearchRoomsPage = () => {
           checkIn: form.values.checkIn ? formatDate(form.values.checkIn) : null,
           checkOut: form.values.checkOut ? formatDate(form.values.checkOut) : null,
         },
+        apaleoPropertyId,
       },
     });
   };

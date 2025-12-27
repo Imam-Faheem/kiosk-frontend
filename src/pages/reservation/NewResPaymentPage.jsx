@@ -15,9 +15,9 @@ import {
 import { IconArrowLeft, IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
-import { createBooking } from '../../services/bookingService';
-import { updateApaleoReservationWithGuest } from '../../services/guestService';
+import { saveGuestDetails } from '../../services/guestService';
 import usePropertyStore from '../../stores/propertyStore';
+import { API_CONFIG } from '../../config/constants';
 
 const NewResPaymentPage = () => {
   const navigate = useNavigate();
@@ -27,73 +27,47 @@ const NewResPaymentPage = () => {
   const [error, setError] = useState(null);
   const hasProcessed = useRef(false);
 
-  const { room, searchCriteria, guestDetails } = location.state || {};
+  const { room, searchCriteria, guestDetails, apaleoPropertyId: stateApaleoPropertyId } = location.state || {};
 
   const processPayment = async () => {
       try {
         hasProcessed.current = true;
         setPaymentStatus('processing');
         
-        const propertyId = usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
-        const hotelId = propertyId; // Use propertyId as hotelId for the endpoint
-        
-        // Prepare booking data for Apaleo
-        const bookingPayload = {
-          propertyId,
-          unitGroupId: room.unitGroupId || room.roomTypeId || room._offerData?.unitGroupId,
-          ratePlanId: room.ratePlanId || room._offerData?.ratePlanId,
-          arrival: searchCriteria.checkIn,
-          departure: searchCriteria.checkOut,
-          adults: Number(searchCriteria.guests) || 1,
-          primaryGuest: {
-            firstName: guestDetails.firstName,
-            lastName: guestDetails.lastName,
-            email: guestDetails.email,
-            phone: guestDetails.phone,
-            address: {
-              addressLine1: guestDetails.addressStreet,
-              city: guestDetails.addressCity,
-              postalCode: guestDetails.addressPostal,
-              countryCode: guestDetails.country,
-              ...(guestDetails.addressState ? { region: guestDetails.addressState } : {}),
-            },
-          },
-        };
+        const selectedProperty = usePropertyStore.getState().selectedProperty;
+        const propertyId = selectedProperty?.property_id ?? usePropertyStore.getState().propertyId ?? '';
+        const organizationId = API_CONFIG.ORGANIZATION_ID;
+        const apaleoPropertyId = selectedProperty?.apaleo_external_property_id ?? stateApaleoPropertyId ?? '';
 
-        if (!bookingPayload.unitGroupId || !bookingPayload.ratePlanId) {
+        if (!propertyId ? true : !organizationId ? true : false) {
+          throw new Error('Missing property configuration. Please select a property first.');
+        }
+
+        const ratePlanId = room?.ratePlan?.id ?? room?.ratePlanId;
+        if (!ratePlanId) {
           throw new Error(t('error.missingRoomInformation'));
         }
 
-        // Create booking in Apaleo
-        const bookingResult = await createBooking(bookingPayload, hotelId);
+        const bookingResult = await saveGuestDetails(guestDetails, organizationId, propertyId, searchCriteria, room, apaleoPropertyId);
         
-        // Extract reservation ID from booking response
-        const reservationId = bookingResult?.id || bookingResult?.reservationId || bookingResult?.reservation?.id;
+        const reservationId = bookingResult?.data?.id ?? bookingResult?.id ?? bookingResult?.data?.reservationId ?? bookingResult?.reservationId;
         
         if (!reservationId) {
           throw new Error(t('error.noReservationId'));
         }
 
-        // Update Apaleo reservation with additional guest info (if needed)
-        try {
-          await updateApaleoReservationWithGuest(reservationId, guestDetails, propertyId);
-        } catch (updateErr) {
-          // Continue even if update fails
-        }
-
         setPaymentStatus('success');
         
-        // Prepare reservation data
         const reservation = {
           reservationId,
           id: reservationId,
           guestDetails,
-          roomTypeId: room.roomTypeId,
+          roomTypeId: room?.unitGroup?.id ?? room?.roomTypeId,
           checkIn: searchCriteria.checkIn,
           checkOut: searchCriteria.checkOut,
           guests: searchCriteria.guests,
-          totalAmount: room.totalPrice,
-          currency: room.currency,
+          totalAmount: room?.totalGrossAmount?.amount ?? room?.totalPrice,
+          currency: room?.totalGrossAmount?.currency ?? room?.currency,
           status: 'confirmed',
           bookingData: bookingResult,
         };
@@ -214,7 +188,7 @@ const NewResPaymentPage = () => {
             <Text size="lg" fw={600} c="#C8653D">{t('newResPayment.bookingSummary')}</Text>
             <Group justify="space-between">
               <Text size="md" c="#666666">{t('newResPayment.room')}:</Text>
-              <Text size="md" fw={600}>{room.name}</Text>
+              <Text size="md" fw={600}>{room?.unitGroup?.name ?? room?.name ?? ''}</Text>
             </Group>
             <Group justify="space-between">
               <Text size="md" c="#666666">{t('newResPayment.guest')}:</Text>
@@ -236,7 +210,7 @@ const NewResPaymentPage = () => {
           <Stack gap="sm" align="center">
             <Text size="md" fw={500}>{t('newResPayment.totalAmount')}</Text>
             <Text size="3xl" fw={700} style={{ fontSize: '48px' }}>
-              ${room.totalPrice} {room.currency}
+              {room?.totalGrossAmount?.currency ?? room?.currency ?? 'EUR'} {room?.totalGrossAmount?.amount ?? room?.totalPrice ?? 0}
             </Text>
           </Stack>
         </Card>

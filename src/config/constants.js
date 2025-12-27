@@ -73,6 +73,59 @@ export const UI_CONFIG = {
   },
 };
 
+// Guest Details Constants
+export const GUEST_DETAILS_OPTIONS = {
+  TITLES: [
+    { value: 'Mr', label: 'Mr' },
+    { value: 'Mrs', label: 'Mrs' },
+    { value: 'Ms', label: 'Ms' },
+    { value: 'Miss', label: 'Miss' },
+    { value: 'Dr', label: 'Dr' },
+  ],
+  GENDERS: [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+    { value: 'Other', label: 'Other' },
+  ],
+  COUNTRIES: [
+    { value: 'US', label: 'United States (+1)' },
+    { value: 'GB', label: 'United Kingdom (+44)' },
+    { value: 'DE', label: 'Germany (+49)' },
+    { value: 'FR', label: 'France (+33)' },
+    { value: 'IT', label: 'Italy (+39)' },
+    { value: 'ES', label: 'Spain (+34)' },
+    { value: 'PT', label: 'Portugal (+351)' },
+  ],
+  DOCUMENT_TYPES: [
+    { value: 'Passport', label: 'Passport' },
+    { value: 'ID', label: 'National ID' },
+    { value: 'DrivingLicense', label: 'Driving License' },
+  ],
+
+  DOCUMENT_TYPE_MAP: {
+    'Passport': 'Passport',
+    'ID': 'IdCard',
+    'DrivingLicense': 'DriverLicense',
+  },
+  TRAVEL_PURPOSES: [
+    { value: 'Business', label: 'Business' },
+    { value: 'Leisure', label: 'Leisure' },
+    { value: 'Other', label: 'Other' },
+  ],
+  REQUIRED_FIELDS: [
+    { key: 'title', label: 'Title' },
+    { key: 'gender', label: 'Gender' },
+    { key: 'firstName', label: 'First name' },
+    { key: 'lastName', label: 'Last name' },
+    { key: 'phone', label: 'Phone number' },
+    { key: 'country', label: 'Country' },
+    { key: 'addressStreet', label: 'Street address' },
+    { key: 'addressCity', label: 'City' },
+    { key: 'addressState', label: 'State/Province' },
+    { key: 'addressPostal', label: 'ZIP/Postal code' },
+  ],
+};
+
 // Early Arrival Page Constants
 export const EARLY_ARRIVAL_CONFIG = {
   COUNTDOWN_DURATION: 15,
