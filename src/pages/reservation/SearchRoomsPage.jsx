@@ -94,7 +94,10 @@ const SearchRoomsPage = () => {
   const formatDate = (date) => date instanceof Date ? date.toISOString().split('T')[0] : date;
 
   const form = useForm({
-    initialValues: roomSearchInitialValues,
+    initialValues: {
+      ...roomSearchInitialValues,
+      guests: roomSearchInitialValues.guests ?? '1',
+    },
     validate: (values) => {
       try {
         roomSearchValidationSchema.validateSync(values, { abortEarly: false });
@@ -222,7 +225,6 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <DateInput
                   label={t('searchRooms.checkIn')}
-                  placeholder={t('searchRooms.selectCheckInDate')}
                   required
                   size="lg"
                   valueFormat="YYYY-MM-DD"
@@ -235,7 +237,6 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <DateInput
                   label={t('searchRooms.checkOut')}
-                  placeholder={t('searchRooms.selectCheckOutDate')}
                   required
                   size="lg"
                   valueFormat="YYYY-MM-DD"

@@ -132,15 +132,10 @@ export const extractBookingError = (error) => {
     userMessage = error.message;
   }
   
-  // Provide user-friendly messages for common errors
   const availabilityKeywords = ['fully booked', 'not available', 'unit group'];
   const isAvailabilityError = availabilityKeywords.some(keyword => 
     userMessage.toLowerCase().includes(keyword)
   );
-  
-  if (isAvailabilityError) {
-    userMessage = 'This room is no longer available for the selected dates. Please search for rooms again.';
-  }
   
   return {
     message: userMessage,
