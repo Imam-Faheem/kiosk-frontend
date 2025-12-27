@@ -1,5 +1,6 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
+import { createApiError, createNetworkError, handleCredentialError } from '../utils/errorHandlers';
 
 /**
  * Search for available rooms
@@ -105,33 +106,6 @@ const parseOffersResponse = (response) => {
   };
 };
 
-const createError = (status, errorData) => {
-  const message = errorData?.message ?? errorData?.error;
-  const isCredentialError = message?.includes('credentials') ? true : message?.includes('Apaleo') ? true : false;
-  
-  if (status === 500 && isCredentialError) {
-    const silentError = new Error('Property not configured with Apaleo credentials');
-    silentError.status = status;
-    silentError.isCredentialError = true;
-    silentError.originalError = errorData;
-    return silentError;
-  }
-  
-  let userMessage = message ?? `Server error (${status})`;
-  
-  if (status === 500) {
-    userMessage = message ?? 'Server error occurred. Please try again later.';
-  } else if (status === 400) {
-    userMessage = message ?? 'Invalid request parameters. Please check your search criteria.';
-  } else if (status === 404) {
-    userMessage = 'Property or offers not found.';
-  }
-
-  const customError = new Error(userMessage);
-  customError.status = status;
-  customError.originalError = errorData;
-  return customError;
-};
 
 export const searchOffers = async (data) => {
   const { organizationId, propertyId, searchParams } = data;
@@ -153,35 +127,24 @@ export const searchOffers = async (data) => {
 
     return parseOffersResponse(response);
   } catch (error) {
-    if (shouldUseMock(error)) {
-      await simulateApiDelay(600);
-      return mockData.roomAvailability({ 
-        arrival: searchParams.arrival, 
-        departure: searchParams.departure, 
-        adults: searchParams.adults 
-      });
-    }
-
-    if (!error.response) {
-      const message = error.request 
-        ? 'Network error. Please check your connection and try again.'
-        : `Request failed: ${error.message}`;
-      throw new Error(message);
-    }
-
-    const errorData = error.response.data;
-    const message = errorData?.message ?? errorData?.error;
-    const isCredentialError = message?.includes('credentials') ? true : message?.includes('Apaleo') ? true : false;
+    const mockResponse = shouldUseMock(error)
+      ? await simulateApiDelay(600).then(() => mockData.roomAvailability({ 
+          arrival: searchParams.arrival, 
+          departure: searchParams.departure, 
+          adults: searchParams.adults 
+        }))
+      : null;
     
-    if (error.response.status === 500 && isCredentialError) {
-      return {
-        success: true,
-        property: null,
-        offers: [],
-        totalOffers: 0,
-      };
-    }
+    if (mockResponse) return mockResponse;
 
-    throw createError(error.response.status, error.response.data);
+    const networkError = !error.response ? createNetworkError(error) : null;
+    if (networkError) throw networkError;
+
+    const apiError = createApiError(error);
+    const credentialResponse = handleCredentialError(apiError);
+    
+    if (credentialResponse) return credentialResponse;
+
+    throw apiError;
   }
 };

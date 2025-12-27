@@ -71,24 +71,17 @@ const GuestDetailsPage = () => {
         setLoading(false);
       }
     } catch (err) {
-      let errorMessage = t('error.failedToSaveGuestDetails');
+      const { createApiError, createNetworkError } = await import('../../utils/errorHandlers');
+      const apiError = err?.response ? createApiError(err) : createNetworkError(err);
       
-      if (err?.response?.status === 404) {
-        errorMessage = 'Booking endpoint not found. Please contact support.';
-      } else if (err?.message) {
-        // Use the error message from the service (which includes user-friendly messages)
-        errorMessage = err.message;
-      } else if (err?.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      }
+      const errorMessageMap = {
+        404: 'Booking endpoint not found. Please contact support.',
+        default: apiError.message || t('error.failedToSaveGuestDetails'),
+      };
       
-      // Check if it's an availability error
-      const availabilityError = err?.isAvailabilityError || 
-                                errorMessage.includes('no longer available') ||
-                                errorMessage.includes('fully booked') ||
-                                errorMessage.includes('unit group');
+      const errorMessage = errorMessageMap[apiError.status] ?? errorMessageMap.default;
       
-      setIsAvailabilityError(availabilityError);
+      setIsAvailabilityError(apiError.isAvailabilityError);
       setError(errorMessage);
       setLoading(false);
     }

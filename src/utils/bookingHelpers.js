@@ -1,4 +1,5 @@
 import { GUEST_DETAILS_OPTIONS } from '../config/constants';
+import { createApiError, createNetworkError } from './errorHandlers';
 
 export const getRatePlanId = (room) => {
   return room?.ratePlan?.id ?? room?.ratePlanId ?? null;
@@ -111,37 +112,20 @@ export const buildPrimaryGuest = (guestData) => {
   return primaryGuest;
 };
 
-export const extractBookingError = (error) => {
-  let userMessage = 'Failed to create booking. Please try again.';
-  
-  if (error?.response?.data) {
-    const errorData = error.response.data;
-    
-    if (errorData?.details?.message) {
-      userMessage = errorData.details.message;
-    } else if (errorData?.details?.messages && Array.isArray(errorData.details.messages)) {
-      userMessage = errorData.details.messages.join('. ');
-    } else if (errorData?.message) {
-      userMessage = errorData.message;
-    } else if (errorData?.error) {
-      userMessage = errorData.error;
-    } else if (typeof errorData === 'string') {
-      userMessage = errorData;
-    }
-  } else if (error?.message) {
-    userMessage = error.message;
-  }
-  
-  const availabilityKeywords = ['fully booked', 'not available', 'unit group'];
-  const isAvailabilityError = availabilityKeywords.some(keyword => 
-    userMessage.toLowerCase().includes(keyword)
-  );
+const AVAILABILITY_KEYWORDS = ['fully booked', 'not available', 'unit group'];
+
+const extractBookingError = (error) => {
+  const apiError = error?.response ? createApiError(error) : createNetworkError(error);
+  const lowerMessage = apiError.message.toLowerCase();
+  const isAvailabilityError = AVAILABILITY_KEYWORDS.some(keyword => lowerMessage.includes(keyword));
   
   return {
-    message: userMessage,
-    status: error?.response?.status,
+    message: apiError.message,
+    status: apiError.status,
     isAvailabilityError,
     originalError: error,
   };
 };
+
+export { extractBookingError };
 

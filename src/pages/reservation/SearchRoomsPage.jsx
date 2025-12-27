@@ -28,6 +28,7 @@ import usePropertyStore from '../../stores/propertyStore';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
+import { createApiError, createNetworkError, handleCredentialError } from '../../utils/errorHandlers';
 
 const SearchRoomsPage = () => {
   const navigate = useNavigate();
@@ -52,44 +53,26 @@ const SearchRoomsPage = () => {
   
   const searchOffers = useRoomMutation('searchOffers', {
     onSuccess: (result) => {
-      if (result?.success) {
-        setSearchResults(result);
-        setErrorMessage(null);
-      } else {
-        setErrorMessage(t('error.requestFailed'));
-      }
+      const success = result?.success ?? false;
+      setSearchResults(success ? result : null);
+      setErrorMessage(success ? null : t('error.requestFailed'));
     },
     onError: (err) => {
-      const isCredentialError = err?.isCredentialError ? true : err?.message?.includes('not configured with Apaleo credentials') ? true : false;
+      const apiError = err?.response ? createApiError(err) : createNetworkError(err);
+      const credentialResponse = handleCredentialError(apiError);
       
-      if (isCredentialError) {
-        setErrorMessage(null);
-        setSearchResults({ offers: [], totalOffers: 0 });
-        return;
-      }
+      const handleError = credentialResponse
+        ? () => {
+            setSearchResults(credentialResponse);
+            setErrorMessage(null);
+          }
+        : () => setErrorMessage(apiError.message);
       
-      const details = err?.response?.data;
-      let msg = t('error.requestFailed');
-      
-      if (details) {
-        if (details.message) {
-          msg = details.message;
-        } else if (details.error) {
-          msg = details.error;
-        } else if (details.errors && Array.isArray(details.errors)) {
-          msg = details.errors.join(', ');
-        } else if (typeof details === 'string') {
-          msg = details;
-        }
-      } else if (err?.message) {
-        msg = err.message;
-      }
-      
-      setErrorMessage(msg);
+      handleError();
     }
   });
 
-  const isSearching = loading ? true : searchOffers.isPending ? true : false;
+  const isSearching = loading || searchOffers.isPending;
 
   const formatDate = (date) => date instanceof Date ? date.toISOString().split('T')[0] : date;
 

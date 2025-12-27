@@ -444,6 +444,14 @@ export const STEP_ICONS = {
   mail: IconMail,
 };
 
+export const ERROR_TYPE_PATTERNS = {
+  credential: ['credentials', 'apaleo', 'not configured'],
+  availability: ['fully booked', 'not available', 'unit group', 'no longer available'],
+  network: ['network', 'connection', 'timeout'],
+  validation: ['validation', 'invalid', 'required', 'must be'],
+  notFound: ['not found', '404', 'does not exist'],
+};
+
 // Status Messages Configuration
 export const CARD_STATUS_MESSAGES = {
   preparing: {
