@@ -1,6 +1,17 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
 import { createApiError, createNetworkError, handleCredentialError } from '../utils/errorHandlers';
+import usePropertyStore from '../stores/propertyStore';
+import { API_CONFIG } from '../config/constants';
+
+const getPropertyIds = () => {
+  const state = usePropertyStore.getState();
+  const propertyId = state.selectedProperty?.property_id ?? state.propertyId;
+  const organizationId = API_CONFIG.ORGANIZATION_ID;
+  const apaleoPropertyId = state.selectedProperty?.apaleo_external_property_id ?? '';
+  
+  return { propertyId, organizationId, apaleoPropertyId };
+};
 
 /**
  * Search for available rooms
@@ -16,7 +27,7 @@ export const searchRoomAvailability = async (data) => {
     propertyId: data.propertyId,
     arrival: data.arrival,
     departure: data.departure,
-    adults: Number(data.adults) || 1, // Number() can return 0, so || is correct here
+    adults: Number(data.adults) ? Number(data.adults) : 1,
     channelCode: 'Direct',
     timeSliceTemplate: 'OverNight',
     unitGroupTypes: 'BedRoom',
@@ -40,7 +51,9 @@ export const searchRoomAvailability = async (data) => {
   }
 };
 
-export const getRoomDetails = async (roomTypeId, propertyId) => {
+export const getRoomDetails = async (roomTypeId) => {
+  const { propertyId } = getPropertyIds();
+  
   try {
     const response = await apiClient.get(`/rooms/${roomTypeId}/details`, {
       params: { propertyId },
@@ -55,7 +68,9 @@ export const getRoomDetails = async (roomTypeId, propertyId) => {
   }
 };
 
-export const getAllRoomTypes = async (propertyId) => {
+export const getAllRoomTypes = async () => {
+  const { propertyId } = getPropertyIds();
+  
   try {
     const response = await apiClient.get('/rooms/types', {
       params: { propertyId },
@@ -107,13 +122,23 @@ const parseOffersResponse = (response) => {
 };
 
 
-export const searchOffers = async (data) => {
-  const { organizationId, propertyId, searchParams } = data;
+export const searchOffers = async (searchParams) => {
+  const { propertyId, organizationId, apaleoPropertyId } = getPropertyIds();
+  
+  const missingIds = [propertyId, organizationId, apaleoPropertyId].filter(id => !id);
+  if (missingIds.length > 0) {
+    return {
+      success: true,
+      property: null,
+      offers: [],
+      totalOffers: 0,
+    };
+  }
   
   try {
     const childrenParam = validateChildrenAges(searchParams.children);
     const params = {
-      apaleo_external_property_id: searchParams.apaleoPropertyId,
+      apaleo_external_property_id: apaleoPropertyId,
       arrival: searchParams.arrival,
       departure: searchParams.departure,
       adults: searchParams.adults,

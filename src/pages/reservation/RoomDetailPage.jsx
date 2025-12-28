@@ -46,8 +46,7 @@ const RoomDetailPage = () => {
         if (!hasImages) {
           setLoading(true);
           try {
-            const propertyId = usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
-            const result = await getRoomDetails(room.roomTypeId, propertyId);
+            const result = await getRoomDetails(room.roomTypeId);
             
             if (result.success && result.data && result.data.images) {
               // Merge room data with fetched images

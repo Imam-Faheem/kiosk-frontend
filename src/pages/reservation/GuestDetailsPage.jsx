@@ -21,7 +21,7 @@ import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import { saveGuestDetails } from '../../services/guestService';
-import { API_CONFIG, GUEST_DETAILS_OPTIONS } from '../../config/constants';
+import { GUEST_DETAILS_OPTIONS } from '../../config/constants';
 import usePropertyStore from '../../stores/propertyStore';
 
 const GuestDetailsPage = () => {
@@ -33,7 +33,7 @@ const GuestDetailsPage = () => {
   const [isAvailabilityError, setIsAvailabilityError] = useState(false);
   const { selectedProperty } = usePropertyStore();
 
-  const { room, searchCriteria, apaleoPropertyId: stateApaleoPropertyId } = location.state ?? {};
+  const { room, searchCriteria } = location.state ?? {};
 
   const form = useForm({
     initialValues: guestInitialValues,
@@ -45,17 +45,7 @@ const GuestDetailsPage = () => {
     setError(null);
 
     try {
-      const propertyId = selectedProperty?.property_id ?? usePropertyStore.getState().propertyId ?? '37KSbwUJKAvulzjtuQ0inmQMJhr';
-      const organizationId = API_CONFIG.ORGANIZATION_ID;
-      const apaleoPropertyId = selectedProperty?.apaleo_external_property_id ?? stateApaleoPropertyId ?? '';
-
-      if (!propertyId ? true : !organizationId ? true : false) {
-        setError('Missing property configuration. Please select a property first.');
-        setLoading(false);
-        return;
-      }
-
-      const result = await saveGuestDetails(values, organizationId, propertyId, searchCriteria, room, apaleoPropertyId);
+      const result = await saveGuestDetails(values, searchCriteria, room);
 
       if (result?.success ?? result?.data) {
         navigate('/reservation/room-details', {
@@ -258,10 +248,19 @@ const GuestDetailsPage = () => {
                   placeholder={t('guestDetails.documentTypePlaceholder')}
                   required
                   size="lg"
-                  data={GUEST_DETAILS_OPTIONS.DOCUMENT_TYPES.map(opt => ({
-                    ...opt,
-                    label: t(`guestDetails.documentTypes.${opt.value === 'ID' ? 'id' : opt.value.toLowerCase()}`),
-                  }))}
+                  data={GUEST_DETAILS_OPTIONS.DOCUMENT_TYPES.map(opt => {
+                    const translationKeys = {
+                      'Passport': 'passport',
+                      'IdCard': 'id',
+                      'DriverLicense': 'driverlicense',
+                    };
+                    const translationKey = translationKeys[opt.value] ?? opt.value.toLowerCase();
+                    const translatedLabel = t(`guestDetails.documentTypes.${translationKey}`);
+                    return {
+                      ...opt,
+                      label: translatedLabel !== `guestDetails.documentTypes.${translationKey}` ? translatedLabel : opt.label,
+                    };
+                  })}
                   {...form.getInputProps('documentType')}
                 />
               </Grid.Col>
@@ -294,10 +293,11 @@ const GuestDetailsPage = () => {
               label={t('guestDetails.travelPurpose')}
               placeholder={t('guestDetails.travelPurposePlaceholder')}
               size="lg"
-              data={GUEST_DETAILS_OPTIONS.TRAVEL_PURPOSES.map(opt => ({
-                ...opt,
-                label: t(`guestDetails.travelPurposes.${opt.value.toLowerCase()}`),
-              }))}
+              data={[
+                { value: 'Business', label: t('guestDetails.travelPurposes.business') },
+                { value: 'Leisure', label: t('guestDetails.travelPurposes.leisure') },
+                { value: 'Other', label: t('guestDetails.travelPurposes.other') },
+              ]}
               {...form.getInputProps('travelPurpose')}
             />
             

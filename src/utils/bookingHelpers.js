@@ -73,7 +73,7 @@ export const buildPrimaryGuest = (guestData) => {
   if (guestData.birthPlace) primaryGuest.birthPlace = guestData.birthPlace;
   if (guestData.documentType && guestData.documentNumber) {
     primaryGuest.identificationDocument = {
-      type: GUEST_DETAILS_OPTIONS.DOCUMENT_TYPE_MAP[guestData.documentType] ?? guestData.documentType,
+      type: guestData.documentType,
       number: guestData.documentNumber,
     };
   }

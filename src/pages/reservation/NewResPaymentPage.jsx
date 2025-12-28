@@ -16,8 +16,6 @@ import { IconArrowLeft, IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { saveGuestDetails } from '../../services/guestService';
-import usePropertyStore from '../../stores/propertyStore';
-import { API_CONFIG } from '../../config/constants';
 
 const NewResPaymentPage = () => {
   const navigate = useNavigate();
@@ -27,24 +25,19 @@ const NewResPaymentPage = () => {
   const [error, setError] = useState(null);
   const hasProcessed = useRef(false);
 
-  const { room, searchCriteria, guestDetails, apaleoPropertyId: stateApaleoPropertyId } = location.state || {};
+  const { room, searchCriteria, guestDetails } = location.state || {};
 
   const processPayment = async () => {
       try {
         hasProcessed.current = true;
         setPaymentStatus('processing');
         
-        const selectedProperty = usePropertyStore.getState().selectedProperty;
-        const propertyId = selectedProperty?.property_id ?? usePropertyStore.getState().propertyId ?? '37KSbwUJKAvulzjtuQ0inmQMJhr';
-        const organizationId = API_CONFIG.ORGANIZATION_ID;
-        const apaleoPropertyId = selectedProperty?.apaleo_external_property_id ?? stateApaleoPropertyId ?? '';
-
         const ratePlanId = room?.ratePlan?.id ?? room?.ratePlanId;
         if (!ratePlanId) {
           throw new Error(t('error.missingRoomInformation'));
         }
 
-        const bookingResult = await saveGuestDetails(guestDetails, organizationId, propertyId, searchCriteria, room, apaleoPropertyId);
+        const bookingResult = await saveGuestDetails(guestDetails, searchCriteria, room);
         
         // Extract reservation ID from various possible response structures
         // Apaleo returns: { id: "ICQXEAIO", reservationIds: [{ id: "ICQXEAIO-1" }] }
@@ -257,15 +250,15 @@ const NewResPaymentPage = () => {
             </Group>
             <Group justify="space-between">
               <Text size="md" c="#666666">{t('newResPayment.guest')}:</Text>
-              <Text size="md" fw={600}>{guestDetails.firstName} {guestDetails.lastName}</Text>
+              <Text size="md" fw={600}>{guestDetails?.firstName ?? ''} {guestDetails?.lastName ?? ''}</Text>
             </Group>
             <Group justify="space-between">
               <Text size="md" c="#666666">{t('newResPayment.checkIn')}:</Text>
-              <Text size="md" fw={600}>{new Date(searchCriteria.checkIn).toLocaleDateString()}</Text>
+              <Text size="md" fw={600}>{searchCriteria?.checkIn ? new Date(searchCriteria.checkIn).toLocaleDateString() : ''}</Text>
             </Group>
             <Group justify="space-between">
               <Text size="md" c="#666666">{t('newResPayment.checkOut')}:</Text>
-              <Text size="md" fw={600}>{new Date(searchCriteria.checkOut).toLocaleDateString()}</Text>
+              <Text size="md" fw={600}>{searchCriteria?.checkOut ? new Date(searchCriteria.checkOut).toLocaleDateString() : ''}</Text>
             </Group>
           </Stack>
         </Card>

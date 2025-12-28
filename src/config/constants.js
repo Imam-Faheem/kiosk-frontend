@@ -98,31 +98,8 @@ export const GUEST_DETAILS_OPTIONS = {
   ],
   DOCUMENT_TYPES: [
     { value: 'Passport', label: 'Passport' },
-    { value: 'ID', label: 'National ID' },
-    { value: 'DrivingLicense', label: 'Driving License' },
-  ],
-
-  DOCUMENT_TYPE_MAP: {
-    'Passport': 'Passport',
-    'ID': 'IdCard',
-    'DrivingLicense': 'DriverLicense',
-  },
-  TRAVEL_PURPOSES: [
-    { value: 'Business', label: 'Business' },
-    { value: 'Leisure', label: 'Leisure' },
-    { value: 'Other', label: 'Other' },
-  ],
-  REQUIRED_FIELDS: [
-    { key: 'title', label: 'Title' },
-    { key: 'gender', label: 'Gender' },
-    { key: 'firstName', label: 'First name' },
-    { key: 'lastName', label: 'Last name' },
-    { key: 'phone', label: 'Phone number' },
-    { key: 'country', label: 'Country' },
-    { key: 'addressStreet', label: 'Street address' },
-    { key: 'addressCity', label: 'City' },
-    { key: 'addressState', label: 'State/Province' },
-    { key: 'addressPostal', label: 'ZIP/Postal code' },
+    { value: 'IdCard', label: 'National ID' },
+    { value: 'DriverLicense', label: 'Driving License' },
   ],
 };
 

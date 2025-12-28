@@ -22,7 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useRoomMutation } from '../../hooks/useRoomMutation';
 import { roomSearchValidationSchema, roomSearchInitialValues } from '../../schemas/reservation.schema';
-import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES, FORM_INPUT_STYLES, API_CONFIG } from '../../config/constants';
+import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES, FORM_INPUT_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
 import usePropertyStore from '../../stores/propertyStore';
 import PropertyHeader from '../../components/PropertyHeader';
@@ -120,21 +120,12 @@ const SearchRoomsPage = () => {
       return;
     }
 
-    const propertyId = selectedProperty?.property_id ?? usePropertyStore.getState().propertyId ?? '37KSbwUJKAvulzjtuQ0inmQMJhr';
-    const organizationId = API_CONFIG.ORGANIZATION_ID;
-    const apaleoPropertyId = selectedProperty?.apaleo_external_property_id ?? 'STERN';
-
-    if (!propertyId ? true : !organizationId ? true : !apaleoPropertyId ? true : false) {
-      setErrorMessage('Missing property configuration. Please select a property first.');
-      setLoading(false);
-      return;
-    }
-
     try {
       await searchOffers.mutateAsync({
-        organizationId,
-        propertyId,
-        searchParams: { apaleoPropertyId, arrival: checkInDate, departure: checkOutDate, adults, children: [] },
+        arrival: checkInDate,
+        departure: checkOutDate,
+        adults,
+        children: [],
       });
     } finally {
       setLoading(false);
@@ -142,9 +133,6 @@ const SearchRoomsPage = () => {
   };
 
   const handleSelectRoom = (room) => {
-    const selectedProperty = usePropertyStore.getState().selectedProperty;
-    const apaleoPropertyId = selectedProperty?.apaleo_external_property_id ?? 'STERN';
-    
     navigate('/reservation/guest-details', {
       state: {
         room,
@@ -153,7 +141,6 @@ const SearchRoomsPage = () => {
           checkIn: form.values.checkIn ? formatDate(form.values.checkIn) : null,
           checkOut: form.values.checkOut ? formatDate(form.values.checkOut) : null,
         },
-        apaleoPropertyId,
       },
     });
   };
