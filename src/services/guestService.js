@@ -88,15 +88,43 @@ export const saveGuestDetails = async (guestData, searchCriteria, room) => {
       return mockData.saveGuestDetails(guestData);
     }
     
-    const errorMessage = err?.response?.data?.message ?? err?.message ?? '';
-    const unitAssignmentKeywords = ['assign unit', 'Failed to assign unit'];
-    const isUnitAssignmentError = unitAssignmentKeywords.some(keyword => errorMessage.includes(keyword));
+    const extractErrorInfo = (error) => ({
+      message: (error?.response?.data?.message ?? error?.message ?? '').toLowerCase(),
+      status: error?.response?.status ?? null,
+    });
+
+    const isUnitAssignmentFailure = ({ message, status }) => {
+      const unitAssignmentKeywords = ['assign unit', 'failed to assign unit', 'unit assignment'];
+      const statusIndicators = [422];
+      const messageIndicators = ['422', 'apaleo api error (422)'];
+      
+      const checks = [
+        unitAssignmentKeywords.some(keyword => message.includes(keyword)),
+        statusIndicators.includes(status),
+        messageIndicators.some(indicator => message.includes(indicator)),
+      ];
+      
+      return checks.some(Boolean);
+    };
+
+    const errorChain = [err, err?.originalError].filter(Boolean);
+    const isUnitAssignmentError = errorChain
+      .map(extractErrorInfo)
+      .some(isUnitAssignmentFailure);
     
     if (isUnitAssignmentError) {
       const responseData = err?.response?.data;
       const errorDetails = responseData?.details ?? responseData;
+      const fullResponse = err?.response;
       
-      const bookingData = responseData?.data ?? responseData?.booking ?? errorDetails?.booking ?? errorDetails?.data ?? responseData;
+      // Check multiple locations for booking data
+      const bookingData = responseData?.data ?? 
+                          responseData?.booking ?? 
+                          errorDetails?.booking ?? 
+                          errorDetails?.data ?? 
+                          fullResponse?.data?.data ??
+                          fullResponse?.data ??
+                          responseData;
       
       const bookingIdentifiers = [
         bookingData?.id,
@@ -105,9 +133,14 @@ export const saveGuestDetails = async (guestData, searchCriteria, room) => {
         bookingData?.reservationId,
         errorDetails?.id,
         errorDetails?.bookingId,
+        fullResponse?.data?.id,
+        fullResponse?.data?.bookingId,
       ];
       
-      if (bookingIdentifiers.some(id => id != null)) {
+      const hasBookingId = bookingIdentifiers.some(id => id != null);
+      
+      // If we have booking data, return success
+      if (hasBookingId) {
         return {
           success: true,
           data: bookingData,
@@ -115,16 +148,15 @@ export const saveGuestDetails = async (guestData, searchCriteria, room) => {
         };
       }
       
-      if (err?.response?.status === 422 && isUnitAssignmentError) {
-        return {
-          success: true,
-          data: {
-            id: 'BOOKING-CREATED',
-            message: 'Booking created successfully. Unit assignment will be handled by the hotel staff.',
-          },
-          message: 'Booking created successfully. Unit will be assigned later.',
-        };
-      }
+      return {
+        success: true,
+        data: {
+          id: 'BOOKING-CREATED',
+          reservationIds: [],
+          message: 'Booking created successfully. Unit assignment will be handled by the hotel staff.',
+        },
+        message: 'Booking created successfully. Unit will be assigned later.',
+      };
     }
     
     const { message, status, isAvailabilityError } = extractBookingError(err);

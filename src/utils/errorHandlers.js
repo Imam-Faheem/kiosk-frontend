@@ -20,13 +20,21 @@ const getErrorType = (message) => {
 export const createApiError = (error) => {
   const status = error?.response?.status;
   const errorData = error?.response?.data;
-  const message = getErrorMessage(errorData) || `Request failed with status ${status}`;
-  const errorType = getErrorType(message);
+  
+  // Check if the error already has an isAvailabilityError flag (from guestService)
+  const hasAvailabilityFlag = error?.isAvailabilityError === true;
+  
+  // Extract error message
+  const message = getErrorMessage(errorData) || error?.message || `Request failed with status ${status}`;
+  
+  // Determine error type - check both the message and the original error flag
+  const errorType = hasAvailabilityFlag ? 'availability' : getErrorType(message);
   
   const apiError = new Error(message);
   apiError.status = status;
   apiError.type = errorType;
   apiError.originalError = errorData;
+  apiError.isAvailabilityError = errorType === 'availability';
   
   return apiError;
 };

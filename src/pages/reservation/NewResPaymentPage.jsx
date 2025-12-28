@@ -16,6 +16,7 @@ import { IconArrowLeft, IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { saveGuestDetails } from '../../services/guestService';
+import { processPaymentByTerminal } from '../../services/paymentService';
 
 const NewResPaymentPage = () => {
   const navigate = useNavigate();
@@ -39,9 +40,86 @@ const NewResPaymentPage = () => {
 
         const bookingResult = await saveGuestDetails(guestDetails, searchCriteria, room);
         
-        // Extract reservation ID from various possible response structures
-        // Apaleo returns: { id: "ICQXEAIO", reservationIds: [{ id: "ICQXEAIO-1" }] }
-        // Backend might wrap it in: { success: true, data: { id: "...", reservationIds: [...] } }
+        // Check if booking was successful (even if unit assignment failed)
+        if (bookingResult?.success) {
+          // Extract reservation ID from various possible response structures
+          const reservationId = bookingResult?.data?.reservationIds?.[0]?.id ?? 
+                               bookingResult?.data?.id ?? 
+                               bookingResult?.data?.reservationId ??
+                               bookingResult?.reservationIds?.[0]?.id ??
+                               bookingResult?.id ?? 
+                               bookingResult?.reservationId;
+          
+          // If we have a reservation ID, proceed with payment
+          if (reservationId && reservationId !== 'BOOKING-CREATED') {
+            setPaymentStatus('processing');
+            
+            let paymentResult = null;
+            try {
+              paymentResult = await processPaymentByTerminal(reservationId);
+            } catch (paymentError) {
+              const paymentErrorMessage = paymentError?.response?.data?.message ?? paymentError?.message ?? 'Payment processing failed';
+              throw new Error(`Booking created successfully, but payment failed: ${paymentErrorMessage}`);
+            }
+            
+            setPaymentStatus('success');
+            
+            const reservation = {
+              reservationId,
+              id: reservationId,
+              guestDetails,
+              roomTypeId: room?.unitGroup?.id ?? room?.roomTypeId,
+              checkIn: searchCriteria?.checkIn ?? '',
+              checkOut: searchCriteria?.checkOut ?? '',
+              guests: searchCriteria?.guests,
+              totalAmount: room?.totalGrossAmount?.amount ?? room?.totalPrice,
+              currency: room?.totalGrossAmount?.currency ?? room?.currency,
+              status: 'confirmed',
+              bookingData: bookingResult,
+              paymentData: paymentResult,
+            };
+
+            setTimeout(() => {
+              navigate('/reservation/complete', {
+                state: {
+                  reservation,
+                  room,
+                  guestDetails,
+                },
+              });
+            }, 1500);
+            return;
+          }
+          
+          // If booking was successful but no reservation ID (unit assignment failed)
+          const reservation = {
+            reservationId: reservationId ?? 'BOOKING-CONFIRMED',
+            id: reservationId ?? 'BOOKING-CONFIRMED',
+            guestDetails,
+            roomTypeId: room?.unitGroup?.id ?? room?.roomTypeId,
+            checkIn: searchCriteria?.checkIn ?? '',
+            checkOut: searchCriteria?.checkOut ?? '',
+            guests: searchCriteria?.guests,
+            totalAmount: room?.totalGrossAmount?.amount ?? room?.totalPrice,
+            currency: room?.totalGrossAmount?.currency ?? room?.currency,
+            status: 'confirmed',
+            bookingData: bookingResult,
+          };
+          
+          setPaymentStatus('success');
+          setTimeout(() => {
+            navigate('/reservation/complete', {
+              state: {
+                reservation,
+                room,
+                guestDetails,
+              },
+            });
+          }, 1500);
+          return;
+        }
+        
+        // Fallback: Extract reservation ID from various possible response structures
         const reservationId = bookingResult?.data?.reservationIds?.[0]?.id ?? 
                              bookingResult?.reservationIds?.[0]?.id ??
                              bookingResult?.data?.id ?? 
@@ -49,71 +127,20 @@ const NewResPaymentPage = () => {
                              bookingResult?.data?.reservationId ?? 
                              bookingResult?.reservationId;
         
-        // If no reservation ID but booking was successful (email sent), proceed with booking ID
         if (!reservationId) {
-          const bookingId = bookingResult?.data?.id ?? bookingResult?.id;
-          
-          if (bookingId) {
-            // Use booking ID as reservation ID since booking was successful
-            const reservation = {
-              reservationId: bookingId,
-              id: bookingId,
-              guestDetails,
-              roomTypeId: room?.unitGroup?.id ?? room?.roomTypeId,
-              checkIn: searchCriteria.checkIn,
-              checkOut: searchCriteria.checkOut,
-              guests: searchCriteria.guests,
-              totalAmount: room?.totalGrossAmount?.amount ?? room?.totalPrice,
-              currency: room?.totalGrossAmount?.currency ?? room?.currency,
-              status: 'confirmed',
-              bookingData: bookingResult,
-            };
-            
-            setPaymentStatus('success');
-            setTimeout(() => {
-              navigate('/reservation/complete', {
-                state: {
-                  reservation,
-                  room,
-                  guestDetails,
-                },
-              });
-            }, 1500);
-            return;
-          }
-          
-          // If we have success indicator, treat as successful even without ID
-          if (bookingResult?.success || bookingResult?.data) {
-            const reservation = {
-              reservationId: 'BOOKING-CONFIRMED',
-              id: 'BOOKING-CONFIRMED',
-              guestDetails,
-              roomTypeId: room?.unitGroup?.id ?? room?.roomTypeId,
-              checkIn: searchCriteria.checkIn,
-              checkOut: searchCriteria.checkOut,
-              guests: searchCriteria.guests,
-              totalAmount: room?.totalGrossAmount?.amount ?? room?.totalPrice,
-              currency: room?.totalGrossAmount?.currency ?? room?.currency,
-              status: 'confirmed',
-              bookingData: bookingResult,
-            };
-            
-            setPaymentStatus('success');
-            setTimeout(() => {
-              navigate('/reservation/complete', {
-                state: {
-                  reservation,
-                  room,
-                  guestDetails,
-                },
-              });
-            }, 1500);
-            return;
-          }
-          
           throw new Error('Booking created successfully but no reservation ID returned. Please check your email for confirmation.');
         }
 
+        setPaymentStatus('processing');
+        
+        let paymentResult = null;
+        try {
+          paymentResult = await processPaymentByTerminal(reservationId);
+        } catch (paymentError) {
+          const paymentErrorMessage = paymentError?.response?.data?.message ?? paymentError?.message ?? 'Payment processing failed';
+          throw new Error(`Booking created successfully, but payment failed: ${paymentErrorMessage}`);
+        }
+        
         setPaymentStatus('success');
         
         const reservation = {
@@ -121,16 +148,16 @@ const NewResPaymentPage = () => {
           id: reservationId,
           guestDetails,
           roomTypeId: room?.unitGroup?.id ?? room?.roomTypeId,
-          checkIn: searchCriteria.checkIn,
-          checkOut: searchCriteria.checkOut,
-          guests: searchCriteria.guests,
+          checkIn: searchCriteria?.checkIn ?? '',
+          checkOut: searchCriteria?.checkOut ?? '',
+          guests: searchCriteria?.guests,
           totalAmount: room?.totalGrossAmount?.amount ?? room?.totalPrice,
           currency: room?.totalGrossAmount?.currency ?? room?.currency,
           status: 'confirmed',
           bookingData: bookingResult,
+          paymentData: paymentResult,
         };
 
-        // Navigate to completion page after a short delay to show success
         setTimeout(() => {
           navigate('/reservation/complete', {
             state: {
@@ -143,6 +170,12 @@ const NewResPaymentPage = () => {
         
       } catch (err) {
         setPaymentStatus('failed');
+        
+        // Check if it's an availability error (fully booked, etc.)
+        const isAvailabilityError = err?.isAvailabilityError ?? false;
+        const lowerErrorMessage = (err?.message ?? '').toLowerCase();
+        const availabilityKeywords = ['fully booked', 'not available', 'unit group', 'no longer available'];
+        const isAvailability = isAvailabilityError || availabilityKeywords.some(keyword => lowerErrorMessage.includes(keyword));
         
         // Extract detailed error message from Apaleo
         const errorData = err?.response?.data;
@@ -161,6 +194,20 @@ const NewResPaymentPage = () => {
         }
         
         setError(errorMessage);
+        
+        // If it's an availability error, redirect to search page after a delay
+        if (isAvailability) {
+          setTimeout(() => {
+            navigate('/reservation/search', { 
+              replace: true,
+              state: { 
+                error: 'This room is no longer available for the selected dates. Please search for rooms again.',
+                searchCriteria 
+              }
+            });
+          }, 3000);
+        }
+        
         hasProcessed.current = false; // Allow retry
       }
   };
@@ -295,9 +342,21 @@ const NewResPaymentPage = () => {
           )}
           {error && (
             <Alert color="red" variant="light" style={{ width: '100%' }}>
-              <Text size="md" c="red" ta="center">
+              <Text size="md" c="red" ta="center" mb="md">
                 {error}
               </Text>
+              {(error.toLowerCase().includes('fully booked') || 
+                error.toLowerCase().includes('not available') || 
+                error.toLowerCase().includes('unit group')) && (
+                <Button
+                  variant="light"
+                  color="red"
+                  fullWidth
+                  onClick={() => navigate('/reservation/search', { replace: true })}
+                >
+                  Search for Rooms Again
+                </Button>
+              )}
             </Alert>
           )}
         </Stack>

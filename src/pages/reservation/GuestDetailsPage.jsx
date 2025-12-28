@@ -64,6 +64,9 @@ const GuestDetailsPage = () => {
       const { createApiError, createNetworkError } = await import('../../utils/errorHandlers');
       const apiError = err?.response ? createApiError(err) : createNetworkError(err);
       
+      // Check if it's an availability error (from the thrown error or detected from message)
+      const isAvailability = err?.isAvailabilityError ?? apiError.type === 'availability';
+      
       const errorMessageMap = {
         404: 'Booking endpoint not found. Please contact support.',
         default: apiError.message || t('error.failedToSaveGuestDetails'),
@@ -71,7 +74,7 @@ const GuestDetailsPage = () => {
       
       const errorMessage = errorMessageMap[apiError.status] ?? errorMessageMap.default;
       
-      setIsAvailabilityError(apiError.isAvailabilityError);
+      setIsAvailabilityError(isAvailability);
       setError(errorMessage);
       setLoading(false);
     }
@@ -318,22 +321,13 @@ const GuestDetailsPage = () => {
               size="lg"
               {...form.getInputProps('addressStreet')}
             />
-            <Group grow>
-              <TextInput
-                label={t('guestDetails.addressCity')}
-                placeholder={t('guestDetails.cityPlaceholder')}
-                required
-                size="lg"
-                {...form.getInputProps('addressCity')}
-              />
-              <TextInput
-                label={t('guestDetails.addressState')}
-                placeholder={t('guestDetails.statePlaceholder')}
-                required
-                size="lg"
-                {...form.getInputProps('addressState')}
-              />
-            </Group>
+            <TextInput
+              label={t('guestDetails.addressCity')}
+              placeholder={t('guestDetails.cityPlaceholder')}
+              required
+              size="lg"
+              {...form.getInputProps('addressCity')}
+            />
             <TextInput
               label={t('guestDetails.addressPostal')}
               placeholder={t('guestDetails.postalPlaceholder')}

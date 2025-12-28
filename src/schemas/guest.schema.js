@@ -61,12 +61,6 @@ export const guestValidationSchema = yup.object({
     .max(80, 'City must be less than 80 characters')
     .trim(),
 
-  addressState: yup
-    .string()
-    .required('State/Province is required')
-    .max(80, 'State/Province must be less than 80 characters')
-    .trim(),
-
   addressPostal: yup
     .string()
     .required('ZIP/Postal code is required')
@@ -141,7 +135,6 @@ export const guestInitialValues = {
   country: '',
   addressStreet: '',
   addressCity: '',
-  addressState: '',
   addressPostal: '',
   nationalityCountryCode: '',
   birthDate: '',
