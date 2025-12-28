@@ -112,17 +112,13 @@ export const buildPrimaryGuest = (guestData) => {
   return primaryGuest;
 };
 
-const AVAILABILITY_KEYWORDS = ['fully booked', 'not available', 'unit group'];
-
 const extractBookingError = (error) => {
   const apiError = error?.response ? createApiError(error) : createNetworkError(error);
-  const lowerMessage = apiError.message.toLowerCase();
-  const isAvailabilityError = AVAILABILITY_KEYWORDS.some(keyword => lowerMessage.includes(keyword));
   
   return {
     message: apiError.message,
     status: apiError.status,
-    isAvailabilityError,
+    isAvailabilityError: apiError.type === 'availability',
     originalError: error,
   };
 };

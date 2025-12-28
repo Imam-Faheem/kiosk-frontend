@@ -1,47 +1,34 @@
 import { ERROR_TYPE_PATTERNS } from '../config/constants';
 
-const ERROR_MESSAGE_EXTRACTORS = [
-  (data) => data?.details?.message,
-  (data) => data?.details?.messages && Array.isArray(data.details.messages) ? data.details.messages.join('. ') : null,
-  (data) => data?.message,
-  (data) => data?.error,
-  (data) => Array.isArray(data?.errors) ? data.errors.join(', ') : null,
-  (data) => typeof data === 'string' ? data : null,
-];
-
-const extractErrorMessage = (errorData) => {
-  return ERROR_MESSAGE_EXTRACTORS
-    .map((extractor) => extractor(errorData))
-    .find((message) => message != null) ?? null;
+const getErrorMessage = (errorData) => {
+  if (!errorData) return null;
+  return errorData?.details?.message ?? (Array.isArray(errorData?.details?.messages) ? errorData.details.messages.join('. ') : null) ?? errorData?.message ?? errorData?.error ?? (Array.isArray(errorData?.errors) ? errorData.errors.join(', ') : null) ?? (typeof errorData === 'string' ? errorData : null) ?? null;
 };
 
-const classifyErrorType = (message) => {
-  const lowerMessage = message?.toLowerCase() ?? '';
+const getErrorType = (message) => {
+  if (!message) return 'unknown';
+  const lowerMessage = message.toLowerCase();
   
-  return Object.entries(ERROR_TYPE_PATTERNS)
-    .find(([_, patterns]) => 
-      patterns.some((pattern) => lowerMessage.includes(pattern))
-    )?.[0] ?? 'unknown';
-};
-
-const createErrorObject = (message, status, errorData, errorType) => {
-  const error = new Error(message);
-  error.status = status;
-  error.type = errorType;
-  error.originalError = errorData;
-  error.isCredentialError = errorType === 'credential';
-  error.isAvailabilityError = errorType === 'availability';
-  return error;
+  for (const [type, patterns] of Object.entries(ERROR_TYPE_PATTERNS)) {
+    if (patterns.some(pattern => lowerMessage.includes(pattern))) {
+      return type;
+    }
+  }
+  return 'unknown';
 };
 
 export const createApiError = (error) => {
   const status = error?.response?.status;
   const errorData = error?.response?.data;
-  const extractedMessage = extractErrorMessage(errorData);
-  const errorType = classifyErrorType(extractedMessage);
-  const userMessage = extractedMessage ?? `Request failed with status ${status}`;
+  const message = getErrorMessage(errorData) || `Request failed with status ${status}`;
+  const errorType = getErrorType(message);
   
-  return createErrorObject(userMessage, status, errorData, errorType);
+  const apiError = new Error(message);
+  apiError.status = status;
+  apiError.type = errorType;
+  apiError.originalError = errorData;
+  
+  return apiError;
 };
 
 export const createNetworkError = (error) => {
@@ -49,18 +36,23 @@ export const createNetworkError = (error) => {
     ? 'Network error. Please check your connection and try again.'
     : `Request failed: ${error.message}`;
   
-  return createErrorObject(message, null, error, 'network');
-};
-
-const CREDENTIAL_ERROR_RESPONSE = {
-  success: true,
-  property: null,
-  offers: [],
-  totalOffers: 0,
+  const networkError = new Error(message);
+  networkError.status = null;
+  networkError.type = 'network';
+  networkError.originalError = error;
+  
+  return networkError;
 };
 
 export const handleCredentialError = (error) => {
-  const isCredentialError = error?.status === 500 && error?.isCredentialError;
-  return isCredentialError ? CREDENTIAL_ERROR_RESPONSE : null;
+  if (error?.status === 500 && error?.type === 'credential') {
+    return {
+      success: true,
+      property: null,
+      offers: [],
+      totalOffers: 0,
+    };
+  }
+  return null;
 };
 
