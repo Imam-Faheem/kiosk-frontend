@@ -76,9 +76,16 @@ const SearchRoomsPage = () => {
 
   const formatDate = (date) => date instanceof Date ? date.toISOString().split('T')[0] : date;
 
+  const getTodayDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  };
+
   const form = useForm({
     initialValues: {
-      ...roomSearchInitialValues,
+      checkIn: getTodayDate(),
+      checkOut: null,
       guests: roomSearchInitialValues.guests ?? '1',
     },
     validate: (values) => {
@@ -90,6 +97,14 @@ const SearchRoomsPage = () => {
       }
     },
   });
+
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (!form.values.checkIn) {
+      form.setFieldValue('checkIn', today);
+    }
+  }, [form]);
 
   const validateDates = (checkInDate, checkOutDate) => {
     if (!checkInDate ? true : !checkOutDate ? true : false) return t('error.invalidDates');
@@ -207,6 +222,7 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <DateInput
                   label={t('searchRooms.checkOut')}
+                  placeholder="Select date"
                   required
                   size="lg"
                   valueFormat="YYYY-MM-DD"

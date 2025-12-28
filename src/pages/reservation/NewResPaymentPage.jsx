@@ -75,6 +75,7 @@ const NewResPaymentPage = () => {
               totalAmount: room?.totalGrossAmount?.amount ?? room?.totalPrice,
               currency: room?.totalGrossAmount?.currency ?? room?.currency,
               status: 'confirmed',
+              room_assigned: bookingResult?.data?.assignedRoom?.room_assigned ?? false,
               bookingData: bookingResult,
               paymentData: paymentResult,
             };
@@ -103,6 +104,7 @@ const NewResPaymentPage = () => {
             totalAmount: room?.totalGrossAmount?.amount ?? room?.totalPrice,
             currency: room?.totalGrossAmount?.currency ?? room?.currency,
             status: 'confirmed',
+            room_assigned: bookingResult?.data?.assignedRoom?.room_assigned ?? false,
             bookingData: bookingResult,
           };
           
@@ -154,6 +156,7 @@ const NewResPaymentPage = () => {
           totalAmount: room?.totalGrossAmount?.amount ?? room?.totalPrice,
           currency: room?.totalGrossAmount?.currency ?? room?.currency,
           status: 'confirmed',
+          room_assigned: bookingResult?.data?.assignedRoom?.room_assigned ?? false,
           bookingData: bookingResult,
           paymentData: paymentResult,
         };

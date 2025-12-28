@@ -2,7 +2,6 @@ import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
 import {
   getRatePlanId,
-  getUnitGroupId,
   determineChannelCode,
   determineGuaranteeType,
   buildPrimaryGuest,
@@ -23,7 +22,6 @@ const getPropertyIds = () => {
 
 const formatReservationPayload = (guestData, searchCriteria, room) => {
   const ratePlanId = getRatePlanId(room);
-  const unitGroupId = getUnitGroupId(room);
   const arrival = searchCriteria?.checkIn;
   const departure = searchCriteria?.checkOut;
   const adults = Number(searchCriteria?.guests);
@@ -32,23 +30,16 @@ const formatReservationPayload = (guestData, searchCriteria, room) => {
   
   const channelCode = determineChannelCode(ratePlanId, room);
   const guaranteeType = determineGuaranteeType(ratePlanId, room);
-  
   const primaryGuest = buildPrimaryGuest(guestData);
-  
-  const timeSlice = { ratePlanId };
-  if (unitGroupId) {
-    timeSlice.unitGroupId = unitGroupId;
-  }
   
   const reservation = {
     arrival,
     departure,
     adults,
-    childrenAges: [],
     channelCode,
     primaryGuest,
     guaranteeType,
-    timeSlices: [timeSlice],
+    timeSlices: [{ ratePlanId }],
   };
   
   if (guestData.guestComment) {

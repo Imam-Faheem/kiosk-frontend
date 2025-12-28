@@ -226,12 +226,34 @@ const GuestDetailsPage = () => {
               <Grid.Col span={6}>
                 <DateInput
                   label={t('guestDetails.birthDate')}
-                  placeholder={t('guestDetails.birthDatePlaceholder')}
+                  placeholder="09/04/2014"
                   required
                   size="lg"
-                  valueFormat="YYYY-MM-DD"
+                  value={form.values.birthDate ? new Date(form.values.birthDate) : null}
+                  onChange={(date) => {
+                    if (date) {
+                      const dateObj = date instanceof Date ? date : new Date(date);
+                      if (!isNaN(dateObj.getTime())) {
+                        const year = dateObj.getFullYear();
+                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        const day = String(dateObj.getDate()).padStart(2, '0');
+                        const formattedDate = `${year}-${month}-${day}`;
+                        form.setFieldValue('birthDate', formattedDate);
+                      }
+                    } else {
+                      form.setFieldValue('birthDate', '');
+                    }
+                  }}
+                  dateFormatter={(value) => {
+                    if (!value) return '';
+                    const date = value instanceof Date ? value : new Date(value);
+                    if (isNaN(date.getTime())) return '';
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                  }}
                   maxDate={new Date()}
-                  {...form.getInputProps('birthDate')}
                 />
               </Grid.Col>
             </Grid>
