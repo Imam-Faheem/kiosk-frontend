@@ -135,6 +135,22 @@
   "guestDetails": {
     "title": "Gastdetails",
     "formTitle": "Kontaktinformationen des Gastes",
+    "titleField": "Titel",
+    "titlePlaceholder": "Titel auswählen",
+    "titleOptions": {
+      "mr": "Herr",
+      "mrs": "Frau",
+      "ms": "Frau",
+      "miss": "Fräulein",
+      "dr": "Dr."
+    },
+    "gender": "Geschlecht",
+    "genderPlaceholder": "Geschlecht auswählen",
+    "genderOptions": {
+      "male": "Männlich",
+      "female": "Weiblich",
+      "other": "Andere"
+    },
     "firstName": "Vorname",
     "lastName": "Nachname",
     "email": "E-Mail",
@@ -152,8 +168,53 @@
     "cityPlaceholder": "Stadt",
     "statePlaceholder": "Bundesland oder Region",
     "postalPlaceholder": "Postleitzahl",
+    "personalInfoSection": "Persönliche Informationen",
+    "nationality": "Nationalität",
+    "nationalityPlaceholder": "Nationalität auswählen",
+    "birthDate": "Geburtsdatum",
+    "birthDatePlaceholder": "Geburtsdatum auswählen",
+    "birthPlace": "Geburtsort",
+    "birthPlacePlaceholder": "Geburtsort eingeben",
+    "documentSection": "Ausweisdokument",
+    "documentType": "ID-Typ",
+    "documentTypePlaceholder": "ID-Typ auswählen",
+    "documentTypes": {
+      "passport": "Reisepass",
+      "id": "Personalausweis",
+      "drivingLicense": "Führerschein"
+    },
+    "documentNumber": "ID-Nummer",
+    "documentNumberPlaceholder": "ID-Nummer eingeben",
+    "documentIssueDate": "Ausstellungsdatum",
+    "documentIssueDatePlaceholder": "Ausstellungsdatum auswählen",
+    "documentExpiryDate": "Ablaufdatum",
+    "documentExpiryDatePlaceholder": "Ablaufdatum auswählen",
+    "documentIssuingCountry": "Ausstellungsland",
+    "documentIssuingCountryPlaceholder": "Ausstellungsland auswählen",
+    "additionalInfoSection": "Zusätzliche Informationen",
+    "travelPurpose": "Reisezweck",
+    "travelPurposePlaceholder": "Reisezweck auswählen",
+    "travelPurposes": {
+      "business": "Geschäftlich",
+      "leisure": "Freizeit",
+      "other": "Sonstiges"
+    },
+    "guestComment": "Besondere Wünsche/Kommentare",
+    "guestCommentPlaceholder": "Geben Sie besondere Wünsche oder Kommentare ein",
     "continue": "Weiter",
-    "back": "Zurück"
+    "back": "Zurück",
+    "firstNamePlaceholder": "Geben Sie Ihren Vornamen ein",
+    "lastNamePlaceholder": "Geben Sie Ihren Nachnamen ein",
+    "emailPlaceholder": "Geben Sie Ihre E-Mail ein",
+    "countries": {
+      "us": "Vereinigte Staaten (+1)",
+      "gb": "Vereinigtes Königreich (+44)",
+      "de": "Deutschland (+49)",
+      "fr": "Frankreich (+33)",
+      "it": "Italien (+39)",
+      "es": "Spanien (+34)",
+      "pt": "Portugal (+351)"
+    }
   },
   "roomDetail": {
     "title": "Zimmerdetails",

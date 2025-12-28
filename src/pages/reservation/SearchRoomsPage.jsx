@@ -28,6 +28,7 @@ import usePropertyStore from '../../stores/propertyStore';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
+import { createApiError, createNetworkError, handleCredentialError } from '../../utils/errorHandlers';
 
 const SearchRoomsPage = () => {
   const navigate = useNavigate();
@@ -48,70 +49,113 @@ const SearchRoomsPage = () => {
     }
   }, [navigate]);
 
-  const searchAvailability = useRoomMutation('searchAvailability', {
+  const { selectedProperty } = usePropertyStore();
+  
+  const searchOffers = useRoomMutation('searchOffers', {
     onSuccess: (result) => {
-      setSearchResults(result?.data || null);
-      setErrorMessage(null);
+      const success = result?.success ?? false;
+      setSearchResults(success ? result : null);
+      setErrorMessage(success ? null : t('error.requestFailed'));
     },
     onError: (err) => {
-      const details = err?.response?.data;
-      const msg = (details && (details.message || details.error)) || err?.message || t('error.requestFailed');
-      setErrorMessage(msg);
+      const apiError = err?.response ? createApiError(err) : createNetworkError(err);
+      const credentialResponse = handleCredentialError(apiError);
+      
+      const handleError = credentialResponse
+        ? () => {
+            setSearchResults(credentialResponse);
+            setErrorMessage(null);
+          }
+        : () => setErrorMessage(apiError.message);
+      
+      handleError();
     }
   });
 
-  const isSearching = loading || searchAvailability.isPending;
+  const isSearching = loading || searchOffers.isPending;
+
+  const formatDate = (date) => date instanceof Date ? date.toISOString().split('T')[0] : date;
+
+  const getTodayDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  };
 
   const form = useForm({
-    initialValues: roomSearchInitialValues,
+    initialValues: {
+      checkIn: getTodayDate(),
+      checkOut: null,
+      guests: roomSearchInitialValues.guests ?? '1',
+    },
     validate: (values) => {
       try {
         roomSearchValidationSchema.validateSync(values, { abortEarly: false });
         return {};
       } catch (err) {
-        const errors = {};
-        err.inner.forEach((error) => {
-          errors[error.path] = error.message;
-        });
-        return errors;
+        return err.inner.reduce((acc, error) => ({ ...acc, [error.path]: error.message }), {});
       }
     },
   });
+
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (!form.values.checkIn) {
+      form.setFieldValue('checkIn', today);
+    }
+  }, [form]);
+
+  const validateDates = (checkInDate, checkOutDate) => {
+    if (!checkInDate ? true : !checkOutDate ? true : false) return t('error.invalidDates');
+    
+    const arrivalDate = new Date(checkInDate);
+    const departureDate = new Date(checkOutDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (arrivalDate < today) return 'Arrival date must be today or in the future';
+    if (departureDate <= arrivalDate) return 'Departure date must be after arrival date';
+    return null;
+  };
 
   const handleSearch = async (values) => {
     setLoading(true);
     setErrorMessage(null);
     setSearchResults(null);
 
-    const checkInDate = values.checkIn ? (values.checkIn instanceof Date ? values.checkIn.toISOString().split('T')[0] : values.checkIn) : null;
-    const checkOutDate = values.checkOut ? (values.checkOut instanceof Date ? values.checkOut.toISOString().split('T')[0] : values.checkOut) : null;
-    const adults = values.guests ? Number(values.guests) : 1;
+    const checkInDate = values.checkIn ? formatDate(values.checkIn) : null;
+    const checkOutDate = values.checkOut ? formatDate(values.checkOut) : null;
+    const adults = Number(values.guests) ?? 1;
 
-    const searchData = {
-      propertyId: usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER',
-      arrival: checkInDate,
-      departure: checkOutDate,
-      adults: adults || 1,
-    };
+    const dateError = validateDates(checkInDate, checkOutDate);
+    if (dateError) {
+      setErrorMessage(dateError);
+      setLoading(false);
+      return;
+    }
 
     try {
-      await searchAvailability.mutateAsync(searchData);
+      await searchOffers.mutateAsync({
+        arrival: checkInDate,
+        departure: checkOutDate,
+        adults,
+        children: [],
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleSelectRoom = (room) => {
-    const searchCriteria = {
-      ...form.values,
-      checkIn: form.values.checkIn ? (form.values.checkIn instanceof Date ? form.values.checkIn.toISOString().split('T')[0] : form.values.checkIn) : null,
-      checkOut: form.values.checkOut ? (form.values.checkOut instanceof Date ? form.values.checkOut.toISOString().split('T')[0] : form.values.checkOut) : null,
-    };
-
     navigate('/reservation/guest-details', {
       state: {
         room,
-        searchCriteria,
+        searchCriteria: {
+          ...form.values,
+          checkIn: form.values.checkIn ? formatDate(form.values.checkIn) : null,
+          checkOut: form.values.checkOut ? formatDate(form.values.checkOut) : null,
+        },
       },
     });
   };
@@ -166,7 +210,6 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <DateInput
                   label={t('searchRooms.checkIn')}
-                  placeholder={t('searchRooms.selectCheckInDate')}
                   required
                   size="lg"
                   valueFormat="YYYY-MM-DD"
@@ -179,7 +222,7 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <DateInput
                   label={t('searchRooms.checkOut')}
-                  placeholder={t('searchRooms.selectCheckOutDate')}
+                  placeholder="Select date"
                   required
                   size="lg"
                   valueFormat="YYYY-MM-DD"
@@ -205,7 +248,7 @@ const SearchRoomsPage = () => {
               type="submit"
               size="lg"
               leftSection={<IconSearch size={20} />}
-              disabled={!!searchResults || isSearching}
+              disabled={searchResults ? true : isSearching ? true : false}
               styles={BUTTON_STYLES.primary}
               radius="md"
             >
@@ -231,100 +274,76 @@ const SearchRoomsPage = () => {
           </Alert>
         )}
 
-        {/* No rooms available message */}
-        {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length === 0 && !isSearching && (
+        {/* No offers available message */}
+        {searchResults && Array.isArray(searchResults.offers) && searchResults.offers.length === 0 && !isSearching && (
           <Alert color="yellow" variant="light">
             {t('searchRooms.noRooms')}
           </Alert>
         )}
 
-        {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length > 0 && (
+        {searchResults && Array.isArray(searchResults.offers) && searchResults.offers.length > 0 && (
           <Stack gap="lg" mb="xl">
             <Text size="xl" fw={600} c="#0B152A">
-              {t('searchRooms.availableRooms')} ({typeof searchResults.totalAvailable === 'number' ? searchResults.totalAvailable : (Array.isArray(searchResults.availableRooms) ? searchResults.availableRooms.length : 0)})
+              {t('searchRooms.availableRooms')} ({searchResults.offers.length})
             </Text>
             
             <Grid>
-              {searchResults.availableRooms.map((room) => (
-                <Grid.Col span={6} key={room.roomTypeId}>
-                  <Card
-                    withBorder
-                    p="lg"
-                    radius="md"
-                    style={{ cursor: 'pointer' }}
-                    styles={{
-                      root: {
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          transform: 'scale(1.02)',
-                          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+              {searchResults.offers.map((offer, index) => {
+                const unitGroup = offer.unitGroup ?? {};
+                const ratePlan = offer.ratePlan ?? {};
+                const totalAmount = offer.totalGrossAmount ?? {};
+                const availableUnits = offer.availableUnits ?? 0;
+                
+                return (
+                  <Grid.Col span={6} key={`${unitGroup.id}-${ratePlan.id}-${index}`}>
+                    <Card
+                      withBorder
+                      p="lg"
+                      radius="md"
+                      style={{ cursor: 'pointer' }}
+                      styles={{
+                        root: {
+                          transition: 'all 0.3s ease',
+                          '&:hover': { transform: 'scale(1.02)', boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)' },
                         },
-                      },
-                    }}
-                    onClick={() => handleSelectRoom(room)}
-                  >
-                    <Stack gap="md">
-                      <Image
-                        src={(room.images && room.images[0]) || UnoLogo}
-                        alt={room.name}
-                        h={200}
-                        radius="md"
-                        fit="cover"
-                      />
-                      
-                      <Stack gap="sm">
-                        <Group justify="space-between">
-                          <Text size="lg" fw={600} c="#0B152A">
-                            {room.name}
-                          </Text>
-                          <Badge color="green" size="lg">
-                            {t('searchRooms.available')}
-                          </Badge>
-                        </Group>
-                        
-                        <Text size="sm" c="#666666">
-                          {room.description}
-                        </Text>
-                        
-                        <Group gap="xs">
-                          <IconUsers size={16} color="#666666" />
-                          <Text size="sm" c="#666666">
-                            {room.capacity} {t('common.guests')}
-                          </Text>
-                        </Group>
-                        
-                        <Group gap="xs" wrap="wrap">
-                          {room.amenities.slice(0, 3).map((amenity, index) => (
-                            <Badge key={index} size="sm" variant="light">
-                              {amenity}
-                            </Badge>
-                          ))}
-                        </Group>
-                        
-                        <Group justify="space-between" align="center">
-                          <Stack gap="xs">
-                            <Text size="sm" c="#666666">
-                              {room.currency} {room.pricePerNight} {t('searchRooms.perNight')}
-                            </Text>
-                            <Text size="xl" fw={700} c="#0B152A">
-                              {room.currency} {room.totalPrice} {t('searchRooms.total')}
-                            </Text>
-                          </Stack>
-                          
-                          <Button
-                            size="md"
-                            bg="#C8653D"
-                            c="white"
-                            radius="md"
-                          >
-                            {t('common.select')}
-                          </Button>
-                        </Group>
+                      }}
+                      onClick={() => handleSelectRoom(offer)}
+                    >
+                      <Stack gap="md">
+                        <Image src={UnoLogo} alt={unitGroup.name} h={200} radius="md" fit="cover" />
+                        <Stack gap="sm">
+                          <Group justify="space-between">
+                            <Text size="lg" fw={600} c="#0B152A">{unitGroup.name}</Text>
+                            <Badge color="green" size="lg">{t('searchRooms.available')}</Badge>
+                          </Group>
+                          <Text size="sm" c="#666666">{unitGroup.description ?? ratePlan.description}</Text>
+                          <Group gap="xs">
+                            <IconUsers size={16} color="#666666" />
+                            <Text size="sm" c="#666666">{unitGroup.maxPersons ?? 2} {t('common.guests')}</Text>
+                          </Group>
+                          <Group gap="xs" wrap="wrap">
+                            <Badge size="sm" variant="light">{ratePlan.name}</Badge>
+                            {availableUnits > 0 && (
+                              <Badge size="sm" variant="light" color="blue">
+                                {availableUnits} {availableUnits === 1 ? 'unit' : 'units'}
+                              </Badge>
+                            )}
+                          </Group>
+                          <Group justify="space-between" align="center">
+                            <Stack gap="xs">
+                              <Text size="sm" c="#666666">{ratePlan.name}</Text>
+                              <Text size="xl" fw={700} c="#0B152A">
+                                {totalAmount.currency ?? 'EUR'} {totalAmount.amount ?? 0} {t('searchRooms.total')}
+                              </Text>
+                            </Stack>
+                            <Button size="md" bg="#C8653D" c="white" radius="md">{t('common.select')}</Button>
+                          </Group>
+                        </Stack>
                       </Stack>
-                    </Stack>
-                  </Card>
-                </Grid.Col>
-              ))}
+                    </Card>
+                  </Grid.Col>
+                );
+              })}
             </Grid>
           </Stack>
         )}

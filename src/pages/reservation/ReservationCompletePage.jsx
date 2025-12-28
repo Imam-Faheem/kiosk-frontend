@@ -49,7 +49,6 @@ const ReservationCompletePage = () => {
     navigate('/home');
   };
 
-  // Trigger celebration animation on mount
   useEffect(() => {
     if (reservation) {
       setShowCelebration(true);
@@ -77,7 +76,7 @@ const ReservationCompletePage = () => {
         radius="xl"
         style={PAPER_STYLES.medium}
       >
-        <Group justify="space-between" mb="xl" pb="md" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+        <Group gap="md" mb="xl" pb="md" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <PropertyHeader />
           <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
             {t('reservationComplete.title')}
@@ -85,7 +84,6 @@ const ReservationCompletePage = () => {
         </Group>
 
         <Stack gap="lg" mb="xl" align="center">
-          {/* Animated Success Checkmark */}
           <Box
             style={{
               position: 'relative',
@@ -94,7 +92,6 @@ const ReservationCompletePage = () => {
               marginBottom: '8px',
             }}
           >
-            {/* Ripple Effects */}
             {showCelebration && (
               <>
                 <Box className="ripple-effect" style={{ top: '50%', left: '50%', marginTop: '-70px', marginLeft: '-70px', width: '140px', height: '140px' }} />
@@ -102,7 +99,6 @@ const ReservationCompletePage = () => {
               </>
             )}
             
-            {/* Success Circle with Glow */}
             <Box
               ref={checkmarkRef}
               className="glow-effect"
@@ -145,7 +141,6 @@ const ReservationCompletePage = () => {
               </svg>
             </Box>
             
-            {/* Sparkle Particles */}
             {showCelebration && Array.from({ length: 8 }).map((_, i) => (
               <Box
                 key={i}
@@ -168,7 +163,6 @@ const ReservationCompletePage = () => {
             {t('reservationComplete.reservationNumber')}: {reservation.reservationId || reservation.id || t('common.notAvailable')}
           </Text>
 
-          {/* Reservation Details Card */}
           {(room || guestDetails || reservation.checkIn) && (
             <Card withBorder p="lg" radius="md" style={{ width: '100%', backgroundColor: '#f8f9fa' }}>
               <Stack gap="md">
@@ -184,7 +178,13 @@ const ReservationCompletePage = () => {
                   <Group gap="sm">
                     <IconCreditCard size={20} color="#C8653D" />
                     <Text size="md" fw={600}>{t('reservationComplete.room')}:</Text>
-                    <Text size="md">{room.name}</Text>
+                    <Text size="md">
+                      {room?.unitGroup?.name ?? 
+                       room?.name ?? 
+                       room?.unitGroup?.id ?? 
+                       room?.roomTypeId ?? 
+                       t('common.notAvailable')}
+                    </Text>
                   </Group>
                 )}
                 

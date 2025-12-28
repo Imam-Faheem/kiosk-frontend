@@ -1,5 +1,17 @@
 import { apiClient } from './api/apiClient';
 import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
+import { createApiError, createNetworkError, handleCredentialError } from '../utils/errorHandlers';
+import usePropertyStore from '../stores/propertyStore';
+import { API_CONFIG } from '../config/constants';
+
+const getPropertyIds = () => {
+  const state = usePropertyStore.getState();
+  const propertyId = state.selectedProperty?.property_id ?? state.propertyId;
+  const organizationId = API_CONFIG.ORGANIZATION_ID;
+  const apaleoPropertyId = state.selectedProperty?.apaleo_external_property_id ?? '';
+  
+  return { propertyId, organizationId, apaleoPropertyId };
+};
 
 /**
  * Search for available rooms
@@ -15,7 +27,7 @@ export const searchRoomAvailability = async (data) => {
     propertyId: data.propertyId,
     arrival: data.arrival,
     departure: data.departure,
-    adults: Number(data.adults) || 1, // Number() can return 0, so || is correct here
+    adults: Number(data.adults) ? Number(data.adults) : 1,
     channelCode: 'Direct',
     timeSliceTemplate: 'OverNight',
     unitGroupTypes: 'BedRoom',
@@ -39,7 +51,9 @@ export const searchRoomAvailability = async (data) => {
   }
 };
 
-export const getRoomDetails = async (roomTypeId, propertyId) => {
+export const getRoomDetails = async (roomTypeId) => {
+  const { propertyId } = getPropertyIds();
+  
   try {
     const response = await apiClient.get(`/rooms/${roomTypeId}/details`, {
       params: { propertyId },
@@ -54,7 +68,9 @@ export const getRoomDetails = async (roomTypeId, propertyId) => {
   }
 };
 
-export const getAllRoomTypes = async (propertyId) => {
+export const getAllRoomTypes = async () => {
+  const { propertyId } = getPropertyIds();
+  
   try {
     const response = await apiClient.get('/rooms/types', {
       params: { propertyId },
@@ -86,4 +102,74 @@ export const calculateRoomPricing = (room, checkIn, checkOut) => {
     total,
     currency: room.currency ?? 'EUR',
   };
+};
+
+const validateChildrenAges = (children) => {
+  if (!Array.isArray(children)) return null;
+  if (children.length === 0) return null;
+  const validAges = children.filter(age => typeof age === 'number' && age > 0 && age <= 17);
+  return validAges.length > 0 ? validAges.join(',') : null;
+};
+
+const parseOffersResponse = (response) => {
+  const offers = response?.data?.data?.offers ?? response?.data?.offers ?? [];
+  return {
+    success: true,
+    property: response?.data?.data?.property ?? null,
+    offers,
+    totalOffers: offers.length,
+  };
+};
+
+
+export const searchOffers = async (searchParams) => {
+  const { propertyId, organizationId, apaleoPropertyId } = getPropertyIds();
+  
+  const missingIds = [propertyId, organizationId, apaleoPropertyId].filter(id => !id);
+  if (missingIds.length > 0) {
+    return {
+      success: true,
+      property: null,
+      offers: [],
+      totalOffers: 0,
+    };
+  }
+  
+  try {
+    const childrenParam = validateChildrenAges(searchParams.children);
+    const params = {
+      apaleo_external_property_id: apaleoPropertyId,
+      arrival: searchParams.arrival,
+      departure: searchParams.departure,
+      adults: searchParams.adults,
+      ...(childrenParam && { children: childrenParam }),
+    };
+
+    const response = await apiClient.get(
+      `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/offers`,
+      { params }
+    );
+
+    return parseOffersResponse(response);
+  } catch (error) {
+    const mockResponse = shouldUseMock(error)
+      ? await simulateApiDelay(600).then(() => mockData.roomAvailability({ 
+          arrival: searchParams.arrival, 
+          departure: searchParams.departure, 
+          adults: searchParams.adults 
+        }))
+      : null;
+    
+    if (mockResponse) return mockResponse;
+
+    const networkError = !error.response ? createNetworkError(error) : null;
+    if (networkError) throw networkError;
+
+    const apiError = createApiError(error);
+    const credentialResponse = handleCredentialError(apiError);
+    
+    if (credentialResponse) return credentialResponse;
+
+    throw apiError;
+  }
 };

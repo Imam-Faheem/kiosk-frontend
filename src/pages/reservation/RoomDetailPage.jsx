@@ -34,7 +34,7 @@ const RoomDetailPage = () => {
   const [roomData, setRoomData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const { room, searchCriteria, guestDetails } = location.state || {};
+  const { room, searchCriteria, guestDetails } = location.state ?? {};
 
   // Fetch room details with images if room images are missing
   useEffect(() => {
@@ -46,8 +46,7 @@ const RoomDetailPage = () => {
         if (!hasImages) {
           setLoading(true);
           try {
-            const propertyId = usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
-            const result = await getRoomDetails(room.roomTypeId, propertyId);
+            const result = await getRoomDetails(room.roomTypeId);
             
             if (result.success && result.data && result.data.images) {
               // Merge room data with fetched images
@@ -90,7 +89,36 @@ const RoomDetailPage = () => {
   }, [room]);
 
   // Use roomData if available, otherwise fallback to room
-  const displayRoom = roomData || room;
+  const displayRoom = roomData ?? room;
+  
+  // Calculate pricing details
+  const calculatePricing = () => {
+    if (!searchCriteria?.checkIn || !searchCriteria?.checkOut || !displayRoom) {
+      return { nights: 0, pricePerNight: 0, taxes: 0, total: 0, currency: 'EUR' };
+    }
+    
+    const nights = Math.ceil((new Date(searchCriteria.checkOut) - new Date(searchCriteria.checkIn)) / (1000 * 60 * 60 * 24));
+    const totalAmount = displayRoom?.totalGrossAmount?.amount ?? displayRoom?.totalPrice ?? 0;
+    const currency = displayRoom?.totalGrossAmount?.currency ?? displayRoom?.currency ?? 'EUR';
+    
+    // Calculate price per night from total amount divided by nights
+    const pricePerNight = nights > 0 && totalAmount > 0 ? totalAmount / nights : 0;
+    
+    // Calculate taxes - if totalGrossAmount includes taxes, extract them
+    // Assuming 10% tax rate on base price, or use room.taxes if available
+    const basePrice = pricePerNight * nights;
+    const taxes = displayRoom?.taxes ?? displayRoom?.totalTaxes ?? (basePrice * 0.1);
+    
+    return {
+      nights,
+      pricePerNight: pricePerNight > 0 ? parseFloat(pricePerNight.toFixed(2)) : 0,
+      taxes: taxes > 0 ? parseFloat(taxes.toFixed(2)) : 0,
+      total: totalAmount > 0 ? parseFloat(totalAmount.toFixed(2)) : 0,
+      currency,
+    };
+  };
+  
+  const pricing = calculatePricing();
   
   // Ensure images array exists - combine room images with bathroom image
   const baseImages = displayRoom?.images && Array.isArray(displayRoom.images) && displayRoom.images.length > 0
@@ -130,7 +158,7 @@ const RoomDetailPage = () => {
       'Safe': t('roomDetail.amenities.safe'),
       'Mini Bar': t('roomDetail.amenities.miniBar'),
     };
-    return amenityMap[amenity] || amenity;
+    return amenityMap[amenity] ?? amenity;
   };
 
   const handleConfirm = () => {
@@ -232,7 +260,7 @@ const RoomDetailPage = () => {
               ) : (
                 <Box style={{ position: 'relative' }}>
                   <Image
-                    src={roomImages[selectedImageIndex] || UnoLogo}
+                    src={roomImages[selectedImageIndex] ?? UnoLogo}
                     alt={`${displayRoom.name} - Image ${selectedImageIndex + 1}`}
                     height={300}
                     radius="md"
@@ -269,7 +297,7 @@ const RoomDetailPage = () => {
                     onClick={() => setSelectedImageIndex(index)}
                   >
                     <Image
-                      src={image || UnoLogo}
+                      src={image ?? UnoLogo}
                       alt={`${displayRoom.name} - Thumbnail ${index + 1}`}
                       height={80}
                       style={{ objectFit: 'cover', width: '100%' }}
@@ -289,12 +317,12 @@ const RoomDetailPage = () => {
               <Stack gap="sm">
                 <Text size="md" fw={600}>{t('roomDetail.amenities.title')}:</Text>
                 <Group gap="sm">
-                  {(displayRoom.amenities || []).map((amenity, index) => (
+                  {(displayRoom.amenities ?? []).map((amenity, index) => (
                     <Badge
                       key={index}
                       variant="light"
                       color="blue"
-                      leftSection={amenityIcons[amenity] || null}
+                      leftSection={amenityIcons[amenity] ?? null}
                       size="sm"
                     >
                       {getAmenityTranslation(amenity)}
@@ -307,11 +335,11 @@ const RoomDetailPage = () => {
               <Grid>
                 <Grid.Col span={6}>
                   <Text size="sm" c="#666666">{t('roomDetail.capacity')}:</Text>
-                  <Text size="md" fw={600}>{displayRoom.capacity || displayRoom.maxGuests || 1} {t('common.guests')}</Text>
+                  <Text size="md" fw={600}>{displayRoom.capacity ?? displayRoom.maxGuests ?? 1} {t('common.guests')}</Text>
                 </Grid.Col>
                 <Grid.Col span={6}>
                   <Text size="sm" c="#666666">{t('roomDetail.maxGuests')}:</Text>
-                  <Text size="md" fw={600}>{displayRoom.maxGuests || displayRoom.capacity || 1} {t('common.guests')}</Text>
+                  <Text size="md" fw={600}>{displayRoom.maxGuests ?? displayRoom.capacity ?? 1} {t('common.guests')}</Text>
                 </Grid.Col>
               </Grid>
 
@@ -341,7 +369,7 @@ const RoomDetailPage = () => {
                   <Group justify="space-between">
                     <Text size="md" c="#666666">{t('roomDetail.numberOfNights')}:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
-                      {Math.ceil((new Date(searchCriteria.checkOut) - new Date(searchCriteria.checkIn)) / (1000 * 60 * 60 * 24))} {t('roomDetail.nights')}
+                      {pricing.nights} {t('roomDetail.nights')}
                     </Text>
                   </Group>
                   
@@ -350,16 +378,20 @@ const RoomDetailPage = () => {
                     <Stack gap="xs">
                       <Group justify="space-between">
                         <Text size="sm" c="#666666">{t('roomDetail.pricePerNight')}:</Text>
-                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{displayRoom.currency || 'EUR'} {displayRoom.pricePerNight || 0}</Text>
+                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
+                          {pricing.currency} {pricing.pricePerNight.toFixed(2)}
+                        </Text>
                       </Group>
                       <Group justify="space-between">
                         <Text size="sm" c="#666666">{t('roomDetail.taxes')}:</Text>
-                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{displayRoom.currency || 'EUR'} {displayRoom.taxes || 0}</Text>
+                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
+                          {pricing.currency} {pricing.taxes.toFixed(2)}
+                        </Text>
                       </Group>
                       <Group justify="space-between" style={{ borderTop: '2px solid #C8653D', paddingTop: '10px' }}>
                         <Text size="lg" fw={700} c="#C8653D">{t('roomDetail.total')}:</Text>
                         <Text size="xl" fw={700} c="#C8653D" style={{ textAlign: 'right', minWidth: '180px' }}>
-                          {displayRoom.currency || 'EUR'} {displayRoom.totalPrice || 0}
+                          {pricing.currency} {pricing.total.toFixed(2)}
                         </Text>
                       </Group>
                     </Stack>

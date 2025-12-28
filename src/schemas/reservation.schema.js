@@ -19,17 +19,18 @@ export const roomSearchValidationSchema = yup.object({
     }),
   
   guests: yup
-    .number()
+    .string()
     .required('Number of guests is required')
-    .min(1, 'At least 1 guest is required')
-    .max(8, 'Maximum 8 guests allowed')
-    .integer('Number of guests must be a whole number')
+    .test('is-valid-number', 'Please select number of guests', (value) => {
+      const num = Number(value);
+      return !isNaN(num) && num >= 1 && num <= 8;
+    })
 });
 
 export const roomSearchInitialValues = {
-  checkIn: null,
+  checkIn: new Date(),
   checkOut: null,
-  guests: 1
+  guests: '1'
 };
 
 export const bookingValidationSchema = yup.object({

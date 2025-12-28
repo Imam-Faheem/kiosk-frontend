@@ -73,6 +73,36 @@ export const UI_CONFIG = {
   },
 };
 
+// Guest Details Constants
+export const GUEST_DETAILS_OPTIONS = {
+  TITLES: [
+    { value: 'Mr', label: 'Mr' },
+    { value: 'Mrs', label: 'Mrs' },
+    { value: 'Ms', label: 'Ms' },
+    { value: 'Miss', label: 'Miss' },
+    { value: 'Dr', label: 'Dr' },
+  ],
+  GENDERS: [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+    { value: 'Other', label: 'Other' },
+  ],
+  COUNTRIES: [
+    { value: 'US', label: 'United States (+1)' },
+    { value: 'GB', label: 'United Kingdom (+44)' },
+    { value: 'DE', label: 'Germany (+49)' },
+    { value: 'FR', label: 'France (+33)' },
+    { value: 'IT', label: 'Italy (+39)' },
+    { value: 'ES', label: 'Spain (+34)' },
+    { value: 'PT', label: 'Portugal (+351)' },
+  ],
+  DOCUMENT_TYPES: [
+    { value: 'Passport', label: 'Passport' },
+    { value: 'IdCard', label: 'National ID' },
+    { value: 'DriverLicense', label: 'Driving License' },
+  ],
+};
+
 // Early Arrival Page Constants
 export const EARLY_ARRIVAL_CONFIG = {
   COUNTDOWN_DURATION: 15,
@@ -389,6 +419,14 @@ export const STEP_ICONS = {
   creditCard: IconCreditCard,
   lock: IconLock,
   mail: IconMail,
+};
+
+export const ERROR_TYPE_PATTERNS = {
+  credential: ['credentials', 'apaleo', 'not configured'],
+  availability: ['fully booked', 'not available', 'unit group', 'no longer available'],
+  network: ['network', 'connection', 'timeout'],
+  validation: ['validation', 'invalid', 'required', 'must be'],
+  notFound: ['not found', '404', 'does not exist'],
 };
 
 // Status Messages Configuration
