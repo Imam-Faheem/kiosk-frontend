@@ -19,19 +19,11 @@ const formatReservationPayload = (guestData, searchCriteria, room) => {
   const departure = searchCriteria?.checkOut;
   const adults = Number(searchCriteria?.guests);
   
-  // Validate required fields
   validateBookingRequirements({ ratePlanId, arrival, departure, adults });
   
-  // Warn if unitGroupId is missing (Apaleo will auto-assign)
-  if (!unitGroupId) {
-    console.warn('UnitGroupId not found in room data. Apaleo will auto-assign a unit.');
-  }
-  
-  // Determine channel code and guarantee type
   const channelCode = determineChannelCode(ratePlanId, room);
   const guaranteeType = determineGuaranteeType(ratePlanId, room);
   
-  // Calculate nights and build time slices
   const nights = calculateNights(arrival, departure);
   const timeSlices = buildTimeSlices({
     ratePlanId,
@@ -40,10 +32,8 @@ const formatReservationPayload = (guestData, searchCriteria, room) => {
     totalAmount: room?.totalGrossAmount,
   });
   
-  // Build primary guest object
   const primaryGuest = buildPrimaryGuest(guestData);
   
-  // Build reservation object in the order expected by backend
   const reservation = {
     arrival,
     departure,
@@ -55,7 +45,6 @@ const formatReservationPayload = (guestData, searchCriteria, room) => {
     timeSlices,
   };
   
-  // Add optional fields if provided
   if (guestData.guestComment) {
     reservation.guestComment = guestData.guestComment;
   }
@@ -72,11 +61,6 @@ const formatReservationPayload = (guestData, searchCriteria, room) => {
 export const saveGuestDetails = async (guestData, organizationId, propertyId, searchCriteria, room, apaleoPropertyId) => {
   const payload = formatReservationPayload(guestData, searchCriteria, room);
   
-  // Log payload for debugging (remove in production or use proper logging)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Booking Payload:', JSON.stringify(payload, null, 2));
-  }
-  
   try {
     const url = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/bookings`;
     const response = await apiClient.post(url, payload, { 
@@ -86,22 +70,29 @@ export const saveGuestDetails = async (guestData, organizationId, propertyId, se
     });
     return response.data;
   } catch (err) {
-    // Log error for debugging
-    if (err?.response && process.env.NODE_ENV === 'development') {
-      console.error('Booking API Error:', {
-        status: err.response.status,
-        message: err.response.data?.message ?? err.message,
-        data: err.response.data,
-        url: err.config?.url,
-      });
-    }
-    
     if (shouldUseMock(err)) {
       await simulateApiDelay(500);
       return mockData.saveGuestDetails(guestData);
     }
     
-    // Extract and format error message
+    const errorMessage = err?.response?.data?.message ?? err?.message ?? '';
+    const unitAssignmentKeywords = ['assign unit', 'Failed to assign unit'];
+    const isUnitAssignmentError = unitAssignmentKeywords.some(keyword => errorMessage.includes(keyword));
+    
+    if (isUnitAssignmentError) {
+      const responseData = err?.response?.data;
+      const bookingData = responseData?.data ?? responseData?.booking ?? responseData;
+      
+      const bookingIdentifiers = [bookingData?.id, bookingData?.bookingId, bookingData?.reservationIds, bookingData?.reservationId];
+      if (bookingIdentifiers.some(id => id != null)) {
+        return {
+          success: true,
+          data: bookingData,
+          message: 'Booking created successfully. Unit will be assigned later.',
+        };
+      }
+    }
+    
     const { message, status, isAvailabilityError } = extractBookingError(err);
     
     const customError = new Error(message);

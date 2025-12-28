@@ -10,31 +10,17 @@ export const getUnitGroupId = (room) => {
 };
 
 export const determineChannelCode = (ratePlanId, room) => {
-  if (room?.channelCode) {
-    return room.channelCode;
-  }
-  
-  const ratePlanUpper = ratePlanId?.toUpperCase() ?? '';
-  if (ratePlanUpper.includes('OTA')) {
-    return 'BookingCom';
-  }
-  
+  if (room?.channelCode) return room.channelCode;
+  if (ratePlanId?.toUpperCase().includes('OTA')) return 'BookingCom';
   return 'Direct';
 };
 
 export const determineGuaranteeType = (ratePlanId, room) => {
-  if (room?.guaranteeType) {
-    return room.guaranteeType;
-  }
-  
-  if (room?.ratePlan?.guaranteeType) {
-    return room.ratePlan.guaranteeType;
-  }
+  if (room?.guaranteeType) return room.guaranteeType;
+  if (room?.ratePlan?.guaranteeType) return room.ratePlan.guaranteeType;
   
   const ratePlanUpper = ratePlanId?.toUpperCase() ?? '';
-  const prepaymentKeywords = ['PREPAY', 'PREPAID', 'NONREF', 'NON-REF', 'OTA'];
-  
-  if (prepaymentKeywords.some(keyword => ratePlanUpper.includes(keyword))) {
+  if (['PREPAY', 'PREPAID', 'NONREF', 'NON-REF', 'OTA'].some(keyword => ratePlanUpper.includes(keyword))) {
     return 'Prepayment';
   }
   
@@ -58,18 +44,10 @@ export const buildTimeSlices = ({ ratePlanId, unitGroupId, nights, totalAmount }
   
   return Array.from({ length: nights }, () => {
     const timeSlice = { ratePlanId };
-    
-    if (unitGroupId) {
-      timeSlice.unitGroupId = unitGroupId;
-    }
-    
+    if (unitGroupId) timeSlice.unitGroupId = unitGroupId;
     if (amountPerNight && totalAmount?.currency) {
-      timeSlice.totalAmount = {
-        amount: amountPerNight,
-        currency: totalAmount.currency,
-      };
+      timeSlice.totalAmount = { amount: amountPerNight, currency: totalAmount.currency };
     }
-    
     return timeSlice;
   });
 };
@@ -90,18 +68,9 @@ export const buildPrimaryGuest = (guestData) => {
     },
   };
   
-  if (guestData.birthDate) {
-    primaryGuest.birthDate = guestData.birthDate;
-  }
-  
-  if (guestData.nationalityCountryCode) {
-    primaryGuest.nationalityCountryCode = guestData.nationalityCountryCode;
-  }
-  
-  if (guestData.birthPlace) {
-    primaryGuest.birthPlace = guestData.birthPlace;
-  }
-  
+  if (guestData.birthDate) primaryGuest.birthDate = guestData.birthDate;
+  if (guestData.nationalityCountryCode) primaryGuest.nationalityCountryCode = guestData.nationalityCountryCode;
+  if (guestData.birthPlace) primaryGuest.birthPlace = guestData.birthPlace;
   if (guestData.documentType && guestData.documentNumber) {
     primaryGuest.identificationDocument = {
       type: GUEST_DETAILS_OPTIONS.DOCUMENT_TYPE_MAP[guestData.documentType] ?? guestData.documentType,

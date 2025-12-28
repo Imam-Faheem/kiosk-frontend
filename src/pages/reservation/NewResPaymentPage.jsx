@@ -46,11 +46,6 @@ const NewResPaymentPage = () => {
 
         const bookingResult = await saveGuestDetails(guestDetails, organizationId, propertyId, searchCriteria, room, apaleoPropertyId);
         
-        // Log response for debugging
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Booking Result:', JSON.stringify(bookingResult, null, 2));
-        }
-        
         // Extract reservation ID from various possible response structures
         // Apaleo returns: { id: "ICQXEAIO", reservationIds: [{ id: "ICQXEAIO-1" }] }
         // Backend might wrap it in: { success: true, data: { id: "...", reservationIds: [...] } }
