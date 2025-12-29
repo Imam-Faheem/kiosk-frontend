@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Container,
   Paper,
@@ -17,9 +17,9 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
 import { checkinInitialValues } from '../../schemas/checkin.schema';
-import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES } from '../../config/constants';
+import { BUTTON_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
-import { mockData, shouldUseMock, simulateApiDelay } from '../../services/mockData';
+import { performCheckIn } from '../../services/checkinService';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 
@@ -29,26 +29,7 @@ const CheckInPage = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
-    const now = new Date();
-    const [time, period] = targetTime.split(' ');
-    const [hours, minutes] = time.split(':').map(Number);
-    const target = new Date();
-    target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
-    if (now < target) {
-      navigate('/checkin/early-arrival');
-    }
-  }, [navigate]);
-  
-  const validateReservation = useReservationMutation('validate', {
-    onError: (err) => {
-      // Don't set error here if we'll use mock data
-      if (!shouldUseMock(err)) {
-        setError(err.message ?? t('error.reservationNotFound'));
-      }
-    },
-  });
+  const validateReservation = useReservationMutation('validate');
 
   const form = useForm({
     initialValues: checkinInitialValues,
@@ -58,52 +39,103 @@ const CheckInPage = () => {
     },
   });
 
+  const getFormValue = (values, ...keys) => {
+    return keys.map(key => values[key]).find(val => val != null);
+  };
+
+  const extractReservationId = (result, formValues) => {
+    const data = result?.data;
+    const sources = [
+      data?.bookingId,
+      data?.reservation_id,
+      data?.id,
+      data?.reservation?.id,
+      data?.reservation?.bookingId,
+      data?.folios?.[0]?.bookingId,
+      data?.folios?.[0]?.reservation?.bookingId,
+      data?.reservations?.[0]?.id,
+      formValues?.reservationId,
+      formValues?.reservation_id,
+    ];
+    return sources.find(id => id != null);
+  };
+
+  const getCheckInData = async (reservationData, reservationId) => {
+    const hasFolios = Array.isArray(reservationData.folios) && reservationData.folios.length > 0;
+    return hasFolios ? reservationData : (await performCheckIn(reservationId)).data;
+  };
+
+  const navigateToPaymentCheck = (reservationData, checkInData) => {
+    navigate('/checkin/payment-check', {
+      state: {
+        reservation: reservationData,
+        checkInData: checkInData ?? reservationData,
+        folios: checkInData?.folios ?? reservationData?.folios,
+      },
+    });
+  };
+
+  const hasValidGuestData = (data) => {
+    if (!data) return false;
+    
+    // Check for primaryGuest format
+    const primaryGuest = data?.primaryGuest;
+    if (primaryGuest) {
+      const firstName = primaryGuest.firstName ?? '';
+      const lastName = primaryGuest.lastName ?? '';
+      return firstName.trim().length > 0 && lastName.trim().length > 0;
+    }
+    
+    // Check for folios format with debitor
+    const folios = data?.folios;
+    if (Array.isArray(folios) && folios.length > 0) {
+      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
+      const debitor = mainFolio?.debitor;
+      if (debitor) {
+        const firstName = debitor.firstName ?? '';
+        const lastName = debitor.name ?? '';
+        return firstName.trim().length > 0 && lastName.trim().length > 0;
+      }
+    }
+    
+    // Legacy format: guest_name
+    const guestName = data?.guest_name;
+    if (guestName) {
+      const firstName = guestName.first_name ?? guestName.firstName ?? '';
+      const lastName = guestName.last_name ?? guestName.lastName ?? '';
+      return firstName.trim().length > 0 && lastName.trim().length > 0;
+    }
+    
+    return false;
+  };
+
   const handleSubmit = async (values) => {
     setError(null);
     setIsLoading(true);
 
     try {
       const result = await validateReservation.mutateAsync({
-        reservationId: values.reservationId ?? values.reservation_id,
-        lastName: values.lastName ?? values.last_name,
+        reservationId: getFormValue(values, 'reservationId', 'reservation_id'),
+        lastName: getFormValue(values, 'lastName', 'last_name'),
       });
 
-      if (result.success && result.data) {
-        const reservationId = result.data.reservation_id ?? result.data.id;
-        if (!reservationId) {
-          setError(t('error.invalidReservationData'));
-          return;
-        }
-
-        navigate('/checkin/payment-check', {
-          state: { reservation: result.data },
-        });
-      } else {
-        setError(t('error.reservationValidationFailed'));
+      const apiData = result.data;
+      
+      if (!apiData || !hasValidGuestData(apiData)) {
+        throw new Error(t('error.reservationNotFound'));
       }
+
+      const reservationId = extractReservationId(result, values);
+      const checkInData = await getCheckInData(apiData, reservationId);
+
+      if (!checkInData || !hasValidGuestData(checkInData)) {
+        throw new Error(t('error.reservationNotFound'));
+      }
+
+      navigateToPaymentCheck(apiData, checkInData);
     } catch (error) {
-      if (shouldUseMock(error)) {
-        try {
-          await simulateApiDelay(600);
-          const mockResult = mockData.reservation(values);
-
-          if (mockResult.success && mockResult.data) {
-            const reservationId = mockResult.data.reservation_id ?? mockResult.data.id;
-            if (reservationId) {
-              navigate('/checkin/payment-check', {
-                state: { reservation: mockResult.data },
-              });
-              return;
-            }
-          }
-        } catch {
-          setError(t('error.failedToLoadReservation'));
-          return;
-        }
-      }
-
-      setError(error.message ?? t('error.reservationNotFound'));
-    } finally {
+      const errorMessage = error?.message ?? t('error.reservationNotFound');
+      setError(errorMessage);
       setIsLoading(false);
     }
   };
