@@ -1,55 +1,114 @@
 import { apiClient } from './api/apiClient';
-import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
 import { translateError } from '../utils/translations';
+import usePropertyStore from '../stores/propertyStore';
+import { STORAGE_KEYS, API_CONFIG } from '../config/constants';
+
+const extractPropertyIdFromStore = (state) => {
+  return state.propertyId ?? state.selectedProperty?.property_id ?? state.selectedProperty?.id;
+};
+
+const extractOrganizationIdFromStore = (state) => {
+  return state.selectedProperty?.organizationId ?? 
+         state.selectedProperty?.organization?.id ??
+         state.selectedProperty?.organization_id;
+};
+
+const getStoredPropertyData = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+
+const getPropertyIds = () => {
+  const state = usePropertyStore.getState();
+  
+  const storePropertyId = extractPropertyIdFromStore(state);
+  const storeOrgId = extractOrganizationIdFromStore(state);
+  
+  if (storePropertyId && storeOrgId) {
+    return { propertyId: storePropertyId, organizationId: storeOrgId };
+  }
+  
+  const storedData = getStoredPropertyData();
+  const storedPropertyId = storedData?.propertyId ?? storedData?.property_id;
+  const storedOrgId = storedData?.organizationId ?? storedData?.organization_id;
+  
+  return {
+    propertyId: storePropertyId ?? storedPropertyId ?? API_CONFIG.DEFAULT_PROPERTY_ID,
+    organizationId: storeOrgId ?? storedOrgId ?? API_CONFIG.ORGANIZATION_ID,
+  };
+};
+
+const isPresent = (value) => value != null && value !== '';
 
 export const validateLostCardGuest = async (data) => {
+  const { reservationNumber, roomNumber, lastName } = data;
+
+  if (!isPresent(reservationNumber)) {
+    throw new Error(translateError('reservationIdRequired'));
+  }
+  if (!isPresent(lastName)) {
+    throw new Error(translateError('lastNameRequired'));
+  }
+
+  const { propertyId, organizationId } = getPropertyIds();
+  if (!isPresent(propertyId) || !isPresent(organizationId)) {
+    throw new Error('Property configuration is missing.');
+  }
+
+  const url = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/reservations/${reservationNumber}/check-in`;
+
   try {
-    const { reservationNumber, roomNumber, lastName } = data;
+    const response = await apiClient.get(url, { params: { lastName } });
+    
+    const apiData = response.data?.success === true && response.data?.data 
+      ? response.data.data 
+      : response.data;
 
-    const reservationResponse = await apiClient.get(`/reservation/${reservationNumber}`);
-    const reservation = reservationResponse.data;
+    if (!apiData) {
+      throw new Error(translateError('reservationNotFoundByNumber'));
+    }
 
+    const reservationLastName = apiData?.primaryGuest?.lastName?.trim().toLowerCase();
     const lastNameLower = lastName?.trim().toLowerCase();
-    const reservationLastName = reservation?.primaryGuest?.lastName?.trim().toLowerCase();
 
     if (!lastNameLower || !reservationLastName || lastNameLower !== reservationLastName) {
       throw new Error(translateError('lastNameMismatch'));
     }
 
-    const assignedRoom = reservation?.unit?.code ?? reservation?.unit?.name ?? reservation?.unit?.id;
+    const assignedRoom = apiData?.unit?.name ?? apiData?.unit?.id;
     if (roomNumber && assignedRoom && assignedRoom.toLowerCase() !== roomNumber.toLowerCase()) {
       throw new Error(translateError('roomNumberMismatch'));
     }
 
-    return reservationResponse.data;
+    return {
+      success: true,
+      data: apiData,
+    };
   } catch (error) {
-    if (shouldUseMock(error) && error?.response?.status !== 404) {
-      await simulateApiDelay(600);
-      return mockData.validateLostCardGuest(data);
-    }
-
     if (error?.response?.status === 404) {
       throw new Error(translateError('reservationNotFoundByNumber'));
+    }
+    if (error?.response?.status === 403) {
+      throw new Error(translateError('lastNameMismatch'));
     }
 
     const message = error?.response?.data?.message ??
                    error?.response?.data?.error ??
                    error?.message ??
-                   'Failed to validate guest';
+                   translateError('guestValidationFailed');
     throw new Error(message);
   }
 };
 
 export const regenerateLostCard = async (data) => {
   try {
-    const response = await apiClient.post('/lost-card/regenerate', data);
+    const response = await apiClient.post('/api/kiosk/v1/lost-card/regenerate', data);
     return response.data;
   } catch (error) {
-    if (shouldUseMock(error)) {
-      await simulateApiDelay(800);
-      return mockData.regenerateLostCard(data);
-    }
-
     const message = error?.response?.data?.message ??
                    error?.response?.data?.error ??
                    error?.message ??

@@ -42,7 +42,7 @@ const LostCardPage = () => {
     setIsLoading(true);
     
     try {
-      // Validate guest using service (with mock data fallback)
+      // Validate guest using real API
       const result = await validateLostCardGuest({
         reservationNumber: values.reservationNumber,
         roomNumber: values.roomType,
