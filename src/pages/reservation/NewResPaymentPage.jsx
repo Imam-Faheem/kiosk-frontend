@@ -77,7 +77,7 @@ const NewResPaymentPage = () => {
               status: 'confirmed',
               room_assigned: bookingResult?.data?.assignedRoom?.room_assigned ?? false,
               bookingData: bookingResult,
-              paymentData: paymentResult,
+              paymentData: paymentResult ?? { success: true, data: { id: null } },
             };
 
             setTimeout(() => {
@@ -106,6 +106,7 @@ const NewResPaymentPage = () => {
             status: 'confirmed',
             room_assigned: bookingResult?.data?.assignedRoom?.room_assigned ?? false,
             bookingData: bookingResult,
+            paymentData: { success: true, message: 'Payment will be processed separately' },
           };
           
           setPaymentStatus('success');
@@ -158,7 +159,7 @@ const NewResPaymentPage = () => {
           status: 'confirmed',
           room_assigned: bookingResult?.data?.assignedRoom?.room_assigned ?? false,
           bookingData: bookingResult,
-          paymentData: paymentResult,
+          paymentData: paymentResult ?? { success: true, data: { id: null } },
         };
 
         setTimeout(() => {

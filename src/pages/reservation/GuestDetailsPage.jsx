@@ -20,7 +20,6 @@ import { createGuestFormValidator } from '../../utils/formValidation';
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
-import { saveGuestDetails } from '../../services/guestService';
 import { GUEST_DETAILS_OPTIONS } from '../../config/constants';
 import usePropertyStore from '../../stores/propertyStore';
 
@@ -45,37 +44,15 @@ const GuestDetailsPage = () => {
     setError(null);
 
     try {
-      const result = await saveGuestDetails(values, searchCriteria, room);
-
-      if (result?.success ?? result?.data) {
-        navigate('/reservation/room-details', {
-          state: {
-            room,
-            searchCriteria,
-            guestDetails: values,
-            savedGuest: result?.data ?? result,
-          },
-        });
-      } else {
-        setError(result?.message ?? t('error.failedToSaveGuestDetails'));
-        setLoading(false);
-      }
+      navigate('/reservation/room-details', {
+        state: {
+          room,
+          searchCriteria,
+          guestDetails: values,
+        },
+      });
     } catch (err) {
-      const { createApiError, createNetworkError } = await import('../../utils/errorHandlers');
-      const apiError = err?.response ? createApiError(err) : createNetworkError(err);
-      
-      // Check if it's an availability error (from the thrown error or detected from message)
-      const isAvailability = err?.isAvailabilityError ?? apiError.type === 'availability';
-      
-      const errorMessageMap = {
-        404: 'Booking endpoint not found. Please contact support.',
-        default: apiError.message || t('error.failedToSaveGuestDetails'),
-      };
-      
-      const errorMessage = errorMessageMap[apiError.status] ?? errorMessageMap.default;
-      
-      setIsAvailabilityError(isAvailability);
-      setError(errorMessage);
+      setError(t('error.failedToSaveGuestDetails'));
       setLoading(false);
     }
   };

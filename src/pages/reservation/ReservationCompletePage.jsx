@@ -10,10 +10,14 @@ import {
   Box,
   Card,
   Divider,
+  Badge,
+  Loader,
+  Alert,
 } from '@mantine/core';
-import { IconHome, IconCalendar, IconUser, IconCreditCard } from '@tabler/icons-react';
+import { IconHome, IconCalendar, IconUser, IconCreditCard, IconCheck, IconX, IconCircleCheck } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
+import { getPaymentAccount } from '../../services/paymentService';
 import '../../styles/animations.css';
 import { BUTTON_STYLES, CONTAINER_STYLES, PAPER_STYLES } from '../../config/constants';
 import PropertyHeader from '../../components/PropertyHeader';
@@ -23,9 +27,11 @@ const ReservationCompletePage = () => {
   const location = useLocation();
   const { t } = useLanguage();
   const [showCelebration, setShowCelebration] = useState(false);
+  const [paymentAccount, setPaymentAccount] = useState(null);
+  const [loadingPayment, setLoadingPayment] = useState(false);
   const checkmarkRef = useRef(null);
 
-  const { reservation, room, guestDetails } = location.state || {};
+  const { reservation, room, guestDetails } = location.state ?? {};
 
   useEffect(() => {
     if (!reservation) {
@@ -57,6 +63,31 @@ const ReservationCompletePage = () => {
           checkmarkRef.current.classList.add('animate-checkmark');
         }
       }, 100);
+    }
+  }, [reservation]);
+
+  useEffect(() => {
+    const fetchPaymentAccount = async () => {
+      const paymentData = reservation?.paymentData;
+      const paymentAccountId = paymentData?.data?.id ?? 
+                               paymentData?.id ?? 
+                               paymentData?.success?.data?.id;
+      
+      if (paymentAccountId) {
+        setLoadingPayment(true);
+        try {
+          const accountData = await getPaymentAccount(paymentAccountId);
+          setPaymentAccount(accountData);
+        } catch (error) {
+          console.error('Failed to fetch payment account:', error);
+        } finally {
+          setLoadingPayment(false);
+        }
+      }
+    };
+
+    if (reservation) {
+      fetchPaymentAccount();
     }
   }, [reservation]);
 
@@ -160,10 +191,91 @@ const ReservationCompletePage = () => {
           </Title>
 
           <Text size="lg" fw={600} c="#C8653D">
-            {t('reservationComplete.reservationNumber')}: {reservation.reservationId || reservation.id || t('common.notAvailable')}
+            {t('reservationComplete.reservationNumber')}: {reservation.reservationId ?? reservation.id ?? t('common.notAvailable')}
           </Text>
 
-          {(room || guestDetails || reservation.checkIn) && (
+          {(() => {
+            const paymentData = reservation?.paymentData;
+            if (!paymentData && !paymentAccount) return null;
+            
+            const status = (paymentAccount?.status ?? paymentData?.status ?? paymentData?.data?.status ?? '').toLowerCase();
+            const isFailure = status === 'failure';
+            const successChecks = [
+              status === 'success',
+              paymentData?.success === true,
+              paymentData?.data?.success === true,
+              paymentData != null && !isFailure
+            ];
+            const isSuccess = successChecks.some(Boolean);
+            
+            if (isFailure) return null;
+            if (!isSuccess) return null;
+            
+            return (
+              <Box style={{ width: '100%', position: 'relative' }}>
+                <Card
+                  withBorder
+                  p="xl"
+                  radius="md"
+                  style={{
+                    backgroundColor: '#f0fdf4',
+                    border: '2px solid #22c55e',
+                    width: '100%',
+                  }}
+                >
+                  <Group gap="lg" align="center" justify="center">
+                    <Box
+                      style={{
+                        width: '80px',
+                        height: '80px',
+                        backgroundColor: '#22c55e',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)',
+                      }}
+                    >
+                      <svg
+                        width="50"
+                        height="50"
+                        viewBox="0 0 50 50"
+                        style={{ position: 'relative', zIndex: 2 }}
+                      >
+                        <circle
+                          cx="25"
+                          cy="25"
+                          r="22"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                        />
+                        <path
+                          d="M 15 25 L 22 32 L 35 18"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </Box>
+                    <Stack gap={6} style={{ flex: 1 }}>
+                      <Text size="xl" fw={700} c="#16a34a">
+                        {t('reservationComplete.paymentSuccessful') ?? 'Payment Successful'}
+                      </Text>
+                      <Text size="md" fw={500} c="#15803d">
+                        {t('reservationComplete.paymentProcessedSuccessfully') ?? 'Your payment has been processed successfully.'}
+                      </Text>
+                    </Stack>
+                  </Group>
+                </Card>
+              </Box>
+            );
+          })()}
+
+          {(room ?? guestDetails ?? reservation.checkIn) && (
             <Card withBorder p="lg" radius="md" style={{ width: '100%', backgroundColor: '#f8f9fa' }}>
               <Stack gap="md">
                 {guestDetails && (
@@ -212,12 +324,92 @@ const ReservationCompletePage = () => {
                     <Group justify="space-between">
                       <Text size="md" fw={600}>{t('reservationComplete.totalAmount')}:</Text>
                       <Text size="lg" fw={700} c="#C8653D">
-                        {reservation.currency || 'EUR'} {reservation.totalAmount}
+                        {reservation.currency ?? 'EUR'} {reservation.totalAmount}
                       </Text>
                     </Group>
                   </>
                 )}
               </Stack>
+            </Card>
+          )}
+
+          {paymentAccount && (
+            <Card withBorder p="lg" radius="md" style={{ width: '100%', backgroundColor: '#f8f9fa' }}>
+              <Stack gap="md">
+                <Group gap="sm" mb="xs">
+                  <IconCreditCard size={20} color="#C8653D" />
+                  <Text size="md" fw={600}>{t('reservationComplete.paymentInformation') ?? 'Payment Information'}</Text>
+                </Group>
+                <Divider />
+                
+                <Group justify="space-between">
+                  <Text size="sm" c="#666666">{t('reservationComplete.paymentAccountId') ?? 'Payment Account ID'}:</Text>
+                  <Text size="sm" fw={600}>{paymentAccount.id}</Text>
+                </Group>
+                
+                <Group justify="space-between">
+                  <Text size="sm" c="#666666">{t('reservationComplete.paymentStatus') ?? 'Status'}:</Text>
+                  <Badge
+                    color={
+                      paymentAccount.status?.toLowerCase() === 'success' ? 'green'
+                        : paymentAccount.status?.toLowerCase() === 'failure' ? 'red'
+                        : 'yellow'
+                    }
+                    variant="light"
+                    leftSection={
+                      paymentAccount.status?.toLowerCase() === 'success' ? (
+                        <IconCheck size={14} />
+                      ) : (
+                        <IconX size={14} />
+                      )
+                    }
+                  >
+                    {paymentAccount.status}
+                  </Badge>
+                </Group>
+                
+                {paymentAccount.failureReason && (
+                  <Group justify="space-between">
+                    <Text size="sm" c="#666666">{t('reservationComplete.failureReason') ?? 'Failure Reason'}:</Text>
+                    <Text size="sm" c="red" fw={600}>{paymentAccount.failureReason}</Text>
+                  </Group>
+                )}
+                
+                <Group justify="space-between">
+                  <Text size="sm" c="#666666">{t('reservationComplete.payerInteraction') ?? 'Payment Method'}:</Text>
+                  <Text size="sm" fw={600}>{paymentAccount.payerInteraction ?? 'N/A'}</Text>
+                </Group>
+                
+                {paymentAccount.target && (
+                  <Group justify="space-between">
+                    <Text size="sm" c="#666666">{t('reservationComplete.targetType') ?? 'Target Type'}:</Text>
+                    <Text size="sm" fw={600}>{paymentAccount.target.type ?? 'N/A'}</Text>
+                  </Group>
+                )}
+                
+                {paymentAccount.created && (
+                  <Group justify="space-between">
+                    <Text size="sm" c="#666666">{t('reservationComplete.paymentCreated') ?? 'Created'}:</Text>
+                    <Text size="sm">{new Date(paymentAccount.created).toLocaleString()}</Text>
+                  </Group>
+                )}
+                
+                {paymentAccount.updated && (
+                  <Group justify="space-between">
+                    <Text size="sm" c="#666666">{t('reservationComplete.paymentUpdated') ?? 'Updated'}:</Text>
+                    <Text size="sm">{new Date(paymentAccount.updated).toLocaleString()}</Text>
+                  </Group>
+                )}
+              </Stack>
+            </Card>
+          )}
+
+          {loadingPayment && (
+            <Card withBorder p="lg" radius="md" style={{ width: '100%', backgroundColor: '#f8f9fa' }}>
+              <Group justify="center">
+                <Loader size="sm" />
+                <Text size="sm" c="#666666">{t('reservationComplete.loadingPayment') ?? 'Loading payment information...'}</Text>
+              </Group>
             </Card>
           )}
 

@@ -129,6 +129,37 @@ export const processPaymentByTerminal = async (reservationId) => {
   }
 };
 
+export const getPaymentAccount = async (paymentAccountId) => {
+  const { propertyId, organizationId } = getPropertyIds();
+  
+  if (!paymentAccountId) {
+    throw new Error('Payment account ID is required.');
+  }
+  
+  try {
+    const url = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/payment-accounts/${paymentAccountId}`;
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (err) {
+    if (shouldUseMock(err)) {
+      return {
+        id: paymentAccountId,
+        status: 'Success',
+        payerInteraction: 'Terminal',
+        isVirtual: false,
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+      };
+    }
+    
+    const errorMessage = err?.response?.data?.message ?? 
+                         err?.response?.data?.error ?? 
+                         err?.message ?? 
+                         'Failed to fetch payment account';
+    throw new Error(errorMessage);
+  }
+};
+
 // Legacy function names for backward compatibility
 export const checkPaymentStatus = getPaymentStatus;
 export const initiatePayment = processPayment;
