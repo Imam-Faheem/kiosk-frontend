@@ -289,7 +289,9 @@
     "checkOut": "Check-Out",
     "confirmationSent": "Bestätigung an Ihre E-Mail gesendet",
     "printReceipt": "Beleg drucken",
-    "returnHome": "Zurück zur Startseite"
+    "returnHome": "Zurück zur Startseite",
+    "paymentSuccessful": "Zahlung erfolgreich",
+    "paymentProcessedSuccessfully": "Ihre Zahlung wurde erfolgreich verarbeitet"
   },
   "lostCard": {
     "title": "Karte verloren",

@@ -16,6 +16,7 @@ import {
 } from '@mantine/core';
 import { IconHome, IconCalendar, IconUser, IconCreditCard, IconCheck, IconX, IconCircleCheck } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import useLanguage from '../../hooks/useLanguage';
 import { getPaymentAccount } from '../../services/paymentService';
 import '../../styles/animations.css';
@@ -27,11 +28,28 @@ const ReservationCompletePage = () => {
   const location = useLocation();
   const { t } = useLanguage();
   const [showCelebration, setShowCelebration] = useState(false);
-  const [paymentAccount, setPaymentAccount] = useState(null);
-  const [loadingPayment, setLoadingPayment] = useState(false);
   const checkmarkRef = useRef(null);
 
   const { reservation, room, guestDetails } = location.state ?? {};
+  
+  const paymentData = reservation?.paymentData;
+  const paymentAccountId = paymentData?.data?.id ?? 
+                           paymentData?.id ?? 
+                           paymentData?.success?.data?.id;
+  
+  const { 
+    data: paymentAccount, 
+    isLoading: loadingPayment,
+    isError: paymentError,
+    error: paymentErrorDetails
+  } = useQuery({
+    queryKey: ['paymentAccount', paymentAccountId],
+    queryFn: () => getPaymentAccount(paymentAccountId),
+    enabled: !!paymentAccountId,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
   useEffect(() => {
     if (!reservation) {
@@ -66,30 +84,6 @@ const ReservationCompletePage = () => {
     }
   }, [reservation]);
 
-  useEffect(() => {
-    const fetchPaymentAccount = async () => {
-      const paymentData = reservation?.paymentData;
-      const paymentAccountId = paymentData?.data?.id ?? 
-                               paymentData?.id ?? 
-                               paymentData?.success?.data?.id;
-      
-      if (paymentAccountId) {
-        setLoadingPayment(true);
-        try {
-          const accountData = await getPaymentAccount(paymentAccountId);
-          setPaymentAccount(accountData);
-        } catch (error) {
-          console.error('Failed to fetch payment account:', error);
-        } finally {
-          setLoadingPayment(false);
-        }
-      }
-    };
-
-    if (reservation) {
-      fetchPaymentAccount();
-    }
-  }, [reservation]);
 
   if (!reservation) {
     return null;
@@ -266,7 +260,7 @@ const ReservationCompletePage = () => {
                         {t('reservationComplete.paymentSuccessful') ?? 'Payment Successful'}
                       </Text>
                       <Text size="md" fw={500} c="#15803d">
-                        {t('reservationComplete.paymentProcessedSuccessfully') ?? 'Your payment has been processed successfully.'}
+                        {t('reservationComplete.paymentProcessedSuccessfully') ?? 'Your payment has been processed successfully'}
                       </Text>
                     </Stack>
                   </Group>
@@ -411,6 +405,14 @@ const ReservationCompletePage = () => {
                 <Text size="sm" c="#666666">{t('reservationComplete.loadingPayment') ?? 'Loading payment information...'}</Text>
               </Group>
             </Card>
+          )}
+
+          {paymentError && (
+            <Alert color="yellow" variant="light" radius="md">
+              <Text size="sm" c="#666666">
+                {t('reservationComplete.paymentLoadError') ?? 'Unable to load payment details. Payment may still be processing.'}
+              </Text>
+            </Alert>
           )}
 
         </Stack>

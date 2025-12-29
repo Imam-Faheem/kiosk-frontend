@@ -117,10 +117,6 @@ export const processPaymentByTerminal = async (reservationId) => {
     const response = await apiClient.post(url);
     return response.data;
   } catch (err) {
-    if (shouldUseMock(err)) {
-      return mockData.payment({ reservationId });
-    }
-    
     const errorMessage = err?.response?.data?.message ?? 
                          err?.response?.data?.error ?? 
                          err?.message ?? 
@@ -141,17 +137,6 @@ export const getPaymentAccount = async (paymentAccountId) => {
     const response = await apiClient.get(url);
     return response.data;
   } catch (err) {
-    if (shouldUseMock(err)) {
-      return {
-        id: paymentAccountId,
-        status: 'Success',
-        payerInteraction: 'Terminal',
-        isVirtual: false,
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
-      };
-    }
-    
     const errorMessage = err?.response?.data?.message ?? 
                          err?.response?.data?.error ?? 
                          err?.message ?? 
