@@ -104,35 +104,18 @@ const hasValidGuestName = (data) => {
   return isNonEmptyString(firstName) && isNonEmptyString(lastName);
 };
 
-const requirePresent = (value, message) => {
-  if (!isPresent(value)) throw new Error(message);
-};
-
-const requireObject = (value, message) => {
-  if (!isObject(value)) throw new Error(message);
-};
-
-const requireValidStatus = (status, message) => {
-  if (!status || !isValidHttpStatus(status)) throw new Error(message);
-};
-
-const requireNonEmpty = (value, message) => {
-  if (!isNonEmpty(value)) throw new Error(message);
-};
-
-const requireValidDate = (value, message) => {
-  if (value && !isValidDate(value)) throw new Error(message);
+const validate = (predicate, value, message) => {
+  if (!predicate(value)) throw new Error(message);
 };
 
 const assertValidInput = (reservationId, lastName) => {
-  if (!isPresent(reservationId)) throw new Error(translateError('reservationIdRequired'));
-  if (!isPresent(lastName)) throw new Error(translateError('lastNameRequired'));
+  validate(isPresent, reservationId, translateError('reservationIdRequired'));
+  validate(isPresent, lastName, translateError('lastNameRequired'));
 };
 
 const assertPropertyConfiguration = (propertyId, organizationId) => {
-  if (!isPresent(propertyId) || !isPresent(organizationId)) {
-    throw new Error('Property configuration is missing.');
-  }
+  const missingIds = [propertyId, organizationId].filter(id => !isPresent(id));
+  if (missingIds.length > 0) throw new Error('Property configuration is missing.');
 };
 
 export const validateReservation = async (data) => {
