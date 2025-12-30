@@ -12,11 +12,6 @@ const getPropertyIds = () => {
   return { propertyId, organizationId };
 };
 
-/**
- * Process payment for a reservation
- * @param {Object} data - Payment data
- * @returns {Promise<Object>} Payment response
- */
 export const processPayment = async (data) => {
   try {
     const response = await apiClient.post('/api/kiosk/v1/payment', data);
@@ -34,11 +29,6 @@ export const processPayment = async (data) => {
   }
 };
 
-/**
- * Get payment status for a reservation
- * @param {string} reservationId - Reservation ID
- * @returns {Promise<Object>} Payment status
- */
 export const getPaymentStatus = async (reservationId) => {
   try {
     const response = await apiClient.get(`/api/kiosk/v1/payment/status/${reservationId}`);
@@ -57,11 +47,6 @@ export const getPaymentStatus = async (reservationId) => {
   }
 };
 
-/**
- * Get payment history for a reservation
- * @param {Object} params - Query parameters
- * @returns {Promise<Object>} Payment history
- */
 export const getPaymentHistory = async (params = {}) => {
   try {
     const queryParams = {};
@@ -81,12 +66,6 @@ export const getPaymentHistory = async (params = {}) => {
   }
 };
 
-/**
- * Process refund for a payment
- * @param {string} transactionId - Transaction ID
- * @param {Object} data - Refund data
- * @returns {Promise<Object>} Refund response
- */
 export const processRefund = async (transactionId, data) => {
   try {
     const response = await apiClient.post(`/api/kiosk/v1/payment/${transactionId}/refund`, data);
