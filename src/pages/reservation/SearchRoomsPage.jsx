@@ -50,7 +50,8 @@ const SearchRoomsPage = () => {
 
   const searchAvailability = useRoomMutation('searchAvailability', {
     onSuccess: (result) => {
-      setSearchResults(result?.data || null);
+      // The service returns the transformed data directly
+      setSearchResults(result || null);
       setErrorMessage(null);
     },
     onError: (err) => {
@@ -83,12 +84,20 @@ const SearchRoomsPage = () => {
     setErrorMessage(null);
     setSearchResults(null);
 
+    // Check if property is configured
+    const propertyId = usePropertyStore.getState().propertyId;
+    if (!propertyId) {
+      setErrorMessage(t('error.propertyNotSelected') || 'Please select a property first. Go to property selection page.');
+      setLoading(false);
+      return;
+    }
+
     const checkInDate = values.checkIn ? (values.checkIn instanceof Date ? values.checkIn.toISOString().split('T')[0] : values.checkIn) : null;
     const checkOutDate = values.checkOut ? (values.checkOut instanceof Date ? values.checkOut.toISOString().split('T')[0] : values.checkOut) : null;
     const adults = values.guests ? Number(values.guests) : 1;
 
     const searchData = {
-      propertyId: usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER',
+      propertyId: propertyId,
       arrival: checkInDate,
       departure: checkOutDate,
       adults: adults || 1,
@@ -96,6 +105,9 @@ const SearchRoomsPage = () => {
 
     try {
       await searchAvailability.mutateAsync(searchData);
+    } catch (err) {
+      // Error is already handled by onError callback, but ensure loading is stopped
+      console.error('Search error:', err);
     } finally {
       setLoading(false);
     }

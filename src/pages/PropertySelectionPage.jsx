@@ -1,25 +1,29 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Container, Paper, Text, Stack, Box, Loader, Alert, Title, Group, Select, Button } from "@mantine/core";
+import { Container, Paper, Text, Stack, Box, Loader, Alert, Title, Group, Select, Button, List } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import usePropertyStore from "../stores/propertyStore";
-import { getProperties } from "../services/propertyService";
 import { getPrimaryButtonStyles, getInputStyles } from "../constants/style.constants";
 import { REVERSE_CAPABILITY_MAP } from "../config/constants";
 import PropertyHeader from "../components/PropertyHeader";
 import useLanguage from "../hooks/useLanguage";
+import { usePropertyQuery } from "../hooks/usePropertyQuery";
 
 const convertCapabilitiesToArray = (capabilitiesObj) =>
   Object.entries(capabilitiesObj ?? {})
     .filter(([_, enabled]) => enabled)
     .map(([key]) => REVERSE_CAPABILITY_MAP[key] ?? key);
 
-const SelectItem = React.forwardRef(({ label, image, ...others }, ref) => (
-  <div ref={ref} {...others} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px' }}>
-    {image && <img src={image} alt={label} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} onError={(e) => e.target.style.display = 'none'} />}
-    <span>{label}</span>
-  </div>
-));
+const SelectItem = React.forwardRef(({ label, image, ...others }, ref) => {
+  // Extract itemComponent prop if it exists to prevent it from being passed to DOM
+  const { itemComponent, ...restProps } = others;
+  return (
+    <div ref={ref} {...restProps} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px' }}>
+      {image && <img src={image} alt={label} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }} onError={(e) => e.target.style.display = 'none'} />}
+      <span>{label}</span>
+    </div>
+  );
+});
 SelectItem.displayName = 'SelectItem';
 
 const PropertySelect = React.memo(({ properties, selectedPropertyId, onPropertySelect, t }) => {
@@ -76,7 +80,18 @@ const PropertyDetails = React.memo(({ properties, selectedPropertyId, t }) => {
 PropertyDetails.displayName = 'PropertyDetails';
 
 const ContinueButton = React.memo(({ onClick, disabled, loading, t }) => (
-  <Button size="xl" onClick={onClick} disabled={disabled} loading={loading} fw={700} tt="uppercase" radius="xl" px={80} py={20} styles={getPrimaryButtonStyles}>
+  <Button 
+    size="xl" 
+    onClick={onClick} 
+    disabled={disabled} 
+    loading={loading} 
+    fw={700} 
+    style={{ textTransform: 'uppercase' }}
+    radius="xl" 
+    px={80} 
+    py={20} 
+    styles={getPrimaryButtonStyles}
+  >
     {loading ? t('common.saving') : t('common.save')}
   </Button>
 ));
@@ -86,37 +101,41 @@ const PropertySelectionPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { configureProperty, propertyId: currentPropertyId, kioskId: currentKioskId, isConfigured } = usePropertyStore();
-  const [properties, setProperties] = useState([]);
   const [selectedPropertyId, setSelectedPropertyId] = useState(currentPropertyId ?? null);
   const [capabilities] = useState({ checkIn: true, reservations: true, cardIssuance: true, lostCard: true });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Use the hook to fetch properties
+  const { data: propertiesResponse, isLoading: loading, error: queryError } = usePropertyQuery({
+    enabled: !isConfigured,
+  });
+
+  const properties = useMemo(() => {
+    return propertiesResponse?.data ?? [];
+  }, [propertiesResponse]);
 
   useEffect(() => {
     if (isConfigured) navigate("/welcome", { replace: true });
   }, [isConfigured, navigate]);
 
+  // Set initial selected property when properties are loaded
   useEffect(() => {
-    const fetchProperties = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await getProperties();
-        const propertiesData = response?.data ?? [];
-        if (response.success === false) setError(response.message || t('error.failedToLoadProperties'));
-        setProperties(propertiesData);
-        if (propertiesData.length > 0 && !currentPropertyId) {
-          setSelectedPropertyId(propertiesData[0]?.id ?? propertiesData[0]?.property_id);
-        }
-      } catch (err) {
-        setError(err.message || t('error.failedToLoadProperties'));
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProperties();
-  }, [currentPropertyId, t]);
+    if (properties.length > 0 && !currentPropertyId && !selectedPropertyId) {
+      setSelectedPropertyId(properties[0]?.id ?? properties[0]?.property_id);
+    }
+  }, [properties, currentPropertyId, selectedPropertyId]);
+
+  // Set error from query
+  useEffect(() => {
+    if (queryError) {
+      setError(queryError.message || t('error.failedToLoadProperties'));
+    } else if (propertiesResponse && !propertiesResponse.success) {
+      setError(propertiesResponse.message || t('error.failedToLoadProperties'));
+    } else {
+      setError(null);
+    }
+  }, [queryError, propertiesResponse, t]);
 
   const handlePropertySelect = useCallback((propertyId) => setSelectedPropertyId(propertyId), []);
 
@@ -177,10 +196,56 @@ const PropertySelectionPage = () => {
             <>
               <PropertySelect properties={properties} selectedPropertyId={selectedPropertyId} onPropertySelect={handlePropertySelect} t={t} />
               <PropertyDetails properties={properties} selectedPropertyId={selectedPropertyId} t={t} />
+              <Box mt="md">
+                <Text size="sm" fw={600} mb="md">{t('propertySelection.availableProperties') || 'Available Properties'}:</Text>
+                <List spacing="xs" size="sm" withPadding>
+                  {properties.map((property) => {
+                    const propertyId = property?.id ?? property?.property_id;
+                    const propertyName = property?.name ?? propertyId ?? "";
+                    const isSelected = propertyId === selectedPropertyId;
+                    return (
+                      <List.Item
+                        key={propertyId}
+                        style={{
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          backgroundColor: isSelected ? '#fff5f0' : 'transparent',
+                          border: isSelected ? '2px solid #C8653D' : '1px solid #E9ECEF',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onClick={() => handlePropertySelect(propertyId)}
+                      >
+                        <Group gap="sm">
+                          {property?.configuration?.logo_url && (
+                            <img
+                              src={property.configuration.logo_url}
+                              alt={propertyName}
+                              style={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '6px',
+                                objectFit: 'cover',
+                              }}
+                              onError={(e) => e.target.style.display = 'none'}
+                            />
+                          )}
+                          <Text size="sm" fw={isSelected ? 600 : 400}>
+                            {propertyName}
+                          </Text>
+                          {isSelected && (
+                            <Text size="xs" c="dimmed">({t('propertySelection.selected') || 'Selected'})</Text>
+                          )}
+                        </Group>
+                      </List.Item>
+                    );
+                  })}
+                </List>
+              </Box>
             </>
-          ) : (
+          ) : !loading ? (
             <Box mb="xl"><Text c="dimmed" ta="center">{t('propertySelection.noPropertiesAvailable')}</Text></Box>
-          )}
+          ) : null}
         </Stack>
         <Stack align="center" gap="md">
           <ContinueButton onClick={handleContinue} disabled={!selectedPropertyId || saving} loading={saving} t={t} />

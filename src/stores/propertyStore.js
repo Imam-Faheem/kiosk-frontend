@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { STORAGE_KEYS } from '../config/constants';
+
 
 const usePropertyStore = create(
   persist(
@@ -70,8 +72,21 @@ const usePropertyStore = create(
 
       // Update all property configuration at once
       configureProperty: (config) => {
+        const propertyData = config.propertyData || {};
+        const propertyId = config.propertyId || propertyData.property_id || propertyData.id;
+        const organizationId = propertyData.organization_id || propertyData.organizationId;
+
+        // Save to localStorage for API client
+        if (propertyId && organizationId) {
+          localStorage.setItem(STORAGE_KEYS.KIOSK_PROPERTY, JSON.stringify({
+            propertyId,
+            organizationId,
+            kioskId: config.kioskId || null
+          }));
+        }
+
         set({
-          propertyId: config.propertyId,
+          propertyId,
           kioskId: config.kioskId || null,
           capabilities: config.capabilities || {
             checkIn: true,
@@ -84,6 +99,7 @@ const usePropertyStore = create(
           configuredAt: new Date().toISOString(),
         });
       },
+
     }),
     {
       name: 'property-storage',

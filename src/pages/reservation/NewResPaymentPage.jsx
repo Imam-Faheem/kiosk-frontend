@@ -34,7 +34,10 @@ const NewResPaymentPage = () => {
         hasProcessed.current = true;
         setPaymentStatus('processing');
         
-        const propertyId = usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
+        const propertyId = usePropertyStore.getState().propertyId;
+        if (!propertyId) {
+          throw new Error('Property ID is required. Please select a property first.');
+        }
         const hotelId = propertyId; // Use propertyId as hotelId for the endpoint
         
         // Prepare booking data for Apaleo

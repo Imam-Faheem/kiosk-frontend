@@ -22,7 +22,6 @@ import usePropertyStore from '../../stores/propertyStore';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 import { getRoomDetails } from '../../services/roomService';
-import { BATHROOM_IMAGE_URL } from '../../services/mockData';
 import UnoLogo from '../../assets/uno.jpg';
 
 const RoomDetailPage = () => {
@@ -46,7 +45,10 @@ const RoomDetailPage = () => {
         if (!hasImages) {
           setLoading(true);
           try {
-            const propertyId = usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
+            const propertyId = usePropertyStore.getState().propertyId;
+            if (!propertyId) {
+              throw new Error('Property ID is required');
+            }
             const result = await getRoomDetails(room.roomTypeId, propertyId);
             
             if (result.success && result.data && result.data.images) {
@@ -92,17 +94,17 @@ const RoomDetailPage = () => {
   // Use roomData if available, otherwise fallback to room
   const displayRoom = roomData || room;
   
-  // Ensure images array exists - combine room images with bathroom image
+  // Ensure images array exists
   const baseImages = displayRoom?.images && Array.isArray(displayRoom.images) && displayRoom.images.length > 0
     ? displayRoom.images
     : [UnoLogo];
   
-  // Always include bathroom image as the third image
+  // Use available images or default logo
   const roomImages = baseImages.length >= 2 
-    ? [...baseImages.slice(0, 2), BATHROOM_IMAGE_URL]
+    ? baseImages.slice(0, 3)
     : baseImages.length === 1
-    ? [baseImages[0], UnoLogo, BATHROOM_IMAGE_URL]
-    : [UnoLogo, UnoLogo, BATHROOM_IMAGE_URL];
+    ? [baseImages[0], UnoLogo]
+    : [UnoLogo];
   const formatDate = (value) => {
     if (!value) return '';
     const date = new Date(value);

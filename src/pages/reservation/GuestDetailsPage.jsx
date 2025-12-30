@@ -14,6 +14,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { guestValidationSchema, guestInitialValues } from '../../schemas/guest.schema';
 import useLanguage from '../../hooks/useLanguage';
+import usePropertyStore from '../../stores/propertyStore';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import { saveGuestDetails } from '../../services/guestService';
@@ -51,7 +52,7 @@ const GuestDetailsPage = () => {
       // Prepare guest data with propertyId if available
       const guestData = {
         ...values,
-        propertyId: process.env.REACT_APP_PROPERTY_ID || 'BER',
+        propertyId: usePropertyStore.getState().propertyId,
         // reservationId can be added later when reservation is created
       };
 

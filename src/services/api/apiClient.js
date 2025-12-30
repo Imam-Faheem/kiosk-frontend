@@ -56,7 +56,7 @@ apiClient.interceptors.request.use(
       (url.includes('/api/kiosk/v1/organizations') && url.includes('/properties')) ||
       (url.includes('/api/core/v1/organizations') && url.includes('/apaleo/properties'))
     ) && method === 'get';
-    
+
     // For public endpoint, explicitly ensure no Authorization header is sent
     if (isPublicPropertyEndpoint) {
       // Remove Authorization header completely from all possible locations
@@ -75,28 +75,32 @@ apiClient.interceptors.request.use(
       // Don't add X-Property-ID for public endpoint
       return config;
     }
-    
-    // Add X-Property-ID and X-Organization-ID for kiosk endpoints
-    const isKioskEndpoint = config.url?.includes('/api/kiosk/v1');
-    if (isKioskEndpoint) {
-      const { propertyId, organizationId } = getPropertyContext();
-      config.headers['X-Property-ID'] = propertyId;
-      config.headers['X-Organization-ID'] = organizationId;
 
+    // Add X-Property-ID and X-Organization-ID for kiosk-related endpoints
+    const { propertyId, organizationId } = getPropertyContext();
+
+    if (propertyId) {
+      config.headers['X-Property-ID'] = propertyId;
+    }
+    if (organizationId) {
+      config.headers['X-Organization-ID'] = organizationId;
+    }
+
+    const isKioskEndpoint = url.includes('/api/kiosk/v1') ||
+      url.includes('/kiosk') ||
+      url.includes('/reservations') ||
+      url.includes('/rooms') ||
+      url.includes('/properties') ||
+      url.includes('/api/v1');
+    if (isKioskEndpoint) {
       // Add X-Idempotency-Key for POST/PUT requests (except for status checks)
-      const needsIdempotency = ['post', 'put', 'patch'].includes(config.method?.toLowerCase()) &&
-                                !config.url?.includes('/status');
+      const needsIdempotency = ['post', 'put', 'patch'].includes(method) &&
+        !url.includes('/status');
       if (needsIdempotency && !config.headers['X-Idempotency-Key']) {
-        const prefix = config.url?.includes('/payment') ? 'payment' :
-                      config.url?.includes('/key') ? 'key' :
-                      config.url?.includes('/check-in') ? 'checkin' : 'req';
+        const prefix = url.includes('/payment') ? 'payment' :
+          url.includes('/key') ? 'key' :
+            url.includes('/check-in') ? 'checkin' : 'req';
         config.headers['X-Idempotency-Key'] = generateIdempotencyKey(prefix);
-      }
-    } else {
-      // For non-kiosk endpoints, try to add X-Property-ID from localStorage
-      const { propertyId } = getPropertyContext();
-      if (propertyId) {
-        config.headers['X-Property-ID'] = propertyId;
       }
     }
 
@@ -114,21 +118,38 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     // Handle 400/403 errors related to property/organization ID
+    // Only redirect for specific missing header errors, not all property-related errors
     if (error.response?.status === 400 || error.response?.status === 403) {
-      const message = error.response?.data?.message ?? '';
-      if (message.includes('X-Property-ID') || message.includes('X-Organization-ID') || message.includes('property') || message.includes('organization')) {
-        // Redirect to property selector if property is missing
-        if (typeof window !== 'undefined' && !window.location.pathname.includes('/property-selector')) {
+      const message = (error.response?.data?.message ?? '').toLowerCase();
+      const isMissingHeaderError = 
+        message.includes('x-property-id') || 
+        message.includes('x-organization-id') ||
+        message.includes('missing property id') ||
+        message.includes('missing organization id') ||
+        message.includes('property id is required') ||
+        message.includes('organization id is required');
+      
+      // Only redirect for missing header errors, not validation or other property errors
+      // Also, don't redirect if we're already on a reservation or check-in page (let those pages handle their own errors)
+      if (isMissingHeaderError && typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        const isReservationOrCheckinPage = 
+          currentPath.includes('/reservation') || 
+          currentPath.includes('/checkin') ||
+          currentPath.includes('/lost-card');
+        
+        // Only redirect if not on a reservation/check-in page and not already on property-selector
+        if (!isReservationOrCheckinPage && !currentPath.includes('/property-selector')) {
           window.location.href = '/property-selector';
         }
       }
     }
-    
+
     // Handle network errors
     if (!error.response) {
       error.message = 'Network error. Please check your connection.';
     }
-    
+
     return Promise.reject(error);
   }
 );

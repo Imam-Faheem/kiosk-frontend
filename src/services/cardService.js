@@ -114,9 +114,11 @@ export const prepareCardRegenerationData = (guestData, validationData) => {
     throw new Error(translateError('reservationNotFound'));
   }
 
-  const propertyId = guestData.propertyId ?? 
-                    usePropertyStore.getState().propertyId ?? 
-                    process.env.REACT_APP_PROPERTY_ID;
+  const propertyId = guestData.propertyId ?? usePropertyStore.getState().propertyId;
+  
+  if (!propertyId) {
+    throw new Error('Property ID is required. Please select a property first.');
+  }
   
   return {
     reservation_id: reservationId,

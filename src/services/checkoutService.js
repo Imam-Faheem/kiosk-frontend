@@ -1,5 +1,4 @@
 import { apiClient } from './api/apiClient';
-import { mockData, shouldUseMock } from './mockData';
 import { translateError } from '../utils/translations';
 
 /**
@@ -12,10 +11,6 @@ export const processCheckout = async (data) => {
     const response = await apiClient.post('/api/kiosk/v1/checkout', data);
     return response.data;
   } catch (err) {
-    if (shouldUseMock(err)) {
-      return mockData.checkout(data);
-    }
-    
     const errorMessage = err?.response?.data?.message ?? 
                          err?.response?.data?.error ?? 
                          err?.message ?? 
@@ -34,10 +29,6 @@ export const getCheckoutStatus = async (reservationId) => {
     const response = await apiClient.get(`/api/kiosk/v1/checkout/${reservationId}/status`);
     return response.data;
   } catch (err) {
-    if (shouldUseMock(err)) {
-      return mockData.checkoutStatus(reservationId);
-    }
-    
     if (err?.response?.status === 404) {
       throw new Error(translateError('checkoutNotFound'));
     }
