@@ -129,6 +129,27 @@ export const processPaymentByTerminal = async (reservationId) => {
   }
 };
 
+/**
+ * Get payment account details
+ * @param {string} paymentAccountId - Payment account ID
+ * @returns {Promise<Object>} Payment account response
+ */
+export const getPaymentAccount = async (paymentAccountId) => {
+  if (!paymentAccountId) {
+    throw new Error('Payment account ID is required.');
+  }
+  try {
+    const response = await apiClient.get(`/api/kiosk/v1/payment-accounts/${paymentAccountId}`);
+    return response.data;
+  } catch (err) {
+    const errorMessage = err?.response?.data?.message ??
+                         err?.response?.data?.error ??
+                         err?.message ??
+                         'Failed to fetch payment account';
+    throw new Error(errorMessage);
+  }
+};
+
 // Legacy function names for backward compatibility
 export const checkPaymentStatus = getPaymentStatus;
 export const initiatePayment = processPayment;
