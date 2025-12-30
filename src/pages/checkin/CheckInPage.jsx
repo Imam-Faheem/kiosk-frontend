@@ -109,33 +109,140 @@ const CheckInPage = () => {
     return false;
   };
 
+  const extractLastNameFromResponse = (data) => {
+    if (!data) return null;
+    
+    const primaryGuest = data?.primaryGuest;
+    if (primaryGuest?.lastName) {
+      return primaryGuest.lastName.trim().toLowerCase();
+    }
+    
+    const folios = data?.folios;
+    if (Array.isArray(folios) && folios.length > 0) {
+      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
+      const debitor = mainFolio?.debitor;
+      if (debitor?.name) {
+        return debitor.name.trim().toLowerCase();
+      }
+    }
+    
+    const guestName = data?.guest_name;
+    if (guestName) {
+      const lastName = guestName.last_name ?? guestName.lastName;
+      if (lastName) {
+        return lastName.trim().toLowerCase();
+      }
+    }
+    
+    return null;
+  };
+
+  const validateLastNameMatch = (submittedLastName, apiData) => {
+    const submittedLastNameLower = submittedLastName?.trim().toLowerCase();
+    if (!submittedLastNameLower) {
+      return false;
+    }
+
+    const responseLastName = extractLastNameFromResponse(apiData);
+    if (!responseLastName) {
+      return false;
+    }
+
+    return submittedLastNameLower === responseLastName;
+  };
+
+  const extractReservationIdFromResponse = (data) => {
+    if (!data) return null;
+    
+    const sources = [
+      data?.bookingId,
+      data?.reservation_id,
+      data?.id,
+      data?.reservation?.id,
+      data?.reservation?.bookingId,
+      data?.folios?.[0]?.bookingId,
+      data?.folios?.[0]?.reservation?.bookingId,
+      data?.reservations?.[0]?.id,
+    ];
+    return sources.find(id => id != null);
+  };
+
+  const validateReservationIdMatch = (submittedReservationId, apiData) => {
+    const submittedId = submittedReservationId?.trim().toUpperCase();
+    if (!submittedId) {
+      return false;
+    }
+
+    const responseId = extractReservationIdFromResponse(apiData);
+    if (!responseId) {
+      return false;
+    }
+
+    return submittedId === responseId.toString().toUpperCase();
+  };
+
   const handleSubmit = async (values) => {
     setError(null);
+    form.clearErrors();
     setIsLoading(true);
 
     try {
+      const submittedReservationId = getFormValue(values, 'reservationId', 'reservation_id');
+      const submittedLastName = getFormValue(values, 'lastName', 'last_name');
+      
       const result = await validateReservation.mutateAsync({
-        reservationId: getFormValue(values, 'reservationId', 'reservation_id'),
-        lastName: getFormValue(values, 'lastName', 'last_name'),
+        reservationId: submittedReservationId,
+        lastName: submittedLastName,
       });
 
       const apiData = result.data;
       
       if (!apiData || !hasValidGuestData(apiData)) {
+        form.setFieldError('reservationId', t('error.reservationNotFound'));
         throw new Error(t('error.reservationNotFound'));
+      }
+
+      if (!validateLastNameMatch(submittedLastName, apiData)) {
+        form.setFieldError('lastName', t('error.lastNameMismatch'));
+        throw new Error(t('error.lastNameMismatch'));
       }
 
       const reservationId = extractReservationId(result, values);
       const checkInData = await getCheckInData(apiData, reservationId);
 
       if (!checkInData || !hasValidGuestData(checkInData)) {
+        form.setFieldError('reservationId', t('error.reservationNotFound'));
         throw new Error(t('error.reservationNotFound'));
+      }
+
+      if (!validateLastNameMatch(submittedLastName, checkInData)) {
+        form.setFieldError('lastName', t('error.lastNameMismatch'));
+        throw new Error(t('error.lastNameMismatch'));
       }
 
       navigateToPaymentCheck(apiData, checkInData);
     } catch (error) {
-      const errorMessage = error?.message ?? t('error.reservationNotFound');
-      setError(errorMessage);
+      const errorStatus = error?.response?.status;
+      const errorMessage = error?.message ?? '';
+      const isReservationError = errorStatus === 404 || 
+                                 errorStatus === 500 ||
+                                 errorMessage.includes('reservation') || 
+                                 errorMessage.includes('Reservation') ||
+                                 errorMessage.includes('status code 500') ||
+                                 errorMessage.includes('Request failed');
+      const isLastNameError = errorStatus === 403 || 
+                              errorMessage.includes('last name') || 
+                              errorMessage.includes('Last name') ||
+                              errorMessage.includes('lastName');
+      
+      if (isReservationError) {
+        form.setFieldError('reservationId', t('error.reservationNotFound'));
+      } else if (isLastNameError) {
+        form.setFieldError('lastName', t('error.lastNameMismatch'));
+      } else {
+        form.setFieldError('reservationId', t('error.reservationNotFound'));
+      }
+      
       setIsLoading(false);
     }
   };

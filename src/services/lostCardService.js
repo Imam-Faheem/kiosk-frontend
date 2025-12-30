@@ -55,7 +55,8 @@ export const validateLostCardGuest = async (data) => {
   }
 
   const { propertyId, organizationId } = getPropertyIds();
-  if (!isPresent(propertyId) || !isPresent(organizationId)) {
+  const missingIds = [propertyId, organizationId].filter(id => !isPresent(id));
+  if (missingIds.length > 0) {
     throw new Error('Property configuration is missing.');
   }
 
@@ -75,7 +76,13 @@ export const validateLostCardGuest = async (data) => {
     const reservationLastName = apiData?.primaryGuest?.lastName?.trim().toLowerCase();
     const lastNameLower = lastName?.trim().toLowerCase();
 
-    if (!lastNameLower || !reservationLastName || lastNameLower !== reservationLastName) {
+    const validationChecks = [
+      !lastNameLower,
+      !reservationLastName,
+      lastNameLower !== reservationLastName
+    ];
+    
+    if (validationChecks.some(check => check === true)) {
       throw new Error(translateError('lastNameMismatch'));
     }
 

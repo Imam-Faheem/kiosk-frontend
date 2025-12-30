@@ -37,32 +37,145 @@ const LostCardPage = () => {
     },
   });
 
+  const hasValidGuestData = (data) => {
+    if (!data) return false;
+    
+    const primaryGuest = data?.primaryGuest;
+    if (primaryGuest) {
+      const firstName = primaryGuest.firstName ?? '';
+      const lastName = primaryGuest.lastName ?? '';
+      return firstName.trim().length > 0 && lastName.trim().length > 0;
+    }
+    
+    const folios = data?.folios;
+    if (Array.isArray(folios) && folios.length > 0) {
+      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
+      const debitor = mainFolio?.debitor;
+      if (debitor) {
+        const firstName = debitor.firstName ?? '';
+        const lastName = debitor.name ?? '';
+        return firstName.trim().length > 0 && lastName.trim().length > 0;
+      }
+    }
+    
+    const guestName = data?.guest_name;
+    if (guestName) {
+      const firstName = guestName.first_name ?? guestName.firstName ?? '';
+      const lastName = guestName.last_name ?? guestName.lastName ?? '';
+      return firstName.trim().length > 0 && lastName.trim().length > 0;
+    }
+    
+    return false;
+  };
+
+  const extractLastNameFromResponse = (data) => {
+    if (!data) return null;
+    
+    const primaryGuest = data?.primaryGuest;
+    if (primaryGuest?.lastName) {
+      return primaryGuest.lastName.trim().toLowerCase();
+    }
+    
+    const folios = data?.folios;
+    if (Array.isArray(folios) && folios.length > 0) {
+      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
+      const debitor = mainFolio?.debitor;
+      if (debitor?.name) {
+        return debitor.name.trim().toLowerCase();
+      }
+    }
+    
+    const guestName = data?.guest_name;
+    if (guestName) {
+      const lastName = guestName.last_name ?? guestName.lastName;
+      if (lastName) {
+        return lastName.trim().toLowerCase();
+      }
+    }
+    
+    return null;
+  };
+
+  const validateLastNameMatch = (submittedLastName, apiData) => {
+    const submittedLastNameLower = submittedLastName?.trim().toLowerCase();
+    if (!submittedLastNameLower) {
+      return false;
+    }
+
+    const responseLastName = extractLastNameFromResponse(apiData);
+    if (!responseLastName) {
+      return false;
+    }
+
+    return submittedLastNameLower === responseLastName;
+  };
+
   const handleSubmit = async (values) => {
     setError(null);
+    form.clearErrors();
     setIsLoading(true);
     
     try {
-      // Validate guest using real API
+      const submittedLastName = values.lastName?.trim();
+      
       const result = await validateLostCardGuest({
         reservationNumber: values.reservationNumber,
         roomNumber: values.roomType,
-        lastName: values.lastName,
+        lastName: submittedLastName,
       });
       
-      if (result.success) {
-        // Navigate to regenerate card page with validated data
-        navigate('/lost-card/regenerate', {
-          state: {
-            guestData: result.data,
-            validationData: values,
-          },
-        });
-      } else {
-        throw new Error(result.message || t('error.validationFailed'));
+      if (!result.success) {
+        throw new Error(result.message ?? t('error.validationFailed'));
       }
+
+      if (!result.data) {
+        throw new Error(t('error.reservationNotFound'));
+      }
+
+      const guestData = result.data;
+      
+      if (!hasValidGuestData(guestData)) {
+        throw new Error(t('error.reservationNotFound'));
+      }
+
+      if (!validateLastNameMatch(submittedLastName, guestData)) {
+        form.setFieldError('lastName', t('error.lastNameMismatch'));
+        throw new Error(t('error.lastNameMismatch'));
+      }
+
+      const hasValidRoomData = guestData?.unit?.name ?? guestData?.unit?.id;
+      if (!hasValidRoomData) {
+        throw new Error(t('error.reservationNotFound'));
+      }
+      
+      navigate('/lost-card/regenerate', {
+        state: {
+          guestData: guestData,
+          validationData: values,
+        },
+      });
     } catch (err) {
-      const errorMessage = err?.message || t('error.guestValidationFailed');
-      setError(errorMessage);
+      const errorStatus = err?.response?.status;
+      const errorMessage = err?.message ?? t('error.guestValidationFailed');
+      
+      const isReservationError = errorStatus === 404 || 
+                                 errorStatus === 500 ||
+                                 errorMessage.includes('reservation') || 
+                                 errorMessage.includes('Reservation') ||
+                                 errorMessage.includes('status code 500') ||
+                                 errorMessage.includes('Request failed');
+      const isLastNameError = errorStatus === 403 || 
+                             errorMessage.includes('last name') || 
+                             errorMessage.includes('Last name') ||
+                             errorMessage.includes('lastName');
+      
+      if (isReservationError) {
+        form.setFieldError('reservationNumber', t('error.reservationNotFound'));
+      } else if (isLastNameError) {
+        form.setFieldError('lastName', t('error.lastNameMismatch'));
+      } else {
+        form.setFieldError('reservationNumber', t('error.reservationNotFound'));
+      }
     } finally {
       setIsLoading(false);
     }
