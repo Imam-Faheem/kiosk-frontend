@@ -16,7 +16,7 @@ import {
   Alert,
   Loader,
 } from '@mantine/core';
-import { IconChevronLeft, IconChevronRight, IconCheck, IconEdit } from '@tabler/icons-react';
+import { IconCheck, IconEdit } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import usePropertyStore from '../../stores/propertyStore';
@@ -25,7 +25,8 @@ import BackButton from '../../components/BackButton';
 import { getRoomDetails, calculateRoomPricing } from '../../services/roomService';
 import { createBooking } from '../../services/bookingService';
 import { useMutation } from '@tanstack/react-query';
-import UnoLogo from '../../assets/uno.jpg';
+
+const NO_IMAGE_PATH = '/no-image.png';
 
 const BookingDetailsPage = () => {
   const navigate = useNavigate();
@@ -58,18 +59,18 @@ const BookingDetailsPage = () => {
             if (result.success && result.data && result.data.images) {
               setRoomData({
                 ...room,
-                images: result.data.images.length > 0 ? result.data.images : [UnoLogo],
+                images: result.data.images.length > 0 ? result.data.images : [],
               });
             } else {
               setRoomData({
                 ...room,
-                images: [UnoLogo],
+                images: [],
               });
             }
           } catch (err) {
             setRoomData({
               ...room,
-              images: [UnoLogo],
+              images: [],
             });
           } finally {
             setLoading(false);
@@ -82,7 +83,7 @@ const BookingDetailsPage = () => {
           ...room,
           images: room.images && Array.isArray(room.images) && room.images.length > 0 
             ? room.images 
-            : [UnoLogo],
+            : [],
         });
       }
     };
@@ -99,15 +100,97 @@ const BookingDetailsPage = () => {
       setPricing(calculatedPricing);
     }
   }, [displayRoom, searchCriteria]);
-  const baseImages = displayRoom?.images && Array.isArray(displayRoom.images) && displayRoom.images.length > 0
-    ? displayRoom.images
-    : [UnoLogo];
+
+  // Extract images from unitGroup payload (offer data) or room data
+  const getRoomImages = () => {
+    // First, try to extract images from unitGroup in offer data (this is the primary source)
+    if (displayRoom?._offerData) {
+      const offer = displayRoom._offerData;
+      const unitGroup = offer.unitGroup || {};
+      
+      // Try to extract images from unitGroup - check various possible fields
+      let unitGroupImages = [];
+      
+      // Check if images is an array
+      if (Array.isArray(unitGroup.images) && unitGroup.images.length > 0) {
+        unitGroupImages = unitGroup.images;
+      }
+      // Check if images is an object with array property
+      else if (unitGroup.images && Array.isArray(unitGroup.images.items)) {
+        unitGroupImages = unitGroup.images.items;
+      }
+      // Check pictures
+      else if (Array.isArray(unitGroup.pictures) && unitGroup.pictures.length > 0) {
+        unitGroupImages = unitGroup.pictures;
+      }
+      // Check photos
+      else if (Array.isArray(unitGroup.photos) && unitGroup.photos.length > 0) {
+        unitGroupImages = unitGroup.photos;
+      }
+      // Check media
+      else if (Array.isArray(unitGroup.media) && unitGroup.media.length > 0) {
+        unitGroupImages = unitGroup.media;
+      }
+      
+      // If we found images in unitGroup, extract URLs and return them
+      if (unitGroupImages.length > 0) {
+        // Map images to URLs - handle both string URLs and objects with url property
+        const imageUrls = unitGroupImages
+          .map((img) => {
+            if (typeof img === 'string') {
+              return img;
+            } else if (img && typeof img === 'object') {
+              return img.url || img.src || img.imageUrl || img.image_url || img.link || null;
+            }
+            return null;
+          })
+          .filter((url) => url != null && url !== '');
+        
+        if (imageUrls.length > 0) {
+          return imageUrls.slice(0, 3);
+        }
+      }
+    }
+    
+    // Fallback: try to get images from room data
+    const roomImages = displayRoom?.images && Array.isArray(displayRoom.images) && displayRoom.images.length > 0
+      ? displayRoom.images
+      : [];
+    
+    // Extract URLs from room images if they're objects
+    if (roomImages.length > 0) {
+      const imageUrls = roomImages
+        .map((img) => {
+          if (typeof img === 'string') {
+            return img;
+          } else if (img && typeof img === 'object') {
+            return img.url || img.src || img.imageUrl || img.image_url || img.link || null;
+          }
+          return null;
+        })
+        .filter((url) => url != null && url !== '');
+      
+      if (imageUrls.length > 0) {
+        return imageUrls.slice(0, 3);
+      }
+    }
+    
+    return [];
+  };
+
+  const baseImages = getRoomImages();
   
-  const roomImages = baseImages.length >= 2 
+  // Limit to max 3 images (including hero), use fallback if no images
+  const roomImages = baseImages.length > 0
     ? baseImages.slice(0, 3)
-    : baseImages.length === 1
-    ? [baseImages[0], UnoLogo]
-    : [UnoLogo];
+    : [NO_IMAGE_PATH];
+  
+  // Ensure selectedImageIndex is valid
+  useEffect(() => {
+    if (selectedImageIndex >= roomImages.length && roomImages.length > 0) {
+      setSelectedImageIndex(0);
+    }
+  }, [roomImages.length, selectedImageIndex]);
 
   const formatDate = (value) => {
     if (!value) return '';
@@ -135,17 +218,20 @@ const BookingDetailsPage = () => {
     mutationFn: createBooking,
     onSuccess: (result) => {
       // Extract reservation ID from various possible response structures
+      // The API might return: { data: { reservations: [{ id, bookingId }] } } or similar
       const reservationIdSources = [
-        result?.bookingId,
-        result?.id,
-        result?.reservationId,
-        result?.reservation?.id,
-        result?.reservation?.bookingId,
+        result?.data?.reservations?.[0]?.id,
+        result?.data?.reservations?.[0]?.bookingId,
         result?.reservations?.[0]?.id,
         result?.reservations?.[0]?.bookingId,
         result?.data?.bookingId,
         result?.data?.id,
         result?.data?.reservationId,
+        result?.bookingId,
+        result?.id,
+        result?.reservationId,
+        result?.reservation?.id,
+        result?.reservation?.bookingId,
       ];
       const reservationId = reservationIdSources.find(id => id != null && id !== 'BOOKING-CREATED');
 
@@ -174,6 +260,12 @@ const BookingDetailsPage = () => {
     },
     onError: (error) => {
       console.error('Booking creation failed:', error);
+      const errorMessage = error?.response?.data?.message || 
+                          error?.response?.data?.error || 
+                          error?.message || 
+                          t('error.bookingFailed') || 
+                          'Failed to create booking. Please try again.';
+      setValidationError(errorMessage);
     },
   });
 
@@ -191,31 +283,74 @@ const BookingDetailsPage = () => {
       return;
     }
 
-    const bookingPayload = {
-      unitGroupId: displayRoom?.unitGroupId || displayRoom?.roomTypeId || displayRoom?._offerData?.unitGroup?.id,
-      ratePlanId: displayRoom?.ratePlanId || displayRoom?._offerData?.ratePlan?.id,
-      arrival: searchCriteria?.checkIn,
-      departure: searchCriteria?.checkOut,
-      adults: Number(searchCriteria?.guests) || 1,
-      primaryGuest: {
-        firstName: guestDetails?.firstName,
-        lastName: guestDetails?.lastName,
-        email: guestDetails?.email,
-        phone: guestDetails?.phone,
-        address: {
-          addressLine1: guestDetails?.addressStreet,
-          city: guestDetails?.addressCity,
-          postalCode: guestDetails?.addressPostal,
-          countryCode: guestDetails?.country,
-          ...(guestDetails?.addressState ? { region: guestDetails.addressState } : {}),
-        },
-      },
-    };
+    // Extract unitGroup and ratePlan IDs from offer data
+    const offerData = displayRoom?._offerData;
+    const unitGroup = offerData?.unitGroup || {};
+    const ratePlan = offerData?.ratePlan || {};
+    
+    const unitGroupId = displayRoom?.unitGroupId || displayRoom?.roomTypeId || unitGroup.id || unitGroup.code;
+    const ratePlanId = displayRoom?.ratePlanId || ratePlan.id || ratePlan.code;
 
-    if (!bookingPayload.unitGroupId || !bookingPayload.ratePlanId) {
+    if (!unitGroupId || !ratePlanId) {
       setValidationError(t('error.missingRoomInformation') || 'Missing room information. Please go back and select a room.');
       return;
     }
+
+    // Format dates to YYYY-MM-DD
+    const formatDateForAPI = (dateStr) => {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return date.toISOString().split('T')[0];
+    };
+
+    // Build the booking payload according to the required API structure
+    const bookingPayload = {
+      reservations: [
+        {
+          arrival: formatDateForAPI(searchCriteria?.checkIn),
+          departure: formatDateForAPI(searchCriteria?.checkOut),
+          adults: Number(searchCriteria?.guests) || 1,
+          guestComment: guestDetails?.comment || '',
+          channelCode: 'Direct',
+          primaryGuest: {
+            title: guestDetails?.title || 'Mr',
+            gender: guestDetails?.gender || 'Male',
+            firstName: guestDetails?.firstName || '',
+            lastName: guestDetails?.lastName || '',
+            email: guestDetails?.email || '',
+            phone: guestDetails?.phone || '',
+            address: {
+              addressLine1: guestDetails?.addressStreet || '',
+              postalCode: guestDetails?.addressPostal || '',
+              city: guestDetails?.addressCity || '',
+              countryCode: guestDetails?.country || 'GB',
+            },
+            ...(guestDetails?.identificationType && guestDetails?.identificationNumber ? {
+              identificationDocument: {
+                type: guestDetails.identificationType,
+                number: guestDetails.identificationNumber,
+              },
+            } : {}),
+            ...(guestDetails?.nationalityCountryCode ? {
+              nationalityCountryCode: guestDetails.nationalityCountryCode,
+            } : {}),
+            ...(guestDetails?.birthDate ? {
+              birthDate: formatDateForAPI(guestDetails.birthDate),
+            } : {}),
+            ...(guestDetails?.birthPlace ? {
+              birthPlace: guestDetails.birthPlace,
+            } : {}),
+          },
+          guaranteeType: guestDetails?.guaranteeType || 'CreditCard',
+          travelPurpose: guestDetails?.travelPurpose || 'Business',
+          timeSlices: [
+            {
+              ratePlanId: ratePlanId,
+            },
+          ],
+        },
+      ],
+    };
 
     bookingMutation.mutate(bookingPayload);
   };
@@ -232,13 +367,6 @@ const BookingDetailsPage = () => {
     });
   };
 
-  const handlePreviousImage = () => {
-    setSelectedImageIndex((prev) => (prev === 0 ? roomImages.length - 1 : prev - 1));
-  };
-
-  const handleNextImage = () => {
-    setSelectedImageIndex((prev) => (prev === roomImages.length - 1 ? 0 : prev + 1));
-  };
 
   if (!displayRoom || !guestDetails || !searchCriteria) {
     navigate('/reservation/search');
@@ -257,12 +385,14 @@ const BookingDetailsPage = () => {
     <Container
       size="lg"
       style={{
-        minHeight: '100vh',
+        height: '100vh',
+        maxHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         padding: '24px',
         backgroundColor: '#FFFFFF',
         maxWidth: '1000px',
+        overflow: 'hidden',
       }}
     >
       <Paper
@@ -272,12 +402,17 @@ const BookingDetailsPage = () => {
         radius="xl"
         style={{
           width: '100%',
+          height: '100%',
+          maxHeight: '100%',
+          display: 'flex',
+          flexDirection: 'column',
           backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
           borderRadius: '20px',
+          overflow: 'hidden',
         }}
       >
-        <Stack gap="xl">
+        <Stack gap="xl" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
           {/* Header */}
           <Group justify="space-between" mb="md">
             <PropertyHeader />
@@ -289,7 +424,7 @@ const BookingDetailsPage = () => {
             {t('bookingDetails.title')}
           </Title>
 
-          {/* Image Carousel */}
+          {/* Hero Image */}
           <Box
             style={{
               position: 'relative',
@@ -300,84 +435,59 @@ const BookingDetailsPage = () => {
             }}
           >
             <Image
-              src={roomImages[selectedImageIndex] || UnoLogo}
-              alt={displayRoom?.name || 'Room'}
+              src={roomImages[selectedImageIndex] || NO_IMAGE_PATH}
+              alt={displayRoom?.name || t('common.room')}
               height={400}
               fit="cover"
               onError={(e) => {
-                e.target.src = UnoLogo;
+                e.target.src = NO_IMAGE_PATH;
               }}
             />
-            
-            {/* Carousel Controls */}
-            {roomImages.length > 1 && (
-              <>
-                <Button
-                  variant="white"
-                  style={{
-                    position: 'absolute',
-                    left: 16,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: 56,
-                    height: 56,
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(4px)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                  }}
-                  onClick={handlePreviousImage}
-                >
-                  <IconChevronLeft size={32} />
-                </Button>
-                <Button
-                  variant="white"
-                  style={{
-                    position: 'absolute',
-                    right: 16,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: 56,
-                    height: 56,
-                    borderRadius: '50%',
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                    backdropFilter: 'blur(4px)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                  }}
-                  onClick={handleNextImage}
-                >
-                  <IconChevronRight size={32} />
-                </Button>
-                
-                {/* Dots Indicator */}
-                <Group
-                  gap="xs"
-                  style={{
-                    position: 'absolute',
-                    bottom: 24,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                  }}
-                >
-                  {roomImages.map((_, index) => (
-                    <Box
-                      key={index}
-                      style={{
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        backgroundColor: index === selectedImageIndex ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)',
-                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                      }}
-                      onClick={() => setSelectedImageIndex(index)}
-                    />
-                  ))}
-                </Group>
-              </>
-            )}
           </Box>
+
+          {/* Image Thumbnails (max 3 including hero) - Only show if there are multiple real images (not just fallback) */}
+          {baseImages.length > 1 && (
+            <Group gap="md" justify="center">
+              {roomImages.map((image, index) => (
+                <Box
+                  key={index}
+                  onClick={() => setSelectedImageIndex(index)}
+                  style={{
+                    width: '120px',
+                    height: '80px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                    border: selectedImageIndex === index ? '3px solid #C8653D' : '3px solid transparent',
+                    transition: 'all 0.2s ease',
+                    opacity: selectedImageIndex === index ? 1 : 0.7,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (selectedImageIndex !== index) {
+                      e.currentTarget.style.opacity = '0.9';
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (selectedImageIndex !== index) {
+                      e.currentTarget.style.opacity = '0.7';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }
+                  }}
+                >
+                  <Image
+                    src={image || NO_IMAGE_PATH}
+                    alt={`${displayRoom?.name || t('common.room')} - ${index + 1}`}
+                    height={80}
+                    fit="cover"
+                    onError={(e) => {
+                      e.target.src = NO_IMAGE_PATH;
+                    }}
+                  />
+                </Box>
+              ))}
+            </Group>
+          )}
 
           {/* Content Grid */}
           <Stack gap="xl">
@@ -430,9 +540,7 @@ const BookingDetailsPage = () => {
               }}
             >
               <Stack gap="lg">
-                <Title order={2} style={{ fontSize: '32px', fontWeight: 700, color: '#212121', marginBottom: 8 }}>
-                  {t('bookingDetails.bookingSummary')}
-                </Title>
+              
 
                 {/* Guest and Booking Info */}
                 <Stack gap="md" style={{ borderBottom: '1px solid #D1D5DB', paddingBottom: 24 }}>

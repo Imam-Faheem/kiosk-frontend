@@ -28,13 +28,14 @@ const getPropertyContext = () => {
 
 /**
  * Create a booking
- * @param {Object} bookingData - Booking information
- * @param {string} bookingData.unitGroupId - Unit Group ID (room type)
- * @param {string} bookingData.ratePlanId - Rate Plan ID
- * @param {string} bookingData.arrival - Check-in date (YYYY-MM-DD)
- * @param {string} bookingData.departure - Check-out date (YYYY-MM-DD)
- * @param {number} bookingData.adults - Number of adults
- * @param {Object} bookingData.primaryGuest - Guest information
+ * @param {Object} bookingData - Booking information with reservations array
+ * @param {Array} bookingData.reservations - Array of reservation objects
+ * @param {string} bookingData.reservations[].arrival - Check-in date (YYYY-MM-DD)
+ * @param {string} bookingData.reservations[].departure - Check-out date (YYYY-MM-DD)
+ * @param {number} bookingData.reservations[].adults - Number of adults
+ * @param {string} bookingData.reservations[].channelCode - Channel code (e.g., 'Direct')
+ * @param {Object} bookingData.reservations[].primaryGuest - Guest information
+ * @param {Array} bookingData.reservations[].timeSlices - Array of time slices with ratePlanId
  * @returns {Promise<Object>} Booking response
  */
 export const createBooking = async (bookingData) => {

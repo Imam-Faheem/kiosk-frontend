@@ -247,8 +247,9 @@
     "back": "Back",
     "loading": "Searching available rooms...",
     "noRooms": "No rooms available for selected dates",
-    "selectCheckInDate": "Select check-in date",
-    "selectCheckOutDate": "Select check-out date",
+    "selectCheckInDate": "Choose your arrival date",
+    "selectCheckOutDate": "Choose your departure date",
+    "selectGuests": "How many guests?",
     "availableRooms": "Available Rooms",
     "available": "Available",
     "perNight": "per night",
@@ -428,7 +429,7 @@
     "maxGuests": "Max Guests"
   },
   "bookingDetails": {
-    "title": "Room Details",
+    "title": "Booking Summary",
     "noDescription": "No description available.",
     "amenities": "Amenities",
     "bookingSummary": "Booking Summary",

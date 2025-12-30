@@ -141,16 +141,16 @@ const SearchRoomsPage = () => {
     <Container
       size="lg"
       style={{ 
-        minHeight: '100vh',
+        height: '100vh',
+        maxHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'flex-start',
         alignItems: 'center',
-        paddingTop: '20px',
-        paddingBottom: '20px',
+        padding: '20px',
+        overflow: 'hidden',
       }}
       bg="white"
-      p="20px"
     >
       <Paper
         withBorder
@@ -159,6 +159,12 @@ const SearchRoomsPage = () => {
         radius="xl"
         w="100%"
         maw={1000}
+        h="100%"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
         bg="white"
         styles={{
           root: {
@@ -167,13 +173,16 @@ const SearchRoomsPage = () => {
           },
         }}
       >
-        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <PropertyHeader />
-        </Group>
+        <Box style={{ flexShrink: 0 }}>
+          <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+            <PropertyHeader />
+          </Group>
+        </Box>
 
-        {/* Search Form */}
-        <form onSubmit={form.onSubmit(handleSearch)}>
-          <Stack gap="lg" mb="xl">
+        <Box style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          {/* Search Form */}
+          <form onSubmit={form.onSubmit(handleSearch)}>
+            <Stack gap="lg" mb="xl">
             <Grid>
               <Grid.Col span={4}>
                 <DateInput
@@ -204,6 +213,7 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <Select
                   label={t('searchRooms.guests')}
+                  placeholder={t('searchRooms.selectGuests') || 'Select number of guests'}
                   data={guestOptions}
                   required
                   size="lg"
@@ -223,128 +233,129 @@ const SearchRoomsPage = () => {
             >
               {t('searchRooms.search')}
             </Button>
-          </Stack>
-        </form>
+            </Stack>
+          </form>
 
-        {/* Search Results Loader */}
-        {isSearching && (
-          <Stack align="center" gap="md">
-            <Loader size="lg" color="#C8653D" />
-            <Text size="lg" c="#666666">
-              {t('searchRooms.loading')}
-            </Text>
-          </Stack>
-        )}
+          {/* Search Results Loader */}
+          {isSearching && (
+            <Stack align="center" gap="md" mb="xl">
+              <Loader size="lg" color="#C8653D" />
+              <Text size="lg" c="#666666">
+                {t('searchRooms.loading')}
+              </Text>
+            </Stack>
+          )}
 
-        {/* Error message from backend */}
-        {errorMessage && !isSearching && (
-          <Alert color="red" variant="light">
-            {errorMessage}
-          </Alert>
-        )}
+          {/* Error message from backend */}
+          {errorMessage && !isSearching && (
+            <Alert color="red" variant="light" mb="xl">
+              {errorMessage}
+            </Alert>
+          )}
 
-        {/* No rooms available message */}
-        {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length === 0 && !isSearching && (
-          <Alert color="yellow" variant="light">
-            {t('searchRooms.noRooms')}
-          </Alert>
-        )}
+          {/* No rooms available message */}
+          {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length === 0 && !isSearching && (
+            <Alert color="yellow" variant="light" mb="xl">
+              {t('searchRooms.noRooms')}
+            </Alert>
+          )}
 
-        {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length > 0 && (
-          <Stack gap="lg" mb="xl">
-            <Text size="xl" fw={600} c="#0B152A">
-              {t('searchRooms.availableRooms')} ({typeof searchResults.totalAvailable === 'number' ? searchResults.totalAvailable : (Array.isArray(searchResults.availableRooms) ? searchResults.availableRooms.length : 0)})
-            </Text>
-            
-            <Grid>
-              {searchResults.availableRooms.map((room) => (
-                <Grid.Col span={6} key={room.roomTypeId}>
-                  <Card
-                    withBorder
-                    p="lg"
-                    radius="md"
-                    style={{ cursor: 'pointer' }}
-                    styles={{
-                      root: {
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          transform: 'scale(1.02)',
-                          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+          {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length > 0 && (
+            <Stack gap="lg" mb="xl">
+              <Text size="xl" fw={600} c="#0B152A">
+                {t('searchRooms.availableRooms')} ({typeof searchResults.totalAvailable === 'number' ? searchResults.totalAvailable : (Array.isArray(searchResults.availableRooms) ? searchResults.availableRooms.length : 0)})
+              </Text>
+              
+              <Grid>
+                {searchResults.availableRooms.map((room) => (
+                  <Grid.Col span={6} key={room.roomTypeId}>
+                    <Card
+                      withBorder
+                      p="lg"
+                      radius="md"
+                      style={{ cursor: 'pointer' }}
+                      styles={{
+                        root: {
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'scale(1.02)',
+                            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                          },
                         },
-                      },
-                    }}
-                    onClick={() => handleSelectRoom(room)}
-                  >
-                    <Stack gap="md">
-                      <Image
-                        src={(room.images && room.images[0]) || UnoLogo}
-                        alt={room.name}
-                        h={200}
-                        radius="md"
-                        fit="cover"
-                      />
-                      
-                      <Stack gap="sm">
-                        <Group justify="space-between">
-                          <Text size="lg" fw={600} c="#0B152A">
-                            {room.name}
-                          </Text>
-                          <Badge color="green" size="lg">
-                            {t('searchRooms.available')}
-                          </Badge>
-                        </Group>
+                      }}
+                      onClick={() => handleSelectRoom(room)}
+                    >
+                      <Stack gap="md">
+                        <Image
+                          src={(room.images && room.images[0]) || UnoLogo}
+                          alt={room.name}
+                          h={200}
+                          radius="md"
+                          fit="cover"
+                        />
                         
-                        <Text size="sm" c="#666666">
-                          {room.description}
-                        </Text>
-                        
-                        <Group gap="xs">
-                          <IconUsers size={16} color="#666666" />
-                          <Text size="sm" c="#666666">
-                            {room.capacity} {t('common.guests')}
-                          </Text>
-                        </Group>
-                        
-                        <Group gap="xs" wrap="wrap">
-                          {room.amenities.slice(0, 3).map((amenity, index) => (
-                            <Badge key={index} size="sm" variant="light">
-                              {amenity}
+                        <Stack gap="sm">
+                          <Group justify="space-between">
+                            <Text size="lg" fw={600} c="#0B152A">
+                              {room.name}
+                            </Text>
+                            <Badge color="green" size="lg">
+                              {t('searchRooms.available')}
                             </Badge>
-                          ))}
-                        </Group>
-                        
-                        <Group justify="space-between" align="center">
-                          <Stack gap="xs">
-                            <Text size="sm" c="#666666">
-                              {room.currency} {room.pricePerNight} {t('searchRooms.perNight')}
-                            </Text>
-                            <Text size="xl" fw={700} c="#0B152A">
-                              {room.currency} {room.totalPrice} {t('searchRooms.total')}
-                            </Text>
-                          </Stack>
+                          </Group>
                           
-                          <Button
-                            size="md"
-                            bg="#C8653D"
-                            c="white"
-                            radius="md"
-                          >
-                            {t('common.select')}
-                          </Button>
-                        </Group>
+                          <Text size="sm" c="#666666">
+                            {room.description}
+                          </Text>
+                          
+                          <Group gap="xs">
+                            <IconUsers size={16} color="#666666" />
+                            <Text size="sm" c="#666666">
+                              {room.capacity} {t('common.guests')}
+                            </Text>
+                          </Group>
+                          
+                          <Group gap="xs" wrap="wrap">
+                            {room.amenities.slice(0, 3).map((amenity, index) => (
+                              <Badge key={index} size="sm" variant="light">
+                                {amenity}
+                              </Badge>
+                            ))}
+                          </Group>
+                          
+                          <Group justify="space-between" align="center">
+                            <Stack gap="xs">
+                              <Text size="sm" c="#666666">
+                                {room.currency} {room.pricePerNight} {t('searchRooms.perNight')}
+                              </Text>
+                              <Text size="xl" fw={700} c="#0B152A">
+                                {room.currency} {room.totalPrice} {t('searchRooms.total')}
+                              </Text>
+                            </Stack>
+                            
+                            <Button
+                              size="md"
+                              bg="#C8653D"
+                              c="white"
+                              radius="md"
+                            >
+                              {t('common.select')}
+                            </Button>
+                          </Group>
+                        </Stack>
                       </Stack>
-                    </Stack>
-                  </Card>
-                </Grid.Col>
-              ))}
-            </Grid>
-          </Stack>
-        )}
+                    </Card>
+                  </Grid.Col>
+                ))}
+              </Grid>
+            </Stack>
+          )}
 
-        {/* Back Button */}
-        <Group justify="flex-start">
-          <BackButton onClick={handleBack} text={t('searchRooms.back')} />
-        </Group>
+          {/* Back Button */}
+          <Group justify="flex-start" mb="md">
+            <BackButton onClick={handleBack} text={t('searchRooms.back')} />
+          </Group>
+        </Box>
       </Paper>
     </Container>
   );
