@@ -1,192 +1,139 @@
 import { apiClient } from './api/apiClient';
-import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
-import {
-  getRatePlanId,
-  determineChannelCode,
-  determineGuaranteeType,
-  buildPrimaryGuest,
-  extractBookingError,
-} from '../utils/bookingHelpers';
-import { validateBookingRequirements } from '../utils/validationHelpers';
-import usePropertyStore from '../stores/propertyStore';
-import { API_CONFIG } from '../config/constants';
+import { STORAGE_KEYS } from '../config/constants';
 
-const getPropertyIds = () => {
-  const state = usePropertyStore.getState();
-  const propertyId = state.selectedProperty?.property_id ?? state.propertyId;
-  const organizationId = API_CONFIG.ORGANIZATION_ID;
-  const apaleoPropertyId = state.selectedProperty?.apaleo_external_property_id ?? '';
-  
-  return { propertyId, organizationId, apaleoPropertyId };
-};
-
-const formatReservationPayload = (guestData, searchCriteria, room) => {
-  const ratePlanId = getRatePlanId(room);
-  const arrival = searchCriteria?.checkIn;
-  const departure = searchCriteria?.checkOut;
-  const adults = Number(searchCriteria?.guests);
-  
-  validateBookingRequirements({ ratePlanId, arrival, departure, adults });
-  
-  const channelCode = determineChannelCode(ratePlanId, room);
-  const guaranteeType = determineGuaranteeType(ratePlanId, room);
-  const primaryGuest = buildPrimaryGuest(guestData);
-  
-  const reservation = {
-    arrival,
-    departure,
-    adults,
-    channelCode,
-    primaryGuest,
-    guaranteeType,
-    timeSlices: [{ ratePlanId }],
-  };
-  
-  if (guestData.guestComment) {
-    reservation.guestComment = guestData.guestComment;
-  }
-  
-  if (guestData.travelPurpose) {
-    reservation.travelPurpose = guestData.travelPurpose;
-  }
-
-  return {
-    reservations: [reservation],
-  };
-};
-
-export const saveGuestDetails = async (guestData, searchCriteria, room) => {
-  const { propertyId, organizationId } = getPropertyIds();
-  
-  const missingIds = [propertyId, organizationId].filter(id => !id);
-  if (missingIds.length > 0) {
-    throw new Error('Property configuration is missing. Please select a property first.');
-  }
-  
-  const payload = formatReservationPayload(guestData, searchCriteria, room);
-  
+/**
+ * Get property and organization IDs from localStorage
+ * @returns {Object} Property context with propertyId and organizationId
+ */
+const getPropertyContext = () => {
   try {
-    const url = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/bookings`;
-    const response = await apiClient.post(url, payload, { 
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-    return response.data;
-  } catch (err) {
-    if (shouldUseMock(err)) {
-      await simulateApiDelay(500);
-      return mockData.saveGuestDetails(guestData);
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return { propertyId: null, organizationId: null };
     }
     
-    const extractErrorInfo = (error) => ({
-      message: (error?.response?.data?.message ?? error?.message ?? '').toLowerCase(),
-      status: error?.response?.status ?? null,
-    });
+    const propertyData = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
+    if (!propertyData) {
+      return { propertyId: null, organizationId: null };
+    }
 
-    const isUnitAssignmentFailure = ({ message, status }) => {
-      const unitAssignmentKeywords = ['assign unit', 'failed to assign unit', 'unit assignment'];
-      const statusIndicators = [422];
-      const messageIndicators = ['422', 'apaleo api error (422)'];
-      
-      const checks = [
-        unitAssignmentKeywords.some(keyword => message.includes(keyword)),
-        statusIndicators.includes(status),
-        messageIndicators.some(indicator => message.includes(indicator)),
-      ];
-      
-      return checks.some(Boolean);
+    const parsed = JSON.parse(propertyData);
+    return {
+      propertyId: parsed.propertyId ?? null,
+      organizationId: parsed.organizationId ?? null,
     };
+  } catch {
+    return { propertyId: null, organizationId: null };
+  }
+};
 
-    const errorChain = [err, err?.originalError].filter(Boolean);
-    const isUnitAssignmentError = errorChain
-      .map(extractErrorInfo)
-      .some(isUnitAssignmentFailure);
-    
-    if (isUnitAssignmentError) {
-      const responseData = err?.response?.data;
-      const errorDetails = responseData?.details ?? responseData;
-      const fullResponse = err?.response;
+/**
+ * Save guest details to backend
+ * @param {Object} guestData - Guest information
+ * @param {string} guestData.firstName - First name
+ * @param {string} guestData.lastName - Last name
+ * @param {string} guestData.email - Email address
+ * @param {string} guestData.phone - Phone number
+ * @param {string} guestData.country - Country code
+ * @param {string} guestData.addressStreet - Street address
+ * @param {string} guestData.addressCity - City
+ * @param {string} guestData.addressState - State/Province
+ * @param {string} guestData.addressPostal - ZIP/Postal code
+ * @param {string} guestData.propertyId - Property ID (optional, will use from store if not provided)
+ * @param {string} guestData.reservationId - Reservation ID (optional)
+ * @returns {Promise<Object>} Saved guest details response
+ */
+export const saveGuestDetails = async (guestData) => {
+  const { propertyId: contextPropertyId, organizationId } = getPropertyContext();
+  const propertyId = guestData.propertyId || contextPropertyId;
+
+  if (!propertyId) {
+    throw new Error('Property ID is required. Please select a property first.');
+  }
+
+  if (!organizationId) {
+    throw new Error('Organization ID is required. Please check your configuration.');
+  }
+
+  // Use kiosk API endpoint with organization and property IDs in path
+  const endpoint = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/guests/details`;
+
+  try {
+    const response = await apiClient.post(endpoint, guestData);
+    return response.data;
+  } catch (error) {
+    console.error('[saveGuestDetails] Error:', {
+      endpoint,
+      guestData: { ...guestData, propertyId: undefined }, // Don't log full data
+      propertyId,
+      organizationId,
+      error: error.message,
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      data: error?.response?.data,
+    });
+
+    // Handle network errors
+    if (!error.response) {
+      let networkError = 'Network error. Please check your connection.';
       
-      // Check multiple locations for booking data
-      const bookingData = responseData?.data ?? 
-                          responseData?.booking ?? 
-                          errorDetails?.booking ?? 
-                          errorDetails?.data ?? 
-                          fullResponse?.data?.data ??
-                          fullResponse?.data ??
-                          responseData;
-      
-      const bookingIdentifiers = [
-        bookingData?.id,
-        bookingData?.bookingId,
-        bookingData?.reservationIds?.[0]?.id,
-        bookingData?.reservationId,
-        errorDetails?.id,
-        errorDetails?.bookingId,
-        fullResponse?.data?.id,
-        fullResponse?.data?.bookingId,
-      ];
-      
-      const hasBookingId = bookingIdentifiers.some(id => id != null);
-      
-      // If we have booking data, return success
-      if (hasBookingId) {
-        return {
-          success: true,
-          data: bookingData,
-          message: 'Booking created successfully. Unit will be assigned later.',
-        };
+      if (error.code === 'ECONNABORTED') {
+        networkError = 'Request timeout. The server took too long to respond.';
+      } else if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        networkError = 'Network error. Please check your connection and ensure the server is running at http://localhost:8000';
+      } else if (error.message) {
+        networkError = error.message;
       }
       
-      return {
-        success: true,
-        data: {
-          id: 'BOOKING-CREATED',
-          reservationIds: [],
-          message: 'Booking created successfully. Unit assignment will be handled by the hotel staff.',
-        },
-        message: 'Booking created successfully. Unit will be assigned later.',
-      };
+      throw new Error(networkError);
     }
+
+    // Handle HTTP errors
+    const errorMessage =
+      error?.response?.data?.message ??
+      error?.response?.data?.error ??
+      error?.response?.statusText ??
+      `Failed to save guest details (${error?.response?.status || 'Unknown error'})`;
     
-    const { message, status, isAvailabilityError } = extractBookingError(err);
-    
-    const customError = new Error(message);
-    customError.status = status;
-    customError.originalError = err;
-    customError.isAvailabilityError = isAvailabilityError;
-    
-    throw customError;
+    throw new Error(errorMessage);
   }
 };
 
+/**
+ * Get guest details by ID or email
+ * @param {Object} params - Search parameters
+ * @param {number} params.guestId - Guest ID (optional)
+ * @param {string} params.email - Email address (optional)
+ * @returns {Promise<Object>} Guest details response
+ */
 export const getGuestDetails = async (params) => {
-  try {
-    const response = await apiClient.get('/guests/details', { params });
-    return response.data;
-  } catch (err) {
-    if (shouldUseMock(err)) {
-      await simulateApiDelay(400);
-      return mockData.getGuestDetails(params);
-    }
-    throw err;
+  const { propertyId, organizationId } = getPropertyContext();
+
+  if (!propertyId || !organizationId) {
+    throw new Error('Property and Organization IDs are required.');
   }
+
+  const endpoint = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/guests/details`;
+  const response = await apiClient.get(endpoint, { params });
+  return response.data;
 };
 
-export const updateApaleoReservationWithGuest = async (reservationId, guestData) => {
-  const { propertyId } = getPropertyIds();
-  
-  try {
-    const params = propertyId ? { propertyId } : {};
-    const response = await apiClient.patch(`/guests/reservation/${reservationId}`, guestData, { params });
-    return response.data;
-  } catch (err) {
-    if (shouldUseMock(err)) {
-      await simulateApiDelay(500);
-      return mockData.updateApaleoReservationWithGuest(reservationId, guestData);
-    }
-    throw err;
+/**
+ * Update Apaleo reservation with guest information
+ * @param {string} reservationId - Apaleo reservation ID
+ * @param {Object} guestData - Guest information
+ * @param {string} propertyId - Property ID (optional, will use from store if not provided)
+ * @returns {Promise<Object>} Update response
+ */
+export const updateApaleoReservationWithGuest = async (reservationId, guestData, propertyId) => {
+  const { propertyId: contextPropertyId, organizationId } = getPropertyContext();
+  const finalPropertyId = propertyId || contextPropertyId;
+
+  if (!finalPropertyId || !organizationId) {
+    throw new Error('Property and Organization IDs are required.');
   }
+
+  const endpoint = `/api/kiosk/v1/organizations/${organizationId}/properties/${finalPropertyId}/reservations/${reservationId}/guests`;
+  const response = await apiClient.patch(endpoint, guestData);
+  return response.data;
 };
 

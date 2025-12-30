@@ -33,101 +33,56 @@ const NewResPaymentPage = () => {
         hasProcessed.current = true;
         setPaymentStatus('processing');
         
-        const ratePlanId = room?.ratePlan?.id ?? room?.ratePlanId;
-        if (!ratePlanId) {
+        const propertyId = usePropertyStore.getState().propertyId;
+        if (!propertyId) {
+          throw new Error('Property ID is required. Please select a property first.');
+        }
+        const hotelId = propertyId; // Use propertyId as hotelId for the endpoint
+        
+        // Prepare booking data for Apaleo
+        const bookingPayload = {
+          propertyId,
+          unitGroupId: room.unitGroupId || room.roomTypeId || room._offerData?.unitGroupId,
+          ratePlanId: room.ratePlanId || room._offerData?.ratePlanId,
+          arrival: searchCriteria.checkIn,
+          departure: searchCriteria.checkOut,
+          adults: Number(searchCriteria.guests) || 1,
+          primaryGuest: {
+            firstName: guestDetails.firstName,
+            lastName: guestDetails.lastName,
+            email: guestDetails.email,
+            phone: guestDetails.phone,
+            address: {
+              addressLine1: guestDetails.addressStreet,
+              city: guestDetails.addressCity,
+              postalCode: guestDetails.addressPostal,
+              countryCode: guestDetails.country,
+              ...(guestDetails.addressState ? { region: guestDetails.addressState } : {}),
+            },
+          },
+        };
+
+        if (!bookingPayload.unitGroupId || !bookingPayload.ratePlanId) {
           throw new Error(t('error.missingRoomInformation'));
         }
 
-        const bookingResult = await saveGuestDetails(guestDetails, searchCriteria, room);
+        // Create booking in Apaleo
+        const bookingResult = await createBooking(bookingPayload, hotelId);
         
-        // Check if booking was successful (even if unit assignment failed)
-        if (bookingResult?.success) {
-          // Extract reservation ID from various possible response structures
-          const reservationId = bookingResult?.data?.reservationIds?.[0]?.id ?? 
-                               bookingResult?.data?.id ?? 
-                               bookingResult?.data?.reservationId ??
-                               bookingResult?.reservationIds?.[0]?.id ??
-                               bookingResult?.id ?? 
-                               bookingResult?.reservationId;
-          
-          // If we have a reservation ID, proceed with payment
-          if (reservationId && reservationId !== 'BOOKING-CREATED') {
-            setPaymentStatus('processing');
-            
-            let paymentResult = null;
-            try {
-              paymentResult = await processPaymentByTerminal(reservationId);
-            } catch (paymentError) {
-              const paymentErrorMessage = paymentError?.response?.data?.message ?? paymentError?.message ?? 'Payment processing failed';
-              throw new Error(`Booking created successfully, but payment failed: ${paymentErrorMessage}`);
-            }
-            
-            setPaymentStatus('success');
-            
-            const reservation = {
-              reservationId,
-              id: reservationId,
-              guestDetails,
-              roomTypeId: room?.unitGroup?.id ?? room?.roomTypeId,
-              checkIn: searchCriteria?.checkIn ?? '',
-              checkOut: searchCriteria?.checkOut ?? '',
-              guests: searchCriteria?.guests,
-              totalAmount: room?.totalGrossAmount?.amount ?? room?.totalPrice,
-              currency: room?.totalGrossAmount?.currency ?? room?.currency,
-              status: 'confirmed',
-              room_assigned: bookingResult?.data?.assignedRoom?.room_assigned ?? false,
-              bookingData: bookingResult,
-              paymentData: paymentResult,
-            };
-
-            setTimeout(() => {
-              navigate('/reservation/complete', {
-                state: {
-                  reservation,
-                  room,
-                  guestDetails,
-                },
-              });
-            }, 1500);
-            return;
-          }
-          
-          // If booking was successful but no reservation ID (unit assignment failed)
-          const reservation = {
-            reservationId: reservationId ?? 'BOOKING-CONFIRMED',
-            id: reservationId ?? 'BOOKING-CONFIRMED',
-            guestDetails,
-            roomTypeId: room?.unitGroup?.id ?? room?.roomTypeId,
-            checkIn: searchCriteria?.checkIn ?? '',
-            checkOut: searchCriteria?.checkOut ?? '',
-            guests: searchCriteria?.guests,
-            totalAmount: room?.totalGrossAmount?.amount ?? room?.totalPrice,
-            currency: room?.totalGrossAmount?.currency ?? room?.currency,
-            status: 'confirmed',
-            room_assigned: bookingResult?.data?.assignedRoom?.room_assigned ?? false,
-            bookingData: bookingResult,
-          };
-          
-          setPaymentStatus('success');
-          setTimeout(() => {
-            navigate('/reservation/complete', {
-              state: {
-                reservation,
-                room,
-                guestDetails,
-              },
-            });
-          }, 1500);
-          return;
-        }
-        
-        // Fallback: Extract reservation ID from various possible response structures
-        const reservationId = bookingResult?.data?.reservationIds?.[0]?.id ?? 
-                             bookingResult?.reservationIds?.[0]?.id ??
-                             bookingResult?.data?.id ?? 
-                             bookingResult?.id ?? 
-                             bookingResult?.data?.reservationId ?? 
-                             bookingResult?.reservationId;
+        // Extract reservation ID from booking response - check all possible fields
+        const reservationIdSources = [
+          bookingResult?.bookingId,
+          bookingResult?.id,
+          bookingResult?.reservationId,
+          bookingResult?.reservation?.id,
+          bookingResult?.reservation?.bookingId,
+          bookingResult?.reservations?.[0]?.id,
+          bookingResult?.reservations?.[0]?.bookingId,
+          bookingResult?.data?.bookingId,
+          bookingResult?.data?.id,
+          bookingResult?.data?.reservationId,
+        ];
+        const reservationId = reservationIdSources.find(id => id != null && id !== 'BOOKING-CREATED');
         
         if (!reservationId) {
           throw new Error('Booking created successfully but no reservation ID returned. Please check your email for confirmation.');
@@ -146,6 +101,7 @@ const NewResPaymentPage = () => {
         setPaymentStatus('success');
         
         const reservation = {
+          bookingId: reservationId,
           reservationId,
           id: reservationId,
           guestDetails,

@@ -80,7 +80,7 @@ const WelcomePage = () => {
           <PropertyHeader showName={true} />
         </Box>
  
-        <PropertyLogo size={110} alt={t('common.unoHotelLogo')} style={{ marginBottom: "20px", marginTop: "60px" }} />
+        <PropertyLogo size={110} style={{ marginBottom: "20px", marginTop: "60px" }} />
 
         {/* ✅ Main heading with dynamic language text */}
         <h3
