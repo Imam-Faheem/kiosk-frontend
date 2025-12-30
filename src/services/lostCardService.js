@@ -73,22 +73,37 @@ export const validateLostCardGuest = async (data) => {
       throw new Error(translateError('reservationNotFoundByNumber'));
     }
 
-    const reservationLastName = apiData?.primaryGuest?.lastName?.trim().toLowerCase();
-    const lastNameLower = lastName?.trim().toLowerCase();
+    const hasPrimaryGuest = !!apiData.primaryGuest;
+    const hasFolios = Array.isArray(apiData.folios) && apiData.folios.length > 0;
+    const hasGuestName = !!apiData.guest_name;
 
-    const validationChecks = [
-      !lastNameLower,
-      !reservationLastName,
-      lastNameLower !== reservationLastName
-    ];
-    
-    if (validationChecks.some(check => check === true)) {
-      throw new Error(translateError('lastNameMismatch'));
+    if (!hasPrimaryGuest && !hasFolios && !hasGuestName) {
+      throw new Error(translateError('reservationNotFoundByNumber'));
     }
 
-    const assignedRoom = apiData?.unit?.name ?? apiData?.unit?.id;
-    if (roomNumber && assignedRoom && assignedRoom.toLowerCase() !== roomNumber.toLowerCase()) {
-      throw new Error(translateError('roomNumberMismatch'));
+    const lastNameSources = [
+      apiData?.primaryGuest?.lastName,
+      hasFolios ? apiData.folios[0]?.debitor?.name : null,
+      apiData?.guest_name?.last_name,
+      apiData?.guest_name?.lastName,
+    ];
+    const reservationLastName = lastNameSources
+      .find(name => name != null)
+      ?.trim()
+      ?.toLowerCase();
+
+    const lastNameLower = lastName?.trim()?.toLowerCase();
+
+    if (!lastNameLower) {
+      throw new Error(translateError('lastNameRequired'));
+    }
+
+    if (!reservationLastName) {
+      throw new Error(translateError('reservationNotFoundByNumber'));
+    }
+
+    if (lastNameLower !== reservationLastName) {
+      throw new Error(translateError('lastNameMismatch'));
     }
 
     return {

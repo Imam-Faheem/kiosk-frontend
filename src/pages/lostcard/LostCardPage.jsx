@@ -40,60 +40,32 @@ const LostCardPage = () => {
   const hasValidGuestData = (data) => {
     if (!data) return false;
     
-    const primaryGuest = data?.primaryGuest;
-    if (primaryGuest) {
-      const firstName = primaryGuest.firstName ?? '';
-      const lastName = primaryGuest.lastName ?? '';
-      return firstName.trim().length > 0 && lastName.trim().length > 0;
-    }
+    const lastNameSources = [
+      data?.primaryGuest?.lastName,
+      Array.isArray(data?.folios) && data.folios.length > 0
+        ? (data.folios.find(f => f.isMainFolio) ?? data.folios[0])?.debitor?.name
+        : null,
+      data?.guest_name?.last_name,
+      data?.guest_name?.lastName,
+    ];
     
-    const folios = data?.folios;
-    if (Array.isArray(folios) && folios.length > 0) {
-      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
-      const debitor = mainFolio?.debitor;
-      if (debitor) {
-        const firstName = debitor.firstName ?? '';
-        const lastName = debitor.name ?? '';
-        return firstName.trim().length > 0 && lastName.trim().length > 0;
-      }
-    }
-    
-    const guestName = data?.guest_name;
-    if (guestName) {
-      const firstName = guestName.first_name ?? guestName.firstName ?? '';
-      const lastName = guestName.last_name ?? guestName.lastName ?? '';
-      return firstName.trim().length > 0 && lastName.trim().length > 0;
-    }
-    
-    return false;
+    return lastNameSources.some(name => name?.trim()?.length > 0);
   };
 
   const extractLastNameFromResponse = (data) => {
     if (!data) return null;
     
-    const primaryGuest = data?.primaryGuest;
-    if (primaryGuest?.lastName) {
-      return primaryGuest.lastName.trim().toLowerCase();
-    }
+    const lastNameSources = [
+      data?.primaryGuest?.lastName,
+      Array.isArray(data?.folios) && data.folios.length > 0
+        ? (data.folios.find(f => f.isMainFolio) ?? data.folios[0])?.debitor?.name
+        : null,
+      data?.guest_name?.last_name,
+      data?.guest_name?.lastName,
+    ];
     
-    const folios = data?.folios;
-    if (Array.isArray(folios) && folios.length > 0) {
-      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
-      const debitor = mainFolio?.debitor;
-      if (debitor?.name) {
-        return debitor.name.trim().toLowerCase();
-      }
-    }
-    
-    const guestName = data?.guest_name;
-    if (guestName) {
-      const lastName = guestName.last_name ?? guestName.lastName;
-      if (lastName) {
-        return lastName.trim().toLowerCase();
-      }
-    }
-    
-    return null;
+    const lastName = lastNameSources.find(name => name != null);
+    return lastName?.trim()?.toLowerCase() ?? null;
   };
 
   const validateLastNameMatch = (submittedLastName, apiData) => {
@@ -142,11 +114,6 @@ const LostCardPage = () => {
         form.setFieldError('lastName', t('error.lastNameMismatch'));
         throw new Error(t('error.lastNameMismatch'));
       }
-
-      const hasValidRoomData = guestData?.unit?.name ?? guestData?.unit?.id;
-      if (!hasValidRoomData) {
-        throw new Error(t('error.reservationNotFound'));
-      }
       
       navigate('/lost-card/regenerate', {
         state: {
@@ -157,24 +124,36 @@ const LostCardPage = () => {
     } catch (err) {
       const errorStatus = err?.response?.status;
       const errorMessage = err?.message ?? t('error.guestValidationFailed');
+      const errorMessageLower = errorMessage.toLowerCase();
       
-      const isReservationError = errorStatus === 404 || 
-                                 errorStatus === 500 ||
-                                 errorMessage.includes('reservation') || 
-                                 errorMessage.includes('Reservation') ||
-                                 errorMessage.includes('status code 500') ||
-                                 errorMessage.includes('Request failed');
-      const isLastNameError = errorStatus === 403 || 
-                             errorMessage.includes('last name') || 
-                             errorMessage.includes('Last name') ||
-                             errorMessage.includes('lastName');
+      const lastNameErrorChecks = [
+        errorStatus === 403,
+        errorMessageLower.includes('lastname'),
+        errorMessageLower.includes('last name'),
+        errorMessageLower.includes('last_name'),
+        errorMessageLower.includes('mismatch'),
+        errorMessageLower.includes('does not match'),
+      ];
+      const isLastNameError = lastNameErrorChecks.some(check => check === true);
       
-      if (isReservationError) {
-        form.setFieldError('reservationNumber', t('error.reservationNotFound'));
-      } else if (isLastNameError) {
+      const reservationErrorChecks = [
+        errorStatus === 404,
+        errorStatus === 500,
+        errorMessageLower.includes('not found'),
+        errorMessage.includes('status code 500'),
+        errorMessage.includes('Request failed'),
+      ];
+      const isReservationError = reservationErrorChecks.some(check => check === true) && !isLastNameError;
+      
+      if (isLastNameError) {
         form.setFieldError('lastName', t('error.lastNameMismatch'));
+        setError(t('error.lastNameMismatch'));
+      } else if (isReservationError) {
+        form.setFieldError('reservationNumber', t('error.reservationNotFound'));
+        setError(t('error.reservationNotFound'));
       } else {
         form.setFieldError('reservationNumber', t('error.reservationNotFound'));
+        setError(t('error.reservationNotFound'));
       }
     } finally {
       setIsLoading(false);
@@ -234,7 +213,6 @@ const LostCardPage = () => {
             <TextInput
               label={t('lostCard.roomType')}
               placeholder={t('lostCard.roomTypePlaceholder')}
-              required
               size="lg"
               {...form.getInputProps('roomType')}
               styles={{
