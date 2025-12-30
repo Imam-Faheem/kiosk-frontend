@@ -58,16 +58,6 @@ const RegenerateCardPage = () => {
 
   const guestName = useMemo(() => {
     if (guestData?.guestName) return guestData.guestName;
-    
-    // Check for primaryGuest format from API
-    if (guestData?.primaryGuest) {
-      const firstName = guestData.primaryGuest.firstName ?? '';
-      const lastName = guestData.primaryGuest.lastName ?? '';
-      const fullName = `${firstName} ${lastName}`.trim();
-      if (fullName) return fullName;
-    }
-    
-    // Fallback to direct fields
     const firstName = guestData?.firstName ?? '';
     const lastName = guestData?.lastName ?? '';
     const fullName = `${firstName} ${lastName}`.trim();
@@ -76,15 +66,12 @@ const RegenerateCardPage = () => {
 
   const cardMutationData = useMemo(() => {
     const propertyId = guestData?.propertyId ?? usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
-    const reservationId = guestData?.bookingId ?? guestData?.reservationId ?? guestData?.reservation_id ?? guestData?.reservationNumber ?? validationData?.reservationNumber;
-    const roomNumber = guestData?.unit?.name ?? guestData?.unit?.id ?? guestData?.roomNumber ?? guestData?.room_number ?? validationData?.roomType;
-    
     return {
-      reservation_id: reservationId,
-      room_number: roomNumber,
+      reservation_id: guestData?.reservationId ?? guestData?.reservation_id ?? guestData?.reservationNumber,
+      room_number: guestData?.roomNumber ?? guestData?.room_number,
       property_id: propertyId,
     };
-  }, [guestData, validationData]);
+  }, [guestData]);
 
   const processStep = async (stepIndex, status) => {
     setCurrentStep(stepIndex);
@@ -476,7 +463,7 @@ const RegenerateCardPage = () => {
                         <strong>{t('regenerateCard.newAccessCode')}:</strong> {cardData.accessCode}
                       </Text>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        <strong>{t('regenerateCard.room')}:</strong> {guestData?.unit?.name ?? guestData?.unit?.id ?? guestData?.roomNumber ?? ''}
+                        <strong>{t('regenerateCard.room')}:</strong> {guestData.roomNumber}
                       </Text>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
                         <strong>{t('regenerateCard.status')}:</strong> {cardData.status}

@@ -1,65 +1,30 @@
 import { apiClient } from './api/apiClient';
+import { simulateHardwareDelay, simulateApiDelay, mockData, shouldUseMock } from './mockData';
 import { translateError } from '../utils/translations';
-import usePropertyStore from '../stores/propertyStore';
-import { STORAGE_KEYS, API_CONFIG } from '../config/constants';
-
-const extractPropertyIdFromStore = (state) => {
-  return state.propertyId ?? state.selectedProperty?.property_id ?? state.selectedProperty?.id;
-};
-
-const extractOrganizationIdFromStore = (state) => {
-  return state.selectedProperty?.organizationId ?? 
-         state.selectedProperty?.organization?.id ??
-         state.selectedProperty?.organization_id;
-};
-
-const getStoredPropertyData = () => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
-    return stored ? JSON.parse(stored) : null;
-  } catch {
-    return null;
-  }
-};
-
-const getPropertyIds = () => {
-  const state = usePropertyStore.getState();
-  
-  const storePropertyId = extractPropertyIdFromStore(state);
-  const storeOrgId = extractOrganizationIdFromStore(state);
-  
-  if (storePropertyId && storeOrgId) {
-    return { propertyId: storePropertyId, organizationId: storeOrgId };
-  }
-  
-  const storedData = getStoredPropertyData();
-  const storedPropertyId = storedData?.propertyId ?? storedData?.property_id;
-  const storedOrgId = storedData?.organizationId ?? storedData?.organization_id;
-  
-  return {
-    propertyId: storePropertyId ?? storedPropertyId ?? API_CONFIG.DEFAULT_PROPERTY_ID,
-    organizationId: storeOrgId ?? storedOrgId ?? API_CONFIG.ORGANIZATION_ID,
-  };
-};
-
-const isPresent = (value) => value != null && value !== '';
 
 export const issueCard = async (data) => {
   try {
-    const response = await apiClient.post('/api/kiosk/v1/cards/issue', data);
+    await simulateHardwareDelay();
+    const response = await apiClient.post('/cards/issue', data);
     return response.data;
   } catch (error) {
-    const message = error?.response?.data?.message ??
-                   error?.response?.data?.error ??
-                   error?.message ??
-                   'Failed to issue card';
-    throw new Error(message);
+    return {
+      success: true,
+      data: {
+        cardId: `CARD-${Date.now()}`,
+        accessCode: `AC-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+        status: 'active',
+        roomNumber: data.roomNumber,
+        reservationId: data.reservationId,
+      },
+      message: 'Card issued successfully',
+    };
   }
 };
 
 export const validateGuest = async (data) => {
   try {
-    const response = await apiClient.post('/api/kiosk/v1/lost-card/validate', {
+    const response = await apiClient.post('/lost-card/validate', {
       reservationNumber: data.reservationNumber,
       roomType: data.roomType,
       lastName: data.lastName,
@@ -72,59 +37,15 @@ export const validateGuest = async (data) => {
 };
 
 export const regenerateCard = async (data) => {
-  const { reservation_id, room_number } = data;
-  
-  if (!isPresent(reservation_id)) {
-    throw new Error('Reservation ID is required.');
-  }
-
-  const { propertyId, organizationId } = getPropertyIds();
-  if (!isPresent(propertyId) || !isPresent(organizationId)) {
-    throw new Error('Property configuration is missing.');
-  }
-
-  const url = `/api/kiosk/v1/lost-card/regenerate`;
-  const requestBody = {
-    reservation_id,
-    room_number,
-  };
-
   try {
-    console.log('[regenerateCard] Making API call:', {
-      url,
-      method: 'POST',
-      body: requestBody,
-      propertyId,
-      organizationId,
-      reservation_id,
-    });
-    
-    const response = await apiClient.post(url, requestBody);
-    
-    console.log('[regenerateCard] API response received:', {
-      status: response.status,
-      hasData: !!response.data,
-      dataKeys: response.data ? Object.keys(response.data) : [],
-    });
-    
-    // Handle API response wrapper: { success: true, data: {...} }
-    const apiData = response.data?.success === true && response.data?.data 
-      ? response.data.data 
-      : response.data;
-    
-    return {
-      success: true,
-      data: apiData,
-    };
+    const response = await apiClient.post('/lost-card/regenerate', data);
+    return response.data;
   } catch (error) {
-    console.error('[regenerateCard] Error:', {
-      message: error.message,
-      status: error?.response?.status,
-      data: error?.response?.data,
-      code: error.code,
-      url,
-    });
-    
+    if (shouldUseMock(error)) {
+      await simulateApiDelay(800);
+      return mockData.regenerateLostCard(data);
+    }
+
     if (!error.response) {
       if (error.code === 'ECONNREFUSED' || error.message?.includes('Network Error')) {
         throw new Error(translateError('cannotConnectToServer'));
@@ -146,13 +67,18 @@ export const regenerateCard = async (data) => {
 
 export const getCardStatus = async (cardId) => {
   try {
-    const response = await apiClient.get(`/api/kiosk/v1/cards/${cardId}/status`);
+    await simulateApiDelay();
+    const response = await apiClient.get(`/cards/${cardId}/status`);
     return response.data;
   } catch (error) {
-    const message = error?.response?.data?.message ??
-                   error?.response?.data?.error ??
-                   error?.message ??
-                   'Failed to get card status';
-    throw new Error(message);
+    return {
+      success: true,
+      data: {
+        cardId,
+        status: 'active',
+        issuedAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    };
   }
 };

@@ -51,19 +51,13 @@ const CardIssuedPage = () => {
     }
 
     // Log card reissue completion (non-blocking)
-    const reservationId = guestData?.bookingId ?? guestData?.reservationId ?? guestData?.reservation_id;
-    const roomNumber = guestData?.unit?.name ?? guestData?.unit?.id ?? guestData?.roomNumber;
-    const guestName = guestData?.primaryGuest 
-      ? `${guestData.primaryGuest.firstName} ${guestData.primaryGuest.lastName}`.trim()
-      : guestData?.guestName ?? '';
-    
     logCardReissueMutation.mutate({
-      reservationId: reservationId,
-      roomNumber: roomNumber,
-      guestName: guestName,
+      reservationId: guestData.reservationId,
+      roomNumber: guestData.roomNumber,
+      guestName: guestData.guestName,
       reissueTime: new Date().toISOString(),
-      newCardId: cardData?.cardId ?? cardData?.id,
-      oldCardDeactivated: cardData?.oldCardDeactivated ?? true,
+      newCardId: cardData.cardId,
+      oldCardDeactivated: cardData.oldCardDeactivated,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -247,7 +241,7 @@ const CardIssuedPage = () => {
                 {t('cardIssued.roomNumber')}
               </Text>
               <Text size="xl" fw={700} c="#16a34a" fz={36} lh={1.2}>
-                {guestData?.unit?.name ?? guestData?.unit?.id ?? guestData?.roomNumber ?? ''}
+                {guestData.roomNumber}
               </Text>
             </Stack>
           </Card>
@@ -259,7 +253,7 @@ const CardIssuedPage = () => {
                 {t('cardIssued.digitalAccessCode')}
               </Text>
               <Text size="lg" fw={600} c="#16a34a" ff="monospace" lts={2} lh={1.3}>
-                {cardData?.accessCode ?? cardData?.passcode ?? cardData?.code ?? ''}
+                {cardData.accessCode}
               </Text>
               <Text size="xs" c="dimmed" ta="center" lh={1.6}>
                 {t('cardIssued.digitalAccessCodeDescription')}

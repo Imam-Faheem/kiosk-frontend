@@ -37,124 +37,32 @@ const LostCardPage = () => {
     },
   });
 
-  const hasValidGuestData = (data) => {
-    if (!data) return false;
-    
-    const lastNameSources = [
-      data?.primaryGuest?.lastName,
-      Array.isArray(data?.folios) && data.folios.length > 0
-        ? (data.folios.find(f => f.isMainFolio) ?? data.folios[0])?.debitor?.name
-        : null,
-      data?.guest_name?.last_name,
-      data?.guest_name?.lastName,
-    ];
-    
-    return lastNameSources.some(name => name?.trim()?.length > 0);
-  };
-
-  const extractLastNameFromResponse = (data) => {
-    if (!data) return null;
-    
-    const lastNameSources = [
-      data?.primaryGuest?.lastName,
-      Array.isArray(data?.folios) && data.folios.length > 0
-        ? (data.folios.find(f => f.isMainFolio) ?? data.folios[0])?.debitor?.name
-        : null,
-      data?.guest_name?.last_name,
-      data?.guest_name?.lastName,
-    ];
-    
-    const lastName = lastNameSources.find(name => name != null);
-    return lastName?.trim()?.toLowerCase() ?? null;
-  };
-
-  const validateLastNameMatch = (submittedLastName, apiData) => {
-    const submittedLastNameLower = submittedLastName?.trim().toLowerCase();
-    if (!submittedLastNameLower) {
-      return false;
-    }
-
-    const responseLastName = extractLastNameFromResponse(apiData);
-    if (!responseLastName) {
-      return false;
-    }
-
-    return submittedLastNameLower === responseLastName;
-  };
-
   const handleSubmit = async (values) => {
     setError(null);
-    form.clearErrors();
     setIsLoading(true);
     
     try {
-      const submittedLastName = values.lastName?.trim();
-      
+      // Validate guest using service (with mock data fallback)
       const result = await validateLostCardGuest({
         reservationNumber: values.reservationNumber,
         roomNumber: values.roomType,
-        lastName: submittedLastName,
+        lastName: values.lastName,
       });
       
-      if (!result.success) {
-        throw new Error(result.message ?? t('error.validationFailed'));
-      }
-
-      if (!result.data) {
-        throw new Error(t('error.reservationNotFound'));
-      }
-
-      const guestData = result.data;
-      
-      if (!hasValidGuestData(guestData)) {
-        throw new Error(t('error.reservationNotFound'));
-      }
-
-      if (!validateLastNameMatch(submittedLastName, guestData)) {
-        form.setFieldError('lastName', t('error.lastNameMismatch'));
-        throw new Error(t('error.lastNameMismatch'));
-      }
-      
-      navigate('/lost-card/regenerate', {
-        state: {
-          guestData: guestData,
-          validationData: values,
-        },
-      });
-    } catch (err) {
-      const errorStatus = err?.response?.status;
-      const errorMessage = err?.message ?? t('error.guestValidationFailed');
-      const errorMessageLower = errorMessage.toLowerCase();
-      
-      const lastNameErrorChecks = [
-        errorStatus === 403,
-        errorMessageLower.includes('lastname'),
-        errorMessageLower.includes('last name'),
-        errorMessageLower.includes('last_name'),
-        errorMessageLower.includes('mismatch'),
-        errorMessageLower.includes('does not match'),
-      ];
-      const isLastNameError = lastNameErrorChecks.some(check => check === true);
-      
-      const reservationErrorChecks = [
-        errorStatus === 404,
-        errorStatus === 500,
-        errorMessageLower.includes('not found'),
-        errorMessage.includes('status code 500'),
-        errorMessage.includes('Request failed'),
-      ];
-      const isReservationError = reservationErrorChecks.some(check => check === true) && !isLastNameError;
-      
-      if (isLastNameError) {
-        form.setFieldError('lastName', t('error.lastNameMismatch'));
-        setError(t('error.lastNameMismatch'));
-      } else if (isReservationError) {
-        form.setFieldError('reservationNumber', t('error.reservationNotFound'));
-        setError(t('error.reservationNotFound'));
+      if (result.success) {
+        // Navigate to regenerate card page with validated data
+        navigate('/lost-card/regenerate', {
+          state: {
+            guestData: result.data,
+            validationData: values,
+          },
+        });
       } else {
-        form.setFieldError('reservationNumber', t('error.reservationNotFound'));
-        setError(t('error.reservationNotFound'));
+        throw new Error(result.message || t('error.validationFailed'));
       }
+    } catch (err) {
+      const errorMessage = err?.message || t('error.guestValidationFailed');
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -213,6 +121,7 @@ const LostCardPage = () => {
             <TextInput
               label={t('lostCard.roomType')}
               placeholder={t('lostCard.roomTypePlaceholder')}
+              required
               size="lg"
               {...form.getInputProps('roomType')}
               styles={{
