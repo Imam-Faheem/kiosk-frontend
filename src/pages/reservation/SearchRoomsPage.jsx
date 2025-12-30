@@ -325,7 +325,9 @@ const SearchRoomsPage = () => {
                           <Text size="sm" c="#666666">{unitGroup.description ?? ratePlan.description}</Text>
                           <Group gap="xs">
                             <IconUsers size={16} color="#666666" />
-                            <Text size="sm" c="#666666">{unitGroup.maxPersons ?? 2} {t('common.guests')}</Text>
+                            <Text size="sm" c="#666666">
+                              {form.values.guests || '1'} {Number(form.values.guests || '1') === 1 ? t('common.guest') : t('common.guests')}
+                            </Text>
                           </Group>
                           <Group gap="xs" wrap="wrap">
                             <Badge size="sm" variant="light">{ratePlan.name}</Badge>
