@@ -25,8 +25,7 @@ export const roomSearchValidationSchema = yup.object({
     .min(1, 'At least 1 guest is required')
     .max(8, 'Maximum 8 guests allowed')
     .integer('Number of guests must be a whole number')
-    .transform((value, originalValue) => {
-      // Convert string to number for Select component compatibility
+    .transform(function(value, originalValue) {
       return originalValue === '' ? undefined : Number(originalValue);
     })
 });
