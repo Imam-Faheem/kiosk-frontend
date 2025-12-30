@@ -135,6 +135,31 @@ const RoomDetailPage = () => {
     return amenityMap[amenity] ?? amenity;
   };
 
+  // Calculate pricing information
+  const pricing = React.useMemo(() => {
+    if (!searchCriteria?.checkIn || !searchCriteria?.checkOut || !displayRoom) {
+      return { nights: 0, pricePerNight: 0, taxes: 0, total: 0, currency: 'EUR' };
+    }
+
+    const checkIn = new Date(searchCriteria.checkIn);
+    const checkOut = new Date(searchCriteria.checkOut);
+    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    
+    const totalAmount = displayRoom?.totalGrossAmount?.amount ?? displayRoom?.totalPrice ?? 0;
+    const currency = displayRoom?.totalGrossAmount?.currency ?? displayRoom?.currency ?? 'EUR';
+    const pricePerNight = nights > 0 ? totalAmount / nights : 0;
+    const taxes = displayRoom?.totalTaxAmount?.amount ?? displayRoom?.taxes ?? 0;
+    const total = totalAmount;
+
+    return {
+      nights,
+      pricePerNight,
+      taxes,
+      total,
+      currency,
+    };
+  }, [searchCriteria, displayRoom]);
+
   const handleConfirm = () => {
     navigate('/reservation/signature', {
       state: {

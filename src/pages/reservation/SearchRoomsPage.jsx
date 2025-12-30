@@ -144,7 +144,7 @@ const SearchRoomsPage = () => {
     };
 
     try {
-      await searchAvailability.mutateAsync(searchData);
+      await searchOffers.mutateAsync(searchData);
     } catch (err) {
       // Error is already handled by onError callback, but ensure loading is stopped
       console.error('Search error:', err);
