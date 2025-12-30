@@ -18,6 +18,7 @@ import { useForm } from '@mantine/form';
 import { guestInitialValues } from '../../schemas/guest.schema';
 import { createGuestFormValidator } from '../../utils/formValidation';
 import useLanguage from '../../hooks/useLanguage';
+import usePropertyStore from '../../stores/propertyStore';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import { saveGuestDetails } from '../../services/guestService';
@@ -45,7 +46,15 @@ const GuestDetailsPage = () => {
     setError(null);
 
     try {
-      const result = await saveGuestDetails(values, searchCriteria, room);
+      // Prepare guest data with propertyId if available
+      const guestData = {
+        ...values,
+        propertyId: usePropertyStore.getState().propertyId,
+        // reservationId can be added later when reservation is created
+      };
+
+      // Save guest details to backend
+      const result = await saveGuestDetails(guestData);
 
       if (result?.success ?? result?.data) {
         navigate('/reservation/room-details', {

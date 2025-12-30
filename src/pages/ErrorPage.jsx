@@ -40,7 +40,7 @@ const ErrorPage = () => {
     // Log error when component mounts
     if (errorMessage || errorType) {
       logErrorMutation.mutate({
-        errorMessage: errorMessage || 'Unknown error',
+        errorMessage: errorMessage || t('error.generic'),
         errorType: errorType || 'generic',
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,

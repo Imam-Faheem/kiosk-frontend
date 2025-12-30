@@ -7,12 +7,12 @@ import useLanguage from '../hooks/useLanguage';
 const PropertyHeader = ({ showName = true, logoSize = 50, titleStyle = {}, ...props }) => {
   const { selectedProperty } = usePropertyStore();
   const { t } = useLanguage();
-  const propertyName = selectedProperty?.name || '';
+  const propertyName = selectedProperty?.name || selectedProperty?.property_name || '';
 
   return (
     <Group gap="md" {...props}>
-      <PropertyLogo size={logoSize} alt={t('common.unoHotelLogo')} />
-      {showName && (
+      <PropertyLogo size={logoSize} alt={propertyName || t('common.propertyLogo')} />
+      {showName && propertyName && (
         <Title
           order={2}
           style={{

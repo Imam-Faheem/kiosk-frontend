@@ -9,15 +9,14 @@ import {
   Box,
   Alert,
   Button,
+  Loader,
 } from '@mantine/core';
 import { IconCheck, IconX, IconKey, IconHome, IconLoader2 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
-import { useCardMutation } from '../../hooks/useCardMutation';
-import usePropertyStore from '../../stores/propertyStore';
+import { useCardRegenerationData, useCardRegenerationMutation } from '../../hooks/useCardRegeneration';
 import PropertyHeader from '../../components/PropertyHeader';
 import '../../styles/animations.css';
-import BackButton from '../../components/BackButton';
 
 const STEP_DELAY = 2000;
 
@@ -26,29 +25,42 @@ const RegenerateCardPage = () => {
   const location = useLocation();
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(0);
-  const [cardStatus, setCardStatus] = useState('deactivating');
-  const [cardData, setCardData] = useState(null);
-  const [error, setError] = useState(null);
+  const [cardStatus, setCardStatus] = useState('idle');
   const [showCelebration, setShowCelebration] = useState(false);
-  const hasProcessedRef = useRef(false);
   const checkmarkRef = useRef(null);
 
   const guestData = location.state?.guestData;
   const validationData = location.state?.validationData;
 
-  const regenerateCard = useCardMutation('regenerate', {
+  const {
+    data: cardMutationData,
+    isLoading: isLoadingData,
+    error: dataError,
+    isError: isDataError,
+  } = useCardRegenerationData(guestData, validationData);
+
+  const regenerateCardMutation = useCardRegenerationMutation({
     onSuccess: (result) => {
-      if (result.success) {
-        setCardData(result.data);
-        setCardStatus('completed');
-        setCurrentStep(3);
+      if (result?.success && result?.data) {
+        setTimeout(() => {
+          setCardStatus('completed');
+          setCurrentStep(3);
+          setTimeout(() => {
+            navigate('/lost-card/issued', {
+              state: { guestData, cardData: result.data },
+            });
+          }, 2000);
+        }, STEP_DELAY);
       }
     },
-    onError: (err) => {
-      setError(err.message ?? t('error.cardRegenerationFailed'));
+    onError: () => {
       setCardStatus('error');
-    }
+    },
   });
+
+  const isLoading = isLoadingData || regenerateCardMutation.isPending;
+  const isError = isDataError || regenerateCardMutation.isError;
+  const isSuccess = regenerateCardMutation.isSuccess && cardStatus === 'completed';
 
   const steps = useMemo(() => [
     { label: t('regenerateCard.steps.deactivating'), status: 'deactivating' },
@@ -58,19 +70,18 @@ const RegenerateCardPage = () => {
 
   const guestName = useMemo(() => {
     if (guestData?.guestName) return guestData.guestName;
+    
+    if (guestData?.primaryGuest) {
+      const firstName = guestData.primaryGuest.firstName ?? '';
+      const lastName = guestData.primaryGuest.lastName ?? '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      if (fullName) return fullName;
+    }
+    
     const firstName = guestData?.firstName ?? '';
     const lastName = guestData?.lastName ?? '';
     const fullName = `${firstName} ${lastName}`.trim();
     return fullName ? fullName : '';
-  }, [guestData]);
-
-  const cardMutationData = useMemo(() => {
-    const propertyId = guestData?.propertyId ?? usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
-    return {
-      reservation_id: guestData?.reservationId ?? guestData?.reservation_id ?? guestData?.reservationNumber,
-      room_number: guestData?.roomNumber ?? guestData?.room_number,
-      property_id: propertyId,
-    };
   }, [guestData]);
 
   const processStep = async (stepIndex, status) => {
@@ -84,39 +95,23 @@ const RegenerateCardPage = () => {
       navigate('/lost-card');
       return;
     }
+  }, [guestData, validationData, navigate]);
 
-    if (hasProcessedRef.current) return;
-    hasProcessedRef.current = true;
+  useEffect(() => {
+    if (!cardMutationData || regenerateCardMutation.isPending || regenerateCardMutation.isSuccess || cardStatus !== 'idle') {
+      return;
+    }
 
     const processCardRegeneration = async () => {
-      try {
-        await processStep(0, 'deactivating');
-        await processStep(1, 'generating');
-        await processStep(2, 'programming');
-        
-        const result = await regenerateCard.mutateAsync(cardMutationData);
-
-        if (result.success) {
-          setCardData(result.data);
-          await new Promise((resolve) => setTimeout(resolve, STEP_DELAY));
-          setCardStatus('completed');
-
-          setTimeout(() => {
-            navigate('/lost-card/issued', {
-              state: { guestData, cardData: result.data },
-            });
-          }, 2000);
-        } else {
-          setError(result.message ?? t('error.cardDispenserError'));
-        }
-      } catch (err) {
-        setError(err.message ?? t('error.cardDispenserError'));
-      }
+      await processStep(0, 'deactivating');
+      await processStep(1, 'generating');
+      await processStep(2, 'programming');
+      regenerateCardMutation.mutate(cardMutationData);
     };
 
     processCardRegeneration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cardMutationData]);
 
   // Trigger celebration animation when card status becomes completed
   useEffect(() => {
@@ -136,6 +131,76 @@ const RegenerateCardPage = () => {
 
   if (!guestData || !validationData) {
     return null;
+  }
+
+  const errorMessage = dataError?.message ?? 
+                      regenerateCardMutation.error?.message ?? 
+                      null;
+  const isReservationNotFound = errorMessage?.toLowerCase().includes('reservation not found') ||
+                               errorMessage?.toLowerCase().includes('reservationnotfound') ||
+                               (isDataError && !isLoading);
+
+  if (isLoading) {
+    return (
+      <Container size="lg" style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }} p={20}>
+        <Stack align="center" gap="md">
+          <Loader size="lg" />
+          <Text size="md" c="dimmed">{t('regenerateCard.pleaseWaitMessage')}</Text>
+        </Stack>
+      </Container>
+    );
+  }
+
+  if (isReservationNotFound) {
+    return (
+      <Container
+        size="lg"
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        p={20}
+        bg="#FFFFFF"
+      >
+        <Paper
+          withBorder
+          shadow="md"
+          p={40}
+          radius="xl"
+          w="100%"
+          maw={600}
+          bg="#ffffff"
+        >
+          <Alert
+            icon={<IconX size={18} />}
+            title={t('error.title')}
+            color="red"
+            variant="light"
+            radius="md"
+          >
+            <Text size="md" fw={500} ff="Inter, sans-serif">
+              {t('error.reservationNotFound')}
+            </Text>
+          </Alert>
+          <Group justify="center" mt="xl">
+            <Button
+              size="lg"
+              leftSection={<IconHome size={20} stroke={2} />}
+              onClick={() => navigate('/lost-card')}
+              bg="#C8653D"
+              c="white"
+              fw={600}
+              radius="md"
+            >
+              {t('common.returnToHome')}
+            </Button>
+          </Group>
+        </Paper>
+      </Container>
+    );
   }
 
   return (
@@ -168,7 +233,7 @@ const RegenerateCardPage = () => {
           </Group>
 
           <Stack gap="lg" mb="xl">
-            {error ? (
+            {isError ? (
               <Alert
                 icon={<IconX size={18} />}
                 title={t('error.title')}
@@ -177,7 +242,7 @@ const RegenerateCardPage = () => {
                 radius="md"
               >
                 <Text size="md" fw={500} ff="Inter, sans-serif">
-                  {error}
+                  {errorMessage ?? t('error.cardRegenerationFailed')}
                 </Text>
               </Alert>
             ) : (
@@ -446,7 +511,7 @@ const RegenerateCardPage = () => {
                   </Stack>
                 )}
 
-                {cardData && (
+                {regenerateCardMutation.data?.data && (
                   <Alert
                     icon={<IconCheck size={16} />}
                     title={t('regenerateCard.newCardDetails')}
@@ -460,13 +525,13 @@ const RegenerateCardPage = () => {
                   >
                     <Stack gap={8}>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        <strong>{t('regenerateCard.newAccessCode')}:</strong> {cardData.accessCode}
+                        <strong>{t('regenerateCard.newAccessCode')}:</strong> {regenerateCardMutation.data.data.accessCode ?? regenerateCardMutation.data.data.passcode ?? regenerateCardMutation.data.data.code}
                       </Text>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        <strong>{t('regenerateCard.room')}:</strong> {guestData.roomNumber}
+                        <strong>{t('regenerateCard.room')}:</strong> {guestData?.unit?.name ?? guestData?.unit?.id ?? ''}
                       </Text>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        <strong>{t('regenerateCard.status')}:</strong> {cardData.status}
+                        <strong>{t('regenerateCard.status')}:</strong> {regenerateCardMutation.data.data.status}
                       </Text>
                     </Stack>
                   </Alert>
@@ -476,7 +541,7 @@ const RegenerateCardPage = () => {
           </Stack>
 
           {/* Return Home Button - Only show when completed or error */}
-          {(cardStatus === 'completed' || error) && (
+          {(isSuccess || isError) && (
             <Group justify="center" mt={8}>
               <Button
                 size="lg"

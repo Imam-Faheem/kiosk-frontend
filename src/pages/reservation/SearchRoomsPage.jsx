@@ -53,9 +53,9 @@ const SearchRoomsPage = () => {
   
   const searchOffers = useRoomMutation('searchOffers', {
     onSuccess: (result) => {
-      const success = result?.success ?? false;
-      setSearchResults(success ? result : null);
-      setErrorMessage(success ? null : t('error.requestFailed'));
+      // The service returns the transformed data directly
+      setSearchResults(result || null);
+      setErrorMessage(null);
     },
     onError: (err) => {
       const apiError = err?.response ? createApiError(err) : createNetworkError(err);
@@ -124,24 +124,30 @@ const SearchRoomsPage = () => {
     setErrorMessage(null);
     setSearchResults(null);
 
-    const checkInDate = values.checkIn ? formatDate(values.checkIn) : null;
-    const checkOutDate = values.checkOut ? formatDate(values.checkOut) : null;
-    const adults = Number(values.guests) ?? 1;
-
-    const dateError = validateDates(checkInDate, checkOutDate);
-    if (dateError) {
-      setErrorMessage(dateError);
+    // Check if property is configured
+    const propertyId = usePropertyStore.getState().propertyId;
+    if (!propertyId) {
+      setErrorMessage(t('error.propertyNotSelected') || 'Please select a property first. Go to property selection page.');
       setLoading(false);
       return;
     }
 
+    const checkInDate = values.checkIn ? (values.checkIn instanceof Date ? values.checkIn.toISOString().split('T')[0] : values.checkIn) : null;
+    const checkOutDate = values.checkOut ? (values.checkOut instanceof Date ? values.checkOut.toISOString().split('T')[0] : values.checkOut) : null;
+    const adults = values.guests ? Number(values.guests) : 1;
+
+    const searchData = {
+      propertyId: propertyId,
+      arrival: checkInDate,
+      departure: checkOutDate,
+      adults: adults || 1,
+    };
+
     try {
-      await searchOffers.mutateAsync({
-        arrival: checkInDate,
-        departure: checkOutDate,
-        adults,
-        children: [],
-      });
+      await searchAvailability.mutateAsync(searchData);
+    } catch (err) {
+      // Error is already handled by onError callback, but ensure loading is stopped
+      console.error('Search error:', err);
     } finally {
       setLoading(false);
     }

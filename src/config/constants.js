@@ -5,11 +5,9 @@ import { IconCreditCard, IconMail, IconLock } from '@tabler/icons-react';
  * Centralized configuration for API endpoints and settings
  */
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.REACT_APP_API_URL ?? 'http://localhost:8000',
+  BASE_URL: 'http://localhost:8000',
   TIMEOUT: 30000,
   RETRY_ATTEMPTS: 3,
-  ORGANIZATION_ID: process.env.REACT_APP_ORGANIZATION_ID ?? '0ujsszwN8NRY24YaXiTIE2VWDTS',
-  DEFAULT_PROPERTY_ID: process.env.REACT_APP_PROPERTY_ID ?? 'BER',
 };
 
 /**
@@ -391,24 +389,24 @@ export const STATUS = {
 
 // Card Dispensing Steps Configuration
 export const CARD_DISPENSING_STEPS = [
-  { 
+  {
     key: 'preparing',
     labelKey: 'cardDispensing.steps.preparing',
-    defaultLabel: 'Preparing Card', 
+    defaultLabel: 'Preparing Card',
     description: 'Preparing your access card',
     iconKey: 'creditCard',
   },
-  { 
+  {
     key: 'encoding',
     labelKey: 'cardDispensing.steps.encoding',
-    defaultLabel: 'Encoding Credentials', 
+    defaultLabel: 'Encoding Credentials',
     description: 'Securing your access credentials',
     iconKey: 'lock',
   },
-  { 
+  {
     key: 'sending',
     labelKey: 'cardDispensing.steps.sending',
-    defaultLabel: 'Sending Digital Key', 
+    defaultLabel: 'Sending Digital Key',
     description: 'Delivering to your email',
     iconKey: 'mail',
   },
