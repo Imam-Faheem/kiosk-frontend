@@ -159,7 +159,17 @@ const PaymentCheckPage = () => {
       return;
     }
 
-    if (balanceData !== null || hasFoliosData || checkInData) {
+    if (!paymentAccountId && (balanceData !== null || hasFoliosData || checkInData)) {
+      const hasValidReservationId = reservation?.id ?? reservation?.bookingId;
+      const hasValidCheckInData = checkInData?.bookingId ?? checkInData?.id;
+      
+      if (!hasValidReservationId && !hasValidCheckInData) {
+        setError(t('error.paymentAccountNotFound'));
+        setPaymentFailed(true);
+        setLoading(false);
+        return;
+      }
+
       const balance = balanceData?.amount ?? 0;
       const currency = balanceData?.currency ?? 'EUR';
       const status = balance <= 0 ? 'Success' : 'Pending';
@@ -169,7 +179,7 @@ const PaymentCheckPage = () => {
         amount: Math.abs(balance),
         currency,
         balance,
-        transactionId: checkInData?.bookingId ?? reservation?.id ?? reservation?.bookingId ?? `TXN-${Date.now()}`,
+        transactionId: checkInData?.bookingId ?? reservation?.id ?? reservation?.bookingId,
       };
 
       setPaymentStatus(paymentStatusData);

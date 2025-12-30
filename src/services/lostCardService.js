@@ -45,13 +45,10 @@ const getPropertyIds = () => {
 const isPresent = (value) => value != null && value !== '';
 
 export const validateLostCardGuest = async (data) => {
-  const { reservationNumber, lastName } = data;
+  const { reservationNumber } = data;
 
   if (!isPresent(reservationNumber)) {
     throw new Error(translateError('reservationIdRequired'));
-  }
-  if (!isPresent(lastName)) {
-    throw new Error(translateError('lastNameRequired'));
   }
 
   const { propertyId, organizationId } = getPropertyIds();
@@ -63,7 +60,7 @@ export const validateLostCardGuest = async (data) => {
   const url = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/reservations/${reservationNumber}/check-in`;
 
   try {
-    const response = await apiClient.get(url, { params: { lastName } });
+    const response = await apiClient.get(url);
     
     const apiData = response.data?.success === true && response.data?.data 
       ? response.data.data 
@@ -81,31 +78,6 @@ export const validateLostCardGuest = async (data) => {
       throw new Error(translateError('reservationNotFoundByNumber'));
     }
 
-    const lastNameSources = [
-      apiData?.primaryGuest?.lastName,
-      hasFolios ? apiData.folios[0]?.debitor?.name : null,
-      apiData?.guest_name?.last_name,
-      apiData?.guest_name?.lastName,
-    ];
-    const reservationLastName = lastNameSources
-      .find(name => name != null)
-      ?.trim()
-      ?.toLowerCase();
-
-    const lastNameLower = lastName?.trim()?.toLowerCase();
-
-    if (!lastNameLower) {
-      throw new Error(translateError('lastNameRequired'));
-    }
-
-    if (!reservationLastName) {
-      throw new Error(translateError('reservationNotFoundByNumber'));
-    }
-
-    if (lastNameLower !== reservationLastName) {
-      throw new Error(translateError('lastNameMismatch'));
-    }
-
     return {
       success: true,
       data: apiData,
@@ -113,9 +85,6 @@ export const validateLostCardGuest = async (data) => {
   } catch (error) {
     if (error?.response?.status === 404) {
       throw new Error(translateError('reservationNotFoundByNumber'));
-    }
-    if (error?.response?.status === 403) {
-      throw new Error(translateError('lastNameMismatch'));
     }
 
     const message = error?.response?.data?.message ??

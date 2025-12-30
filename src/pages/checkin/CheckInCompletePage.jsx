@@ -42,7 +42,7 @@ const CheckInCompletePage = () => {
   const checkInResult = location.state?.checkInResult;
 
   const formatCheckOut = (dateStr) => {
-    if (!dateStr || dateStr === 'N/A') return 'N/A';
+    if (!dateStr || dateStr === 'N/A') return t('common.notAvailable');
     try {
       if (typeof dateStr === 'string' && dateStr.includes('T')) {
         return new Date(dateStr).toLocaleDateString('en-US', { 
@@ -95,12 +95,12 @@ const CheckInCompletePage = () => {
     return {
       reservationId: reservation.reservation_id ?? reservation.id,
       guestName: getGuestName(reservation, checkInInfo),
-      roomNumber: checkInInfo.room_number ?? reservation.room_number ?? 'TBD',
-      checkOut: checkOutDate ? formatCheckOut(checkOutDate) : 'N/A',
+      roomNumber: checkInInfo.room_number ?? reservation.room_number ?? t('common.notAvailable'),
+      checkOut: checkOutDate ? formatCheckOut(checkOutDate) : t('common.notAvailable'),
       checkInTime: checkInInfo.checked_in_at ?? new Date().toISOString(),
       status: checkInInfo.status ?? checkInResult?.data?.status ?? 'checked_in',
     };
-  }, [reservation, checkInData, checkInResult]);
+  }, [reservation, checkInData, checkInResult, t]);
 
   // Log completion event
   const logCompletionMutation = useMutation({
@@ -157,7 +157,7 @@ const CheckInCompletePage = () => {
     if (!hasLogged) {
       const guestName = displayData?.guestName ?? getGuestName(reservation, checkInData);
       
-      const roomNumber = displayData?.roomNumber ?? reservation.room_number ?? reservation.roomNumber ?? 'TBD';
+      const roomNumber = displayData?.roomNumber ?? reservation.room_number ?? reservation.roomNumber ?? t('common.notAvailable');
       const checkInTime = displayData?.checkInTime ?? new Date().toISOString();
       
       logCompletionMutation.mutate({
@@ -175,7 +175,7 @@ const CheckInCompletePage = () => {
     return () => {
       // Cleanup handled in countdown effect
     };
-  }, [reservation?.reservation_id ?? reservation?.reservationId ?? reservation?.id, navigate, displayData, paymentStatus, cardData, logCompletionMutation]);
+  }, [reservation?.reservation_id ?? reservation?.reservationId ?? reservation?.id, navigate, displayData, paymentStatus, cardData, logCompletionMutation, t, getGuestName, checkInData]);
 
   // Separate effect for countdown timer - runs once on mount
   useEffect(() => {

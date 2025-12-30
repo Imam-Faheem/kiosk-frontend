@@ -27,11 +27,9 @@ const LostCardPage = () => {
   const form = useForm({
     initialValues: {
       reservationNumber: '',
-      lastName: ''
     },
     validate: {
       reservationNumber: (value) => (!value ? t('error.reservationNumberRequired') : null),
-      lastName: (value) => (!value ? t('error.lastNameRequired') : null),
     },
   });
 
@@ -50,35 +48,6 @@ const LostCardPage = () => {
     return lastNameSources.some(name => name?.trim()?.length > 0);
   };
 
-  const extractLastNameFromResponse = (data) => {
-    if (!data) return null;
-    
-    const lastNameSources = [
-      data?.primaryGuest?.lastName,
-      Array.isArray(data?.folios) && data.folios.length > 0
-        ? (data.folios.find(f => f.isMainFolio) ?? data.folios[0])?.debitor?.name
-        : null,
-      data?.guest_name?.last_name,
-      data?.guest_name?.lastName,
-    ];
-    
-    const lastName = lastNameSources.find(name => name != null);
-    return lastName?.trim()?.toLowerCase() ?? null;
-  };
-
-  const validateLastNameMatch = (submittedLastName, apiData) => {
-    const submittedLastNameLower = submittedLastName?.trim().toLowerCase();
-    if (!submittedLastNameLower) {
-      return false;
-    }
-
-    const responseLastName = extractLastNameFromResponse(apiData);
-    if (!responseLastName) {
-      return false;
-    }
-
-    return submittedLastNameLower === responseLastName;
-  };
 
   const handleSubmit = async (values) => {
     setError(null);
@@ -86,11 +55,8 @@ const LostCardPage = () => {
     setIsLoading(true);
     
     try {
-      const submittedLastName = values.lastName?.trim();
-      
       const result = await validateLostCardGuest({
         reservationNumber: values.reservationNumber,
-        lastName: submittedLastName,
       });
       
       if (!result.success) {
@@ -106,11 +72,6 @@ const LostCardPage = () => {
       if (!hasValidGuestData(guestData)) {
         throw new Error(t('error.reservationNotFound'));
       }
-
-      if (!validateLastNameMatch(submittedLastName, guestData)) {
-        form.setFieldError('lastName', t('error.lastNameMismatch'));
-        throw new Error(t('error.lastNameMismatch'));
-      }
       
       navigate('/lost-card/regenerate', {
         state: {
@@ -121,31 +82,17 @@ const LostCardPage = () => {
     } catch (err) {
       const errorStatus = err?.response?.status;
       const errorMessage = err?.message ?? t('error.guestValidationFailed');
-      const errorMessageLower = errorMessage.toLowerCase();
-      
-      const lastNameErrorChecks = [
-        errorStatus === 403,
-        errorMessageLower.includes('lastname'),
-        errorMessageLower.includes('last name'),
-        errorMessageLower.includes('last_name'),
-        errorMessageLower.includes('mismatch'),
-        errorMessageLower.includes('does not match'),
-      ];
-      const isLastNameError = lastNameErrorChecks.some(check => check === true);
       
       const reservationErrorChecks = [
         errorStatus === 404,
         errorStatus === 500,
-        errorMessageLower.includes('not found'),
+        errorMessage.toLowerCase().includes('not found'),
         errorMessage.includes('status code 500'),
         errorMessage.includes('Request failed'),
       ];
-      const isReservationError = reservationErrorChecks.some(check => check === true) && !isLastNameError;
+      const isReservationError = reservationErrorChecks.some(check => check === true);
       
-      if (isLastNameError) {
-        form.setFieldError('lastName', t('error.lastNameMismatch'));
-        setError(t('error.lastNameMismatch'));
-      } else if (isReservationError) {
+      if (isReservationError) {
         form.setFieldError('reservationNumber', t('error.reservationNotFound'));
         setError(t('error.reservationNotFound'));
       } else {
@@ -213,35 +160,6 @@ const LostCardPage = () => {
               required
               size="lg"
               {...form.getInputProps('reservationNumber')}
-              styles={{
-                label: {
-                  display: 'inline-flex',
-                  alignItems: 'baseline',
-                  gap: '4px',
-                  marginBottom: '10px',
-                },
-                required: {
-                  marginLeft: '2px',
-                  transform: 'translateY(-1px)',
-                },
-                input: {
-                  height: '48px',
-                  minHeight: '48px',
-                  borderRadius: '8px',
-                  border: '2px solid #E0E0E0',
-                  '&:focus': {
-                    borderColor: '#C8653D',
-                  }
-                }
-              }}
-            />
-
-            <TextInput
-              label={t('lostCard.lastName')}
-              placeholder={t('lostCard.lastNamePlaceholder')}
-              required
-              size="lg"
-              {...form.getInputProps('lastName')}
               styles={{
                 label: {
                   display: 'inline-flex',
