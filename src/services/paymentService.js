@@ -126,20 +126,17 @@ export const processPaymentByTerminal = async (reservationId) => {
 };
 
 export const getPaymentAccount = async (paymentAccountId) => {
-  const { propertyId, organizationId } = getPropertyIds();
-  
   if (!paymentAccountId) {
     throw new Error('Payment account ID is required.');
   }
   
   try {
-    const url = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/payment-accounts/${paymentAccountId}`;
-    const response = await apiClient.get(url);
+    const response = await apiClient.get(`/api/kiosk/v1/payment-accounts/${paymentAccountId}`);
     return response.data;
   } catch (err) {
     const errorMessage = err?.response?.data?.message ?? 
-                         err?.response?.data?.error ?? 
-                         err?.message ?? 
+                         err?.response?.data?.error ??
+                         err?.message ??
                          'Failed to fetch payment account';
     throw new Error(errorMessage);
   }
