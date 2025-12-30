@@ -1,5 +1,4 @@
 import { apiClient } from './api/apiClient';
-import { mockData, shouldUseMock } from './mockData';
 import { translateError } from '../utils/translations';
 
 /**
@@ -12,10 +11,6 @@ export const issueDigitalKey = async (data) => {
     const response = await apiClient.post('/api/kiosk/v1/key/issue', data);
     return response.data;
   } catch (err) {
-    if (shouldUseMock(err)) {
-      return mockData.digitalKey(data);
-    }
-    
     const errorMessage = err?.response?.data?.message ?? 
                          err?.response?.data?.error ?? 
                          err?.message ?? 
@@ -34,10 +29,6 @@ export const getDigitalKey = async (keyId) => {
     const response = await apiClient.get(`/api/kiosk/v1/key/${keyId}`);
     return response.data;
   } catch (err) {
-    if (shouldUseMock(err)) {
-      return mockData.digitalKeyGet(keyId);
-    }
-    
     if (err?.response?.status === 404) {
       throw new Error(translateError('digitalKeyNotFound'));
     }
@@ -57,10 +48,6 @@ export const revokeDigitalKey = async (keyId) => {
     const response = await apiClient.delete(`/api/kiosk/v1/key/${keyId}`);
     return response.data;
   } catch (err) {
-    if (shouldUseMock(err)) {
-      return { success: true, data: { key_id: keyId, status: 'revoked' }, message: 'Digital key revoked successfully (mock)' };
-    }
-    
     const errorMessage = err?.response?.data?.message ?? 
                          err?.response?.data?.error ?? 
                          err?.message ?? 
@@ -80,10 +67,6 @@ export const regenerateDigitalKey = async (keyId, data = {}) => {
     const response = await apiClient.post(`/api/kiosk/v1/key/${keyId}/regenerate`, data);
     return response.data;
   } catch (err) {
-    if (shouldUseMock(err)) {
-      return mockData.digitalKey({ reservation_id: data.reservation_id, lock_id: data.lock_id });
-    }
-    
     const errorMessage = err?.response?.data?.message ?? 
                          err?.response?.data?.error ?? 
                          err?.message ?? 

@@ -4,25 +4,25 @@ import { API_CONFIG } from '../config/constants';
 const extractProperties = (response) => {
   if (Array.isArray(response)) return { data: response, pagination: null };
   if (!response) return { data: [], pagination: null };
-  
+
   const dataPaths = [
     response?.data?.properties,
     response?.data,
     response?.properties,
     response?.results
   ];
-  
+
   const data = dataPaths.find(Array.isArray) || [];
-  const pagination = response?.data?.properties === data 
-    ? response?.data?.pagination 
+  const pagination = response?.data?.properties === data
+    ? response?.data?.pagination
     : response?.pagination ?? null;
-  
+
   return { data, pagination };
 };
 
 export const getProperties = async (params) => {
   try {
-    const response = await apiClient.get(`/api/kiosk/v1/organizations/${API_CONFIG.ORGANIZATION_ID}/properties`, { params });
+    const response = await apiClient.get(`/api/kiosk/v1/properties`, { params });
     const { data, pagination } = extractProperties(response.data);
     return {
       success: response.data?.success !== false,

@@ -1,6 +1,18 @@
 import { apiClient } from './api/apiClient';
-import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
 import { translateError } from '../utils/translations';
+
+// Mock data helpers - optional fallback
+let mockData, shouldUseMock, simulateApiDelay;
+try {
+  const mockModule = require('./mockData');
+  mockData = mockModule.mockData;
+  shouldUseMock = mockModule.shouldUseMock;
+  simulateApiDelay = mockModule.simulateApiDelay;
+} catch (e) {
+  shouldUseMock = () => false;
+  simulateApiDelay = () => Promise.resolve();
+  mockData = { validateLostCardGuest: () => ({ success: false }), regenerateLostCard: () => ({ success: false }) };
+}
 
 export const validateLostCardGuest = async (data) => {
   try {

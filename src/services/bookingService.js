@@ -1,5 +1,4 @@
 import { apiClient } from './api/apiClient';
-import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
 
 /**
  * Create a booking in Apaleo
@@ -15,16 +14,8 @@ import { mockData, shouldUseMock, simulateApiDelay } from './mockData';
  * @returns {Promise<Object>} Booking response from Apaleo
  */
 export const createBooking = async (bookingData, hotelId) => {
-  try {
-    const response = await apiClient.post(`/booking/${hotelId}`, bookingData);
-    return response.data;
-  } catch (err) {
-    if (shouldUseMock(err)) {
-      await simulateApiDelay(800);
-      return mockData.createBooking(bookingData);
-    }
-    throw err;
-  }
+  const response = await apiClient.post(`/booking/${hotelId}`, bookingData);
+  return response.data;
 };
 
 /**
@@ -33,15 +24,7 @@ export const createBooking = async (bookingData, hotelId) => {
  * @returns {Promise<Object>} Reservation details
  */
 export const getReservation = async (reservationId) => {
-  try {
-    const response = await apiClient.get(`/reservation/${reservationId}`);
-    return response.data;
-  } catch (err) {
-    if (shouldUseMock(err)) {
-      await simulateApiDelay(400);
-      return mockData.getReservation(reservationId);
-    }
-    throw err;
-  }
+  const response = await apiClient.get(`/reservation/${reservationId}`);
+  return response.data;
 };
 

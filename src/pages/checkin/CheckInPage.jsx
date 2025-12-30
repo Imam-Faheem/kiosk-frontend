@@ -19,7 +19,6 @@ import { useReservationMutation } from '../../hooks/useReservationMutation';
 import { checkinInitialValues } from '../../schemas/checkin.schema';
 import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
-import { mockData, shouldUseMock, simulateApiDelay } from '../../services/mockData';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 
@@ -43,10 +42,7 @@ const CheckInPage = () => {
   
   const validateReservation = useReservationMutation('validate', {
     onError: (err) => {
-      // Don't set error here if we'll use mock data
-      if (!shouldUseMock(err)) {
-        setError(err.message ?? t('error.reservationNotFound'));
-      }
+      setError(err.message ?? t('error.reservationNotFound'));
     },
   });
 
@@ -82,26 +78,6 @@ const CheckInPage = () => {
         setError(t('error.reservationValidationFailed'));
       }
     } catch (error) {
-      if (shouldUseMock(error)) {
-        try {
-          await simulateApiDelay(600);
-          const mockResult = mockData.reservation(values);
-
-          if (mockResult.success && mockResult.data) {
-            const reservationId = mockResult.data.reservation_id ?? mockResult.data.id;
-            if (reservationId) {
-              navigate('/checkin/payment-check', {
-                state: { reservation: mockResult.data },
-              });
-              return;
-            }
-          }
-        } catch {
-          setError(t('error.failedToLoadReservation'));
-          return;
-        }
-      }
-
       setError(error.message ?? t('error.reservationNotFound'));
     } finally {
       setIsLoading(false);

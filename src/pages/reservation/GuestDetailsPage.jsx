@@ -18,10 +18,11 @@ import { useForm } from '@mantine/form';
 import { guestInitialValues } from '../../schemas/guest.schema';
 import { createGuestFormValidator } from '../../utils/formValidation';
 import useLanguage from '../../hooks/useLanguage';
+import usePropertyStore from '../../stores/propertyStore';
+import { saveGuestDetails } from '../../services/guestService';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import { GUEST_DETAILS_OPTIONS } from '../../config/constants';
-import usePropertyStore from '../../stores/propertyStore';
 
 const GuestDetailsPage = () => {
   const navigate = useNavigate();
@@ -44,13 +45,29 @@ const GuestDetailsPage = () => {
     setError(null);
 
     try {
-      navigate('/reservation/room-details', {
-        state: {
-          room,
-          searchCriteria,
-          guestDetails: values,
-        },
-      });
+      // Prepare guest data with propertyId if available
+      const guestData = {
+        ...values,
+        propertyId: usePropertyStore.getState().propertyId,
+        // reservationId can be added later when reservation is created
+      };
+
+      // Save guest details to backend
+      const result = await saveGuestDetails(guestData);
+
+      if (result?.success ?? result?.data) {
+        navigate('/reservation/room-details', {
+          state: {
+            room,
+            searchCriteria,
+            guestDetails: values,
+            savedGuest: result?.data ?? result,
+          },
+        });
+      } else {
+        setError(result?.message ?? t('error.failedToSaveGuestDetails'));
+        setLoading(false);
+      }
     } catch (err) {
       setError(t('error.failedToSaveGuestDetails'));
       setLoading(false);

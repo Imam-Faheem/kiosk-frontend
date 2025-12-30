@@ -1,6 +1,16 @@
 import { apiClient } from './api/apiClient';
-import { mockData, shouldUseMock } from './mockData';
 import { translateError } from '../utils/translations';
+
+// Mock data helpers - optional fallback
+let mockData, shouldUseMock;
+try {
+  const mockModule = require('./mockData');
+  mockData = mockModule.mockData;
+  shouldUseMock = mockModule.shouldUseMock;
+} catch (e) {
+  shouldUseMock = () => false;
+  mockData = { checkIn: () => ({}), checkInStatus: () => ({}), reservation: () => ({ success: false }) };
+}
 
 export const processCheckIn = async (data) => {
   try {

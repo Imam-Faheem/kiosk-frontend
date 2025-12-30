@@ -28,7 +28,7 @@ const LostCardPage = () => {
     initialValues: {
       roomType: '',
       reservationNumber: '',
-      lastName: ''
+      lastName: '',
     },
     validate: {
       roomType: (value) => (!value ? t('error.roomTypeRequired') : null),
@@ -42,7 +42,7 @@ const LostCardPage = () => {
     setIsLoading(true);
     
     try {
-      // Validate guest using service (with mock data fallback)
+      // Validate guest using service
       const result = await validateLostCardGuest({
         reservationNumber: values.reservationNumber,
         roomNumber: values.roomType,

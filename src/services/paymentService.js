@@ -1,5 +1,4 @@
 import { apiClient } from './api/apiClient';
-import { mockData, shouldUseMock } from './mockData';
 import { translateError } from '../utils/translations';
 import usePropertyStore from '../stores/propertyStore';
 import { API_CONFIG } from '../config/constants';
@@ -17,10 +16,6 @@ export const processPayment = async (data) => {
     const response = await apiClient.post('/api/kiosk/v1/payment', data);
     return response.data;
   } catch (err) {
-    if (shouldUseMock(err)) {
-      return mockData.payment(data);
-    }
-    
     const errorMessage = err?.response?.data?.message ?? 
                          err?.response?.data?.error ?? 
                          err?.message ?? 
@@ -34,10 +29,6 @@ export const getPaymentStatus = async (reservationId) => {
     const response = await apiClient.get(`/api/kiosk/v1/payment/status/${reservationId}`);
     return response.data;
   } catch (err) {
-    if (shouldUseMock(err)) {
-      return mockData.paymentStatus(reservationId);
-    }
-    
     if (err?.response?.status === 404) {
       throw new Error(translateError('paymentStatusNotFound'));
     }
@@ -57,10 +48,6 @@ export const getPaymentHistory = async (params = {}) => {
     const response = await apiClient.get('/api/kiosk/v1/payment/history', { params: queryParams });
     return response.data;
   } catch (err) {
-    if (shouldUseMock(err)) {
-      return mockData.paymentHistory(params);
-    }
-    
     const errorMessage = err?.response?.data?.message ?? err?.message ?? 'Failed to fetch payment history';
     throw new Error(errorMessage);
   }
@@ -71,10 +58,6 @@ export const processRefund = async (transactionId, data) => {
     const response = await apiClient.post(`/api/kiosk/v1/payment/${transactionId}/refund`, data);
     return response.data;
   } catch (err) {
-    if (shouldUseMock(err)) {
-      return mockData.refund(transactionId, data);
-    }
-    
     const errorMessage = err?.response?.data?.message ?? 
                          err?.response?.data?.error ?? 
                          err?.message ?? 
@@ -104,6 +87,11 @@ export const processPaymentByTerminal = async (reservationId) => {
   }
 };
 
+/**
+ * Get payment account details
+ * @param {string} paymentAccountId - Payment account ID
+ * @returns {Promise<Object>} Payment account response
+ */
 export const getPaymentAccount = async (paymentAccountId) => {
   if (!paymentAccountId) {
     throw new Error('Payment account ID is required.');

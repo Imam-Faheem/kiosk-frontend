@@ -22,7 +22,10 @@
     "paymentSuccessful": "Payment Successful",
     "paymentFailed": "Payment Failed",
     "paymentTimeout": "Payment Timeout",
-    "insertOrSwipeCard": "Please insert or swipe your card at the terminal"
+    "paymentError": "Payment Error",
+    "insertOrSwipeCard": "Please insert or swipe your card at the terminal",
+    "timeRemaining": "Time remaining",
+    "paymentCompletedMessage": "Payment completed successfully! Preparing your card..."
   },
   "checkInComplete": {
     "title": "Check-In Complete",
@@ -233,6 +236,8 @@
     "roomNumberMismatch": "Room number does not match reservation records",
     "reservationNotFoundByNumber": "Reservation not found. Please check your reservation number.",
     "paymentStatusNotFound": "Payment status not found",
+    "paymentDataMissing": "Payment data is missing. Please return to check-in.",
+    "paymentAccountNotFound": "Payment account not found",
     "digitalKeyNotFound": "Digital key not found",
     "checkoutNotFound": "Checkout not found",
     "cannotConnectToServer": "Cannot connect to server. Please ensure the backend server is running.",
@@ -366,6 +371,7 @@
     "verifyingPaymentStatus": "Verifying Payment Status",
     "pleaseWaitCheckingPayment": "Please wait while we check your payment information...",
     "processingPaymentVerification": "Processing payment verification...",
+    "pleaseWait": "Please wait...",
     "reservationDetails": "Reservation Details",
     "room": "Room",
     "contactSupport": "Contact Support"

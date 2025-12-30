@@ -18,7 +18,12 @@
     "lastName": "Nachname",
     "submit": "Absenden",
     "back": "Zurück",
-    "loading": "Reservierung wird überprüft..."
+    "loading": "Reservierung wird überprüft...",
+    "enterReservationNumber": "Geben Sie Ihre 10-stellige Reservierungsnummer ein",
+    "enterLastName": "Geben Sie Ihren Nachnamen ein",
+    "invalidReservationData": "Ungültige Reservierungsdaten. Bitte versuchen Sie es erneut.",
+    "reservationValidationFailed": "Reservierungsvalidierung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.",
+    "failedToLoadReservation": "Reservierungsdaten konnten nicht geladen werden. Bitte versuchen Sie es erneut."
   },
   "paymentCheck": {
     "title": "Zahlungsstatus",
@@ -51,6 +56,7 @@
     "verifyingPaymentStatus": "Zahlungsstatus wird überprüft",
     "pleaseWaitCheckingPayment": "Bitte warten Sie, während wir Ihre Zahlungsinformationen überprüfen...",
     "processingPaymentVerification": "Zahlungsverifizierung wird verarbeitet...",
+    "pleaseWait": "Bitte warten...",
     "reservationDetails": "Reservierungsdetails",
     "room": "Zimmer",
     "contactSupport": "Support kontaktieren"
@@ -61,7 +67,14 @@
     "swipeCard": "Bitte ziehen Sie Ihre Karte",
     "processing": "Zahlung wird bearbeitet...",
     "cancel": "Abbrechen",
-    "timeout": "Zahlungszeitüberschreitung. Bitte versuchen Sie es erneut."
+    "timeout": "Zahlungszeitüberschreitung. Bitte versuchen Sie es erneut.",
+    "paymentSuccessful": "Zahlung erfolgreich",
+    "paymentFailed": "Zahlung fehlgeschlagen",
+    "paymentTimeout": "Zahlungszeitüberschreitung",
+    "paymentError": "Zahlungsfehler",
+    "insertOrSwipeCard": "Bitte stecken Sie Ihre Karte ein oder ziehen Sie sie am Terminal",
+    "timeRemaining": "Verbleibende Zeit",
+    "paymentCompletedMessage": "Zahlung erfolgreich abgeschlossen! Ihre Karte wird vorbereitet..."
   },
   "cardDispensing": {
     "title": "Ihre Karte wird vorbereitet",
@@ -122,7 +135,12 @@
     "back": "Zurück",
     "loading": "Verfügbare Zimmer werden gesucht...",
     "noRooms": "Keine Zimmer für die ausgewählten Daten verfügbar",
+    "selectCheckInDate": "Check-In Datum auswählen",
+    "selectCheckOutDate": "Check-Out Datum auswählen",
     "availableRooms": "Verfügbare Zimmer",
+    "available": "Verfügbar",
+    "perNight": "pro Nacht",
+    "total": "Gesamt",
     "guestCount": {
       "1": "1 Gast",
       "2": "2 Gäste",
@@ -269,20 +287,36 @@
     "totalAmount": "Gesamtbetrag",
     "swipeCard": "Bitte ziehen Sie Ihre Karte",
     "processing": "Zahlung wird bearbeitet...",
-    "cancelBooking": "Buchung stornieren"
+    "cancelBooking": "Buchung stornieren",
+    "readyToProcessPayment": "Bereit zur Zahlungsabwicklung",
+    "processingBooking": "Ihre Reservierung wird erstellt...",
+    "bookingSuccessful": "Buchung erfolgreich!",
+    "bookingFailed": "Buchung fehlgeschlagen",
+    "missingRoomInformation": "Fehlende Zimmerinformationen. Bitte wählen Sie erneut ein Zimmer aus.",
+    "noReservationId": "Buchung erstellt, aber keine Reservierungs-ID zurückgegeben",
+    "redirectingToConfirmation": "Weiterleitung zur Bestätigung...",
+    "room": "Zimmer",
+    "guest": "Gast",
+    "checkIn": "Check-In",
+    "checkOut": "Check-Out"
   },
   "newResCard": {
     "title": "Ihre Karte wird vorbereitet",
     "steps": {
       "preparing": "Karte wird vorbereitet",
+      "preparingDescription": "Ihre neue Karte wird vorbereitet",
       "encoding": "Karte wird kodiert",
-      "sending": "Details werden gesendet"
+      "encodingDescription": "Karte wird mit Ihren Daten kodiert",
+      "sending": "Details werden gesendet",
+      "sendingDescription": "Bestätigung wird gesendet"
     },
     "takeCard": "Bitte nehmen Sie Ihre Karte"
   },
   "reservationComplete": {
     "title": "Reservierung abgeschlossen",
     "success": "Reservierung bestätigt!",
+    "paymentSuccessful": "Zahlung erfolgreich",
+    "paymentProcessedSuccessfully": "Ihre Zahlung wurde erfolgreich verarbeitet",
     "reservationNumber": "Reservierungsnummer",
     "roomNumber": "Zimmernummer",
     "checkIn": "Check-In",
@@ -290,16 +324,24 @@
     "confirmationSent": "Bestätigung an Ihre E-Mail gesendet",
     "printReceipt": "Beleg drucken",
     "returnHome": "Zurück zur Startseite",
+    "guest": "Gast",
+    "room": "Zimmer",
+    "totalAmount": "Gesamtbetrag",
     "paymentSuccessful": "Zahlung erfolgreich",
     "paymentProcessedSuccessfully": "Ihre Zahlung wurde erfolgreich verarbeitet"
   },
   "lostCard": {
     "title": "Karte verloren",
+    "roomType": "Zimmertyp",
+    "roomTypePlaceholder": "Geben Sie den Zimmertyp ein (z.B. Doppelzimmer, Einzelzimmer, Suite)",
     "roomNumber": "Zimmernummer",
     "reservationNumber": "Reservierungsnummer",
+    "reservationNumberPlaceholder": "Geben Sie Ihre Reservierungsnummer ein",
     "lastName": "Nachname",
+    "lastNamePlaceholder": "Geben Sie Ihren Nachnamen ein",
     "submit": "Absenden",
     "back": "Zurück",
+    "validating": "Wird überprüft...",
     "helpText": "Bitte geben Sie Ihre Zimmernummer, Reservierungsnummer und Ihren Nachnamen an, um Ihre Karte neu zu generieren."
   },
   "regenerateCard": {
@@ -369,6 +411,8 @@
     "roomNumberMismatch": "Zimmernummer stimmt nicht mit den Reservierungsunterlagen überein",
     "reservationNotFoundByNumber": "Reservierung nicht gefunden. Bitte überprüfen Sie Ihre Reservierungsnummer.",
     "paymentStatusNotFound": "Zahlungsstatus nicht gefunden",
+    "paymentDataMissing": "Zahlungsdaten fehlen. Bitte kehren Sie zum Check-In zurück.",
+    "paymentAccountNotFound": "Zahlungskonto nicht gefunden",
     "digitalKeyNotFound": "Digitaler Schlüssel nicht gefunden",
     "checkoutNotFound": "Check-Out nicht gefunden",
     "cannotConnectToServer": "Kann nicht zum Server verbinden. Bitte stellen Sie sicher, dass der Backend-Server läuft.",
@@ -433,5 +477,13 @@
     "address": "Adresse",
     "property": "Objekt",
     "noPropertiesAvailable": "Keine Objekte verfügbar. Bitte kontaktieren Sie den Support."
+  },
+  "earlyArrival": {
+    "title": "Frühe Ankunft",
+    "message": "Karte kann nicht vor 14:00 Uhr ausgegeben werden. Bitte kommen Sie nach 14:00 Uhr wieder.",
+    "currentTime": "Aktuelle Zeit: {{time}}",
+    "cardsAvailableAfter": "Karten verfügbar nach: {{time}}",
+    "returningToMenu": "Zurück zum Menü in: {{countdown}}...",
+    "returnToMenu": "Zurück zum Menü"
   }
 }

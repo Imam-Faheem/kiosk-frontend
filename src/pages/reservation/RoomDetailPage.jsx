@@ -22,7 +22,6 @@ import usePropertyStore from '../../stores/propertyStore';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 import { getRoomDetails } from '../../services/roomService';
-import { BATHROOM_IMAGE_URL } from '../../services/mockData';
 import UnoLogo from '../../assets/uno.jpg';
 
 const RoomDetailPage = () => {
@@ -46,7 +45,11 @@ const RoomDetailPage = () => {
         if (!hasImages) {
           setLoading(true);
           try {
-            const result = await getRoomDetails(room.roomTypeId);
+            const propertyId = usePropertyStore.getState().propertyId;
+            if (!propertyId) {
+              throw new Error('Property ID is required');
+            }
+            const result = await getRoomDetails(room.roomTypeId, propertyId);
             
             if (result.success && result.data && result.data.images) {
               // Merge room data with fetched images
@@ -89,48 +92,19 @@ const RoomDetailPage = () => {
   }, [room]);
 
   // Use roomData if available, otherwise fallback to room
-  const displayRoom = roomData ?? room;
+  const displayRoom = roomData || room;
   
-  // Calculate pricing details
-  const calculatePricing = () => {
-    if (!searchCriteria?.checkIn || !searchCriteria?.checkOut || !displayRoom) {
-      return { nights: 0, pricePerNight: 0, taxes: 0, total: 0, currency: 'EUR' };
-    }
-    
-    const nights = Math.ceil((new Date(searchCriteria.checkOut) - new Date(searchCriteria.checkIn)) / (1000 * 60 * 60 * 24));
-    const totalAmount = displayRoom?.totalGrossAmount?.amount ?? displayRoom?.totalPrice ?? 0;
-    const currency = displayRoom?.totalGrossAmount?.currency ?? displayRoom?.currency ?? 'EUR';
-    
-    // Calculate price per night from total amount divided by nights
-    const pricePerNight = nights > 0 && totalAmount > 0 ? totalAmount / nights : 0;
-    
-    // Calculate taxes - if totalGrossAmount includes taxes, extract them
-    // Assuming 10% tax rate on base price, or use room.taxes if available
-    const basePrice = pricePerNight * nights;
-    const taxes = displayRoom?.taxes ?? displayRoom?.totalTaxes ?? (basePrice * 0.1);
-    
-    return {
-      nights,
-      pricePerNight: pricePerNight > 0 ? parseFloat(pricePerNight.toFixed(2)) : 0,
-      taxes: taxes > 0 ? parseFloat(taxes.toFixed(2)) : 0,
-      total: totalAmount > 0 ? parseFloat(totalAmount.toFixed(2)) : 0,
-      currency,
-    };
-  };
-  
-  const pricing = calculatePricing();
-  
-  // Ensure images array exists - combine room images with bathroom image
+  // Ensure images array exists
   const baseImages = displayRoom?.images && Array.isArray(displayRoom.images) && displayRoom.images.length > 0
     ? displayRoom.images
     : [UnoLogo];
   
-  // Always include bathroom image as the third image
+  // Use available images or default logo
   const roomImages = baseImages.length >= 2 
-    ? [...baseImages.slice(0, 2), BATHROOM_IMAGE_URL]
+    ? baseImages.slice(0, 3)
     : baseImages.length === 1
-    ? [baseImages[0], UnoLogo, BATHROOM_IMAGE_URL]
-    : [UnoLogo, UnoLogo, BATHROOM_IMAGE_URL];
+    ? [baseImages[0], UnoLogo]
+    : [UnoLogo];
   const formatDate = (value) => {
     if (!value) return '';
     const date = new Date(value);
@@ -160,6 +134,31 @@ const RoomDetailPage = () => {
     };
     return amenityMap[amenity] ?? amenity;
   };
+
+  // Calculate pricing information
+  const pricing = React.useMemo(() => {
+    if (!searchCriteria?.checkIn || !searchCriteria?.checkOut || !displayRoom) {
+      return { nights: 0, pricePerNight: 0, taxes: 0, total: 0, currency: 'EUR' };
+    }
+
+    const checkIn = new Date(searchCriteria.checkIn);
+    const checkOut = new Date(searchCriteria.checkOut);
+    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    
+    const totalAmount = displayRoom?.totalGrossAmount?.amount ?? displayRoom?.totalPrice ?? 0;
+    const currency = displayRoom?.totalGrossAmount?.currency ?? displayRoom?.currency ?? 'EUR';
+    const pricePerNight = nights > 0 ? totalAmount / nights : 0;
+    const taxes = displayRoom?.totalTaxAmount?.amount ?? displayRoom?.taxes ?? 0;
+    const total = totalAmount;
+
+    return {
+      nights,
+      pricePerNight,
+      taxes,
+      total,
+      currency,
+    };
+  }, [searchCriteria, displayRoom]);
 
   const handleConfirm = () => {
     navigate('/reservation/signature', {

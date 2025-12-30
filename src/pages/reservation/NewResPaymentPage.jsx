@@ -17,6 +17,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { saveGuestDetails } from '../../services/guestService';
 import { processPaymentByTerminal } from '../../services/paymentService';
+import { createBooking } from '../../services/bookingService';
+import usePropertyStore from '../../stores/propertyStore';
 
 const NewResPaymentPage = () => {
   const navigate = useNavigate();
@@ -33,12 +35,38 @@ const NewResPaymentPage = () => {
         hasProcessed.current = true;
         setPaymentStatus('processing');
         
-        const ratePlanId = room?.ratePlan?.id ?? room?.ratePlanId;
-        if (!ratePlanId) {
+        const propertyId = usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
+        const hotelId = propertyId; // Use propertyId as hotelId for the endpoint
+        
+        // Prepare booking data for Apaleo
+        const bookingPayload = {
+          propertyId,
+          unitGroupId: room.unitGroupId || room.roomTypeId || room._offerData?.unitGroupId,
+          ratePlanId: room.ratePlanId || room._offerData?.ratePlanId,
+          arrival: searchCriteria.checkIn,
+          departure: searchCriteria.checkOut,
+          adults: Number(searchCriteria.guests) || 1,
+          primaryGuest: {
+            firstName: guestDetails.firstName,
+            lastName: guestDetails.lastName,
+            email: guestDetails.email,
+            phone: guestDetails.phone,
+            address: {
+              addressLine1: guestDetails.addressStreet,
+              city: guestDetails.addressCity,
+              postalCode: guestDetails.addressPostal,
+              countryCode: guestDetails.country,
+              ...(guestDetails.addressState ? { region: guestDetails.addressState } : {}),
+            },
+          },
+        };
+
+        if (!bookingPayload.unitGroupId || !bookingPayload.ratePlanId) {
           throw new Error(t('error.missingRoomInformation'));
         }
 
-        const bookingResult = await saveGuestDetails(guestDetails, searchCriteria, room);
+        // Create booking in Apaleo
+        const bookingResult = await createBooking(bookingPayload, hotelId);
         
         // Check if booking was successful (even if unit assignment failed)
         if (bookingResult?.success) {
@@ -147,6 +175,7 @@ const NewResPaymentPage = () => {
         setPaymentStatus('success');
         
         const reservation = {
+          bookingId: reservationId,
           reservationId,
           id: reservationId,
           guestDetails,

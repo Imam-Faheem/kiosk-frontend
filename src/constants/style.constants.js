@@ -58,7 +58,13 @@ export const getPrimaryButtonStyles = (theme) => ({
       boxShadow: "0 6px 15px rgba(0, 0, 0, 0.2)",
       transform: "scale(1.02)",
     },
-    "&:disabled, &[data-disabled]": {
+    "&:disabled": {
+      backgroundColor: theme.colors.gray[4],
+      color: theme.colors.gray[6],
+      transform: "none",
+      boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
+    },
+    "&[data-disabled]": {
       backgroundColor: theme.colors.gray[4],
       color: theme.colors.gray[6],
       transform: "none",
