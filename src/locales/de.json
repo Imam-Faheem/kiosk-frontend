@@ -326,7 +326,9 @@
     "returnHome": "Zurück zur Startseite",
     "guest": "Gast",
     "room": "Zimmer",
-    "totalAmount": "Gesamtbetrag"
+    "totalAmount": "Gesamtbetrag",
+    "paymentSuccessful": "Zahlung erfolgreich",
+    "paymentProcessedSuccessfully": "Ihre Zahlung wurde erfolgreich verarbeitet"
   },
   "lostCard": {
     "title": "Karte verloren",

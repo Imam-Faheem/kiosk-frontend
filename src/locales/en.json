@@ -171,7 +171,9 @@
     "returnHome": "Return to Home",
     "guest": "Guest",
     "room": "Room",
-    "totalAmount": "Total Amount"
+    "totalAmount": "Total Amount",
+    "paymentSuccessful": "Payment Successful",
+    "paymentProcessedSuccessfully": "Your payment has been processed successfully"
   },
   "lostCard": {
     "title": "Lost Card",

@@ -26,9 +26,8 @@ import {
   IconPhone,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import useLanguage from '../../hooks/useLanguage';
-import { getPaymentAccount } from '../../services/paymentService';
+import { usePaymentMutation } from '../../hooks/usePaymentMutation';
 import '../../styles/animations.css';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
@@ -39,63 +38,49 @@ const PaymentCheckPage = () => {
   const { t } = useLanguage();
 
   const isPaymentCompleted = (status) => {
-    return status === 'Success' || status === 'completed' || status === 'paid';
+    return status === 'completed' || status === 'paid';
   };
 
-  const isPaymentFailed = (status, failureReason) => {
-    return status === 'Failure' || !!failureReason;
+  const getPaymentStatus = (reservation) => {
+    if (reservation.paymentStatus) return reservation.paymentStatus;
+    return reservation.balance <= 0 ? 'paid' : 'pending';
   };
-
-  const extractPaymentAccountId = (reservation, checkInData, folios) => {
-    const sources = [
-      checkInData?.paymentAccountId,
-      checkInData?.paymentAccount?.id,
-      reservation?.paymentAccountId,
-      reservation?.paymentAccount?.id,
-      folios?.[0]?.paymentAccountId,
-      location.state?.paymentAccountId,
-    ];
-    return sources.find(id => id != null);
-  };
-
-  const getBalanceFromFolios = (folios) => {
-    if (!Array.isArray(folios) || folios.length === 0) return null;
-    const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
-    return mainFolio?.balance;
-  };
-
-  const getBalanceFromData = (checkInData, reservation, folios) => {
-    const folioBalance = getBalanceFromFolios(folios);
-    if (folioBalance !== null) return folioBalance;
-    
-    const checkInBalance = checkInData?.balance ?? checkInData?.payableAmount?.guest;
-    if (checkInBalance) return checkInBalance;
-    
-    const reservationBalance = reservation?.balance ?? reservation?.payableAmount?.guest;
-    if (reservationBalance) return reservationBalance;
-    
-    return null;
-  };
-
-  const reservation = location.state?.reservation;
-  const checkInData = location.state?.checkInData;
-  const folios = location.state?.folios;
-
-  const paymentAccountId = extractPaymentAccountId(reservation, checkInData, folios);
-  const balanceData = getBalanceFromData(checkInData, reservation, folios);
-  const hasFoliosData = Array.isArray(folios) && folios.length > 0;
-
-  const { data: paymentAccount, isLoading: loadingPayment, error: paymentError } = useQuery({
-    queryKey: ['paymentAccount', paymentAccountId],
-    queryFn: () => getPaymentAccount(paymentAccountId),
-    enabled: !!paymentAccountId,
-    retry: false,
+  usePaymentMutation('checkStatus', {
+    onSuccess: (result) => {
+      if (result.success) {
+        setPaymentStatus(result.data);
+        setLoading(false);
+        
+        // Show payment status for 7 seconds so user can see it
+        setTimeout(() => {
+          // Navigate based on payment status
+          if (isPaymentCompleted(result.data.status)) {
+            navigate('/checkin/card-dispensing', {
+              state: { reservation, paymentStatus: result.data }
+            });
+          } else {
+            navigate('/checkin/payment', {
+              state: { reservation, paymentStatus: result.data }
+            });
+          }
+        }, 7000);
+      } else {
+        setError(t('error.paymentFailed'));
+        setLoading(false);
+      }
+    },
+    onError: (err) => {
+      setError(err.message ?? t('error.paymentFailed'));
+      setLoading(false);
+    }
   });
-
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [processingTime, setProcessingTime] = useState(0);
   const [paymentFailed, setPaymentFailed] = useState(false);
+
+  const reservation = location.state?.reservation;
 
   useEffect(() => {
     if (!reservation) {
@@ -103,116 +88,64 @@ const PaymentCheckPage = () => {
       return;
     }
 
-    if (paymentError) {
-      console.error('Payment account fetch error:', paymentError);
-      setError(paymentError.message ?? t('error.paymentFailed'));
-      setPaymentFailed(true);
-      setLoading(false);
-      return;
-    }
-
-    if (paymentAccountId && loadingPayment) {
-      setLoading(true);
-      return;
-    }
-
-    console.log('Payment check data:', {
-      paymentAccountId,
-      hasPaymentAccount: !!paymentAccount,
-      balanceData,
-      hasFoliosData,
-      hasCheckInData: !!checkInData,
-      folios: folios?.length ?? 0,
-    });
-
-    if (paymentAccountId && paymentAccount) {
-      const status = paymentAccount.status ?? 'Pending';
-      const balance = balanceData?.amount ?? paymentAccount.balance?.amount ?? 0;
-      const currency = balanceData?.currency ?? paymentAccount.balance?.currency ?? 'EUR';
-      const hasFailure = status === 'Failure' || paymentAccount.failureReason;
-      
-      const paymentStatusData = {
-        status,
-        amount: Math.abs(balance),
-        currency,
-        balance,
-        transactionId: paymentAccount.id ?? paymentAccountId,
-        failureReason: paymentAccount.failureReason,
-      };
-
-      setPaymentStatus(paymentStatusData);
-      setLoading(false);
-
-      setPaymentFailed(hasFailure);
-
-      setTimeout(() => {
-        if (isPaymentCompleted(status) || balance <= 0) {
+    const checkStatus = async () => {
+      try {
+        setLoading(true);
+        setProcessingTime(0);
+        setPaymentFailed(false);
+        
+        // Progress timer
+        const progressInterval = setInterval(() => {
+          setProcessingTime(prev => prev + 1);
+        }, 1000);
+        
+        // Simulate processing delay
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Calculate actual amount from reservation
+        const totalAmount = reservation.totalAmount ?? 0;
+        
+        const paymentStatusData = {
+          status: getPaymentStatus(reservation),
+          amount: totalAmount,
+          currency: reservation.currency ?? 'EUR',
+          balance: reservation.balance ?? 0,
+          transactionId: reservation.id ?? `TXN-${Date.now()}`
+        };
+        
+        clearInterval(progressInterval);
+        setPaymentStatus(paymentStatusData);
+        setLoading(false);
+        
+        // Check if payment failed
+        if (!isPaymentCompleted(paymentStatusData.status) && paymentStatusData.balance > 0) {
+          setPaymentFailed(true);
+        }
+        
+        // Show payment status for 7 seconds so user can see it
+        await new Promise(resolve => setTimeout(resolve, 7000));
+        
+        // Navigate based on payment status
+        const shouldProceedToCard = isPaymentCompleted(paymentStatusData.status) ? true : paymentStatusData.balance <= 0;
+        
+        if (shouldProceedToCard) {
           navigate('/checkin/card-dispensing', {
-            state: { reservation, paymentStatus: paymentStatusData, checkInData, folios }
+            state: { reservation, paymentStatus: paymentStatusData }
           });
         } else {
           navigate('/checkin/payment', {
-            state: { reservation, paymentStatus: paymentStatusData, checkInData, folios }
+            state: { reservation, paymentStatus: paymentStatusData }
           });
         }
-      }, 5000);
-      return;
-    }
-
-    if (!paymentAccountId && (balanceData !== null || hasFoliosData || checkInData)) {
-      const hasValidReservationId = reservation?.id ?? reservation?.bookingId;
-      const hasValidCheckInData = checkInData?.bookingId ?? checkInData?.id;
-      
-      if (!hasValidReservationId && !hasValidCheckInData) {
-        setError(t('error.paymentAccountNotFound'));
+      } catch (err) {
+        setError(err.message ?? t('error.paymentFailed'));
         setPaymentFailed(true);
         setLoading(false);
-        return;
       }
+    };
 
-      const balance = balanceData?.amount ?? 0;
-      const currency = balanceData?.currency ?? 'EUR';
-      const status = balance <= 0 ? 'Success' : 'Pending';
-      
-      const paymentStatusData = {
-        status,
-        amount: Math.abs(balance),
-        currency,
-        balance,
-        transactionId: checkInData?.bookingId ?? reservation?.id ?? reservation?.bookingId,
-      };
-
-      setPaymentStatus(paymentStatusData);
-      setLoading(false);
-
-      setPaymentFailed(false);
-
-      setTimeout(() => {
-        if (balance <= 0) {
-          navigate('/checkin/card-dispensing', {
-            state: { reservation, paymentStatus: paymentStatusData, checkInData, folios }
-          });
-        } else {
-          navigate('/checkin/payment', {
-            state: { reservation, paymentStatus: paymentStatusData, checkInData, folios }
-          });
-        }
-      }, 5000);
-      return;
-    }
-
-    console.warn('No payment information found:', {
-      reservation: !!reservation,
-      checkInData: !!checkInData,
-      folios: folios?.length ?? 0,
-      balanceData,
-      paymentAccountId,
-    });
-    
-    setError(t('error.paymentAccountNotFound'));
-    setPaymentFailed(true);
-    setLoading(false);
-  }, [reservation, paymentAccount, paymentAccountId, loadingPayment, paymentError, balanceData, hasFoliosData, checkInData, folios, navigate, t]);
+    checkStatus();
+  }, [reservation, navigate, t]);
 
   const handleBack = () => {
     navigate('/checkin');
@@ -302,9 +235,29 @@ const PaymentCheckPage = () => {
                       {t('paymentCheck.processingPaymentVerification')}
                     </Text>
                     <Text size="xs" c="dimmed" ta="center">
-                      {t('paymentCheck.pleaseWait')}
+                      {t('paymentCheck.estimatedTime', { time: processingTime < 3 ? t('paymentCheck.threeSeconds') : t('paymentCheck.almostDone') })}
                     </Text>
                   </Stack>
+                  {/* Progress Bar */}
+                  <Box
+                    w="100%"
+                    h={4}
+                    bg="rgba(200, 101, 61, 0.1)"
+                    radius={2}
+                    style={{
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <Box
+                      h="100%"
+                      bg="#C8653D"
+                      radius={2}
+                      style={{
+                        width: `${Math.min((processingTime / 3) * 100, 100)}%`,
+                        transition: 'width 0.3s ease',
+                      }}
+                    />
+                  </Box>
                 </Stack>
               </Box>
             </>
@@ -491,11 +444,6 @@ const PaymentCheckPage = () => {
                               {t('paymentCheck.paymentCompleted')}
                             </Text>
                           )}
-                          {paymentStatus.failureReason && (
-                            <Text size="xs" c="red" fw={600} mt={4}>
-                              {paymentStatus.failureReason}
-                            </Text>
-                          )}
                         </Box>
                       </Group>
                     )}
@@ -547,30 +495,9 @@ const PaymentCheckPage = () => {
                         </Text>
                         <Text size="md" fw={500} c="dark.9">
                           {(() => {
-                            const primaryGuest = checkInData?.primaryGuest ?? reservation?.primaryGuest;
-                            if (primaryGuest) {
-                              return `${primaryGuest.firstName ?? ''} ${primaryGuest.lastName ?? ''}`.trim();
-                            }
-                            
-                            const reservationFolios = folios ?? checkInData?.folios ?? reservation?.folios;
-                            if (Array.isArray(reservationFolios) && reservationFolios.length > 0) {
-                              const mainFolio = reservationFolios.find(f => f.isMainFolio) ?? reservationFolios[0];
-                              const debitor = mainFolio?.debitor;
-                              if (debitor) {
-                                return `${debitor.firstName ?? ''} ${debitor.name ?? ''}`.trim();
-                              }
-                            }
-                            
-                            const guestName = reservation?.guest_name;
-                            if (guestName) {
-                              const firstName = guestName.first_name ?? guestName.firstName ?? '';
-                              const lastName = guestName.last_name ?? guestName.lastName ?? '';
-                              return `${firstName} ${lastName}`.trim();
-                            }
-                            
-                            return reservation?.firstName && reservation?.lastName
-                              ? `${reservation.firstName} ${reservation.lastName}`
-                              : t('common.notAvailable');
+                            const firstName = reservation.guest_name?.first_name ?? reservation.firstName ?? '';
+                            const lastName = reservation.guest_name?.last_name ?? reservation.lastName ?? '';
+                            return `${firstName} ${lastName}`.trim();
                           })()}
                         </Text>
                       </Box>

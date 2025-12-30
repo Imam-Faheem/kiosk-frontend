@@ -15,6 +15,7 @@ import { IconCheck, IconX, IconKey, IconHome, IconLoader2 } from '@tabler/icons-
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardRegenerationData, useCardRegenerationMutation } from '../../hooks/useCardRegeneration';
+import usePropertyStore from '../../stores/propertyStore';
 import PropertyHeader from '../../components/PropertyHeader';
 import '../../styles/animations.css';
 
@@ -83,7 +84,6 @@ const RegenerateCardPage = () => {
     const fullName = `${firstName} ${lastName}`.trim();
     return fullName ? fullName : '';
   }, [guestData]);
-
   const processStep = async (stepIndex, status) => {
     setCurrentStep(stepIndex);
     setCardStatus(status);
@@ -528,7 +528,7 @@ const RegenerateCardPage = () => {
                         <strong>{t('regenerateCard.newAccessCode')}:</strong> {regenerateCardMutation.data.data.accessCode ?? regenerateCardMutation.data.data.passcode ?? regenerateCardMutation.data.data.code}
                       </Text>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        <strong>{t('regenerateCard.room')}:</strong> {guestData?.unit?.name ?? guestData?.unit?.id ?? ''}
+                        <strong>{t('regenerateCard.room')}:</strong> {guestData?.unit?.name ?? guestData?.unit?.id ?? guestData?.roomNumber ?? ''}
                       </Text>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
                         <strong>{t('regenerateCard.status')}:</strong> {regenerateCardMutation.data.data.status}

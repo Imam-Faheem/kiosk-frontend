@@ -26,79 +26,43 @@ const LostCardPage = () => {
 
   const form = useForm({
     initialValues: {
+      roomType: '',
       reservationNumber: '',
+      lastName: '',
     },
     validate: {
+      roomType: (value) => (!value ? t('error.roomTypeRequired') : null),
       reservationNumber: (value) => (!value ? t('error.reservationNumberRequired') : null),
+      lastName: (value) => (!value ? t('error.lastNameRequired') : null),
     },
   });
 
-  const hasValidGuestData = (data) => {
-    if (!data) return false;
-    
-    const lastNameSources = [
-      data?.primaryGuest?.lastName,
-      Array.isArray(data?.folios) && data.folios.length > 0
-        ? (data.folios.find(f => f.isMainFolio) ?? data.folios[0])?.debitor?.name
-        : null,
-      data?.guest_name?.last_name,
-      data?.guest_name?.lastName,
-    ];
-    
-    return lastNameSources.some(name => name?.trim()?.length > 0);
-  };
-
-
   const handleSubmit = async (values) => {
     setError(null);
-    form.clearErrors();
     setIsLoading(true);
     
     try {
+      // Validate guest using service
       const result = await validateLostCardGuest({
         reservationNumber: values.reservationNumber,
+        roomNumber: values.roomType,
+        lastName: values.lastName,
       });
       
-      if (!result.success) {
-        throw new Error(result.message ?? t('error.validationFailed'));
-      }
-
-      if (!result.data) {
-        throw new Error(t('error.reservationNotFound'));
-      }
-
-      const guestData = result.data;
-      
-      if (!hasValidGuestData(guestData)) {
-        throw new Error(t('error.reservationNotFound'));
-      }
-      
-      navigate('/lost-card/regenerate', {
-        state: {
-          guestData: guestData,
-          validationData: values,
-        },
-      });
-    } catch (err) {
-      const errorStatus = err?.response?.status;
-      const errorMessage = err?.message ?? t('error.guestValidationFailed');
-      
-      const reservationErrorChecks = [
-        errorStatus === 404,
-        errorStatus === 500,
-        errorMessage.toLowerCase().includes('not found'),
-        errorMessage.includes('status code 500'),
-        errorMessage.includes('Request failed'),
-      ];
-      const isReservationError = reservationErrorChecks.some(check => check === true);
-      
-      if (isReservationError) {
-        form.setFieldError('reservationNumber', t('error.reservationNotFound'));
-        setError(t('error.reservationNotFound'));
+      if (result.success) {
+        // Navigate to regenerate card page with validated data
+        navigate('/lost-card/regenerate', {
+          state: {
+            guestData: result.data,
+            validationData: values,
+          },
+        });
       } else {
-        form.setFieldError('reservationNumber', t('error.reservationNotFound'));
-        setError(t('error.reservationNotFound'));
+        throw new Error(result.message || t('error.validationFailed'));
       }
+    } catch (err) {
+      const errorMessage = err?.message || t('error.guestValidationFailed');
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -155,11 +119,69 @@ const LostCardPage = () => {
             )}
 
             <TextInput
+              label={t('lostCard.roomType')}
+              placeholder={t('lostCard.roomTypePlaceholder')}
+              required
+              size="lg"
+              {...form.getInputProps('roomType')}
+              styles={{
+                label: {
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: '4px',
+                  marginBottom: '10px',
+                },
+                required: {
+                  marginLeft: '2px',
+                  transform: 'translateY(-1px)',
+                },
+                input: {
+                  height: '48px',
+                  minHeight: '48px',
+                  borderRadius: '8px',
+                  border: '2px solid #E0E0E0',
+                  '&:focus': {
+                    borderColor: '#C8653D',
+                  }
+                }
+              }}
+            />
+
+            <TextInput
               label={t('lostCard.reservationNumber')}
               placeholder={t('lostCard.reservationNumberPlaceholder')}
               required
               size="lg"
               {...form.getInputProps('reservationNumber')}
+              styles={{
+                label: {
+                  display: 'inline-flex',
+                  alignItems: 'baseline',
+                  gap: '4px',
+                  marginBottom: '10px',
+                },
+                required: {
+                  marginLeft: '2px',
+                  transform: 'translateY(-1px)',
+                },
+                input: {
+                  height: '48px',
+                  minHeight: '48px',
+                  borderRadius: '8px',
+                  border: '2px solid #E0E0E0',
+                  '&:focus': {
+                    borderColor: '#C8653D',
+                  }
+                }
+              }}
+            />
+
+            <TextInput
+              label={t('lostCard.lastName')}
+              placeholder={t('lostCard.lastNamePlaceholder')}
+              required
+              size="lg"
+              {...form.getInputProps('lastName')}
               styles={{
                 label: {
                   display: 'inline-flex',
