@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Container,
   Paper,
@@ -8,84 +8,53 @@ import {
   Stack,
   TextInput,
   Select,
-  Alert,
-  Textarea,
-  Grid,
 } from '@mantine/core';
-import { DateInput } from '@mantine/dates';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from '@mantine/form';
-import { guestInitialValues } from '../../schemas/guest.schema';
-import { createGuestFormValidator } from '../../utils/formValidation';
+import { guestValidationSchema, guestInitialValues } from '../../schemas/guest.schema';
 import useLanguage from '../../hooks/useLanguage';
-import usePropertyStore from '../../stores/propertyStore';
-import { saveGuestDetails } from '../../services/guestService';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
-import { GUEST_DETAILS_OPTIONS } from '../../config/constants';
-
 const GuestDetailsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [isAvailabilityError, setIsAvailabilityError] = useState(false);
-  const { selectedProperty } = usePropertyStore();
 
-  const { room, searchCriteria } = location.state ?? {};
+  const { room, searchCriteria } = location.state || {};
 
   const form = useForm({
     initialValues: guestInitialValues,
-    validate: createGuestFormValidator(),
+    validate: (values) => {
+      try {
+        guestValidationSchema.validateSync(values, { abortEarly: false });
+        return {};
+      } catch (err) {
+        const errors = {};
+        err.inner.forEach((error) => {
+          errors[error.path] = error.message;
+        });
+        return errors;
+      }
+    },
   });
 
-  const handleSubmit = async (values) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Prepare guest data with propertyId if available
-      const guestData = {
-        ...values,
-        propertyId: usePropertyStore.getState().propertyId,
-        // reservationId can be added later when reservation is created
-      };
-
-      // Save guest details to backend
-      const result = await saveGuestDetails(guestData);
-
-      if (result?.success ?? result?.data) {
-        navigate('/reservation/room-details', {
-          state: {
-            room,
-            searchCriteria,
-            guestDetails: values,
-            savedGuest: result?.data ?? result,
-          },
-        });
-      } else {
-        setError(result?.message ?? t('error.failedToSaveGuestDetails'));
-        setLoading(false);
-      }
-    } catch (err) {
-      setError(t('error.failedToSaveGuestDetails'));
-      setLoading(false);
-    }
+  const handleSubmit = (values) => {
+    // Navigate directly to booking details page with form data and room details
+    navigate('/reservation/booking-details', {
+      state: {
+        room,
+        searchCriteria,
+        guestDetails: values,
+      },
+    });
   };
 
   const handleBack = () => {
     navigate('/reservation/search');
   };
 
-  useEffect(() => {
-    if (!room || !searchCriteria) {
-      navigate('/reservation/search', { replace: true });
-      return;
-    }
-  }, [room, searchCriteria, navigate]);
-
-  if (!room || !searchCriteria) {
+  if (!room) {
+    navigate('/reservation/search');
     return null;
   }
 
@@ -123,57 +92,6 @@ const GuestDetailsPage = () => {
           <Stack gap="lg" mb="xl">
             <Title order={3} style={{ fontSize: '24px', fontWeight: 800, color: '#222' }}>{t('guestDetails.formTitle')}</Title>
 
-            {error && (
-              <Alert 
-                color="red" 
-                variant="light" 
-                onClose={() => {
-                  setError(null);
-                  setIsAvailabilityError(false);
-                }} 
-                withCloseButton
-                title={isAvailabilityError ? 'Room No Longer Available' : 'Error'}
-              >
-                {error}
-                {isAvailabilityError && (
-                  <Button
-                    variant="light"
-                    color="red"
-                    size="sm"
-                    mt="md"
-                    onClick={() => navigate('/reservation/search', { replace: true })}
-                  >
-                    Search for Rooms Again
-                  </Button>
-                )}
-              </Alert>
-            )}
-
-            <Group grow>
-              <Select
-                label={t('guestDetails.titleField')}
-                placeholder={t('guestDetails.titlePlaceholder')}
-                required
-                size="lg"
-                data={GUEST_DETAILS_OPTIONS.TITLES.map(opt => ({
-                  ...opt,
-                  label: t(`guestDetails.titleOptions.${opt.value.toLowerCase()}`),
-                }))}
-                {...form.getInputProps('title')}
-              />
-              <Select
-                label={t('guestDetails.gender')}
-                placeholder={t('guestDetails.genderPlaceholder')}
-                required
-                size="lg"
-                data={GUEST_DETAILS_OPTIONS.GENDERS.map(opt => ({
-                  ...opt,
-                  label: t(`guestDetails.genderOptions.${opt.value.toLowerCase()}`),
-                }))}
-                {...form.getInputProps('gender')}
-              />
-            </Group>
-
             <TextInput
               label={t('guestDetails.firstName')}
               placeholder={t('guestDetails.firstNamePlaceholder')}
@@ -196,138 +114,31 @@ const GuestDetailsPage = () => {
               type="email"
               {...form.getInputProps('email')}
             />
-            <Select
-              label={t('guestDetails.country')}
-              placeholder={t('guestDetails.countryPlaceholder')}
-              required
-              size="lg"
-              data={GUEST_DETAILS_OPTIONS.COUNTRIES.map(opt => ({
-                ...opt,
-                label: t(`guestDetails.countries.${opt.value.toLowerCase()}`),
-              }))}
-              {...form.getInputProps('country')}
-            />
-            <Grid>
-              <Grid.Col span={6}>
-                <TextInput
-                  label={t('guestDetails.phone')}
-                  placeholder={t('guestDetails.phonePlaceholder')}
-                  required
-                  size="lg"
-                  {...form.getInputProps('phone')}
-                />
-              </Grid.Col>
-              <Grid.Col span={6}>
-                <DateInput
-                  label={t('guestDetails.birthDate')}
-                  placeholder="09/04/2014"
-                  required
-                  size="lg"
-                  value={form.values.birthDate ? new Date(form.values.birthDate) : null}
-                  onChange={(date) => {
-                    if (date) {
-                      const dateObj = date instanceof Date ? date : new Date(date);
-                      if (!isNaN(dateObj.getTime())) {
-                        const year = dateObj.getFullYear();
-                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                        const day = String(dateObj.getDate()).padStart(2, '0');
-                        const formattedDate = `${year}-${month}-${day}`;
-                        form.setFieldValue('birthDate', formattedDate);
-                      }
-                    } else {
-                      form.setFieldValue('birthDate', '');
-                    }
-                  }}
-                  dateFormatter={(value) => {
-                    if (!value) return '';
-                    const date = value instanceof Date ? value : new Date(value);
-                    if (isNaN(date.getTime())) return '';
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const year = date.getFullYear();
-                    return `${day}/${month}/${year}`;
-                  }}
-                  maxDate={new Date()}
-                />
-              </Grid.Col>
-            </Grid>
-            <Grid>
-              <Grid.Col span={6}>
-                <TextInput
-                  label={t('guestDetails.documentNumber')}
-                  placeholder={t('guestDetails.documentNumberPlaceholder')}
-                  required
-                  size="lg"
-                  {...form.getInputProps('documentNumber')}
-                />
-              </Grid.Col>
-              <Grid.Col span={6}>
-                <Select
-                  label={t('guestDetails.documentType')}
-                  placeholder={t('guestDetails.documentTypePlaceholder')}
-                  required
-                  size="lg"
-                  data={GUEST_DETAILS_OPTIONS.DOCUMENT_TYPES.map(opt => {
-                    const translationKeys = {
-                      'Passport': 'passport',
-                      'IdCard': 'id',
-                      'DriverLicense': 'driverlicense',
-                    };
-                    const translationKey = translationKeys[opt.value] ?? opt.value.toLowerCase();
-                    const translatedLabel = t(`guestDetails.documentTypes.${translationKey}`);
-                    return {
-                      ...opt,
-                      label: translatedLabel !== `guestDetails.documentTypes.${translationKey}` ? translatedLabel : opt.label,
-                    };
-                  })}
-                  {...form.getInputProps('documentType')}
-                />
-              </Grid.Col>
-            </Grid>
-            
-            <Grid>
-              <Grid.Col span={6}>
-                <TextInput
-                  label={t('guestDetails.birthPlace')}
-                  placeholder={t('guestDetails.birthPlacePlaceholder')}
-                  size="lg"
-                  {...form.getInputProps('birthPlace')}
-                />
-              </Grid.Col>
-              <Grid.Col span={6}>
-                <Select
-                  label={t('guestDetails.nationality')}
-                  placeholder={t('guestDetails.nationalityPlaceholder')}
-                  size="lg"
-                  data={GUEST_DETAILS_OPTIONS.COUNTRIES.map(opt => ({
-                    ...opt,
-                    label: t(`guestDetails.countries.${opt.value.toLowerCase()}`),
-                  }))}
-                  {...form.getInputProps('nationalityCountryCode')}
-                />
-              </Grid.Col>
-            </Grid>
-            
-            <Select
-              label={t('guestDetails.travelPurpose')}
-              placeholder={t('guestDetails.travelPurposePlaceholder')}
-              size="lg"
-              data={[
-                { value: 'Business', label: t('guestDetails.travelPurposes.business') },
-                { value: 'Leisure', label: t('guestDetails.travelPurposes.leisure') },
-                { value: 'Other', label: t('guestDetails.travelPurposes.other') },
-              ]}
-              {...form.getInputProps('travelPurpose')}
-            />
-            
-            <Textarea
-              label={t('guestDetails.guestComment')}
-              placeholder={t('guestDetails.guestCommentPlaceholder')}
-              size="lg"
-              minRows={3}
-              maxRows={5}
-              {...form.getInputProps('guestComment')}
-            />
+            <Group grow>
+              <Select
+                label={t('guestDetails.country')}
+                placeholder={t('guestDetails.countryPlaceholder')}
+                required
+                size="lg"
+                data={[
+                  { value: 'US', label: t('guestDetails.countries.us') },
+                  { value: 'GB', label: t('guestDetails.countries.gb') },
+                  { value: 'DE', label: t('guestDetails.countries.de') },
+                  { value: 'FR', label: t('guestDetails.countries.fr') },
+                  { value: 'IT', label: t('guestDetails.countries.it') },
+                  { value: 'ES', label: t('guestDetails.countries.es') },
+                  { value: 'PT', label: t('guestDetails.countries.pt') },
+                ]}
+                {...form.getInputProps('country')}
+              />
+              <TextInput
+                label={t('guestDetails.phone')}
+                placeholder={t('guestDetails.phonePlaceholder')}
+                required
+                size="lg"
+                {...form.getInputProps('phone')}
+              />
+            </Group>
 
             <Title order={4} style={{ fontSize: '18px', fontWeight: 700, color: '#444', marginTop: '8px' }}>{t('guestDetails.addressSection')}</Title>
             <TextInput
@@ -337,13 +148,22 @@ const GuestDetailsPage = () => {
               size="lg"
               {...form.getInputProps('addressStreet')}
             />
-            <TextInput
-              label={t('guestDetails.addressCity')}
-              placeholder={t('guestDetails.cityPlaceholder')}
-              required
-              size="lg"
-              {...form.getInputProps('addressCity')}
-            />
+            <Group grow>
+              <TextInput
+                label={t('guestDetails.addressCity')}
+                placeholder={t('guestDetails.cityPlaceholder')}
+                required
+                size="lg"
+                {...form.getInputProps('addressCity')}
+              />
+              <TextInput
+                label={t('guestDetails.addressState')}
+                placeholder={t('guestDetails.statePlaceholder')}
+                required
+                size="lg"
+                {...form.getInputProps('addressState')}
+              />
+            </Group>
             <TextInput
               label={t('guestDetails.addressPostal')}
               placeholder={t('guestDetails.postalPlaceholder')}
@@ -358,9 +178,7 @@ const GuestDetailsPage = () => {
             <Button
               type="submit"
               size="lg"
-              loading={loading}
-              rightSection={!loading && <span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
-              disabled={loading}
+              rightSection={<span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
               style={{
                 backgroundColor: '#C8653D',
                 color: '#FFFFFF',
@@ -370,19 +188,15 @@ const GuestDetailsPage = () => {
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.backgroundColor = '#B8552F';
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                }
+                e.currentTarget.style.backgroundColor = '#B8552F';
+                e.currentTarget.style.transform = 'scale(1.02)';
               }}
               onMouseLeave={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.backgroundColor = '#C8653D';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }
+                e.currentTarget.style.backgroundColor = '#C8653D';
+                e.currentTarget.style.transform = 'scale(1)';
               }}
             >
-              {loading ? t('common.saving') : t('guestDetails.continue')}
+              {t('guestDetails.continue')}
             </Button>
           </Group>
         </form>
