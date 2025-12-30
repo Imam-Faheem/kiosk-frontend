@@ -195,21 +195,67 @@ export const getAllRoomTypes = async (propertyId) => {
   return response.data;
 };
 
+/**
+ * Calculate room pricing from offer data
+ * @param {Object} room - Room object with _offerData
+ * @param {string} checkIn - Check-in date
+ * @param {string} checkOut - Check-out date
+ * @returns {Object} Pricing breakdown
+ */
 export const calculateRoomPricing = (room, checkIn, checkOut) => {
   const nights = Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
-  const basePrice = room.basePrice * nights;
-  const subtotal = basePrice;
-  const tax = subtotal * 0.1;
-  const total = subtotal + tax + 15.00 + 25.00;
-
+  
+  // Extract pricing from offer data if available
+  const offer = room?._offerData;
+  
+  if (offer) {
+    const totalGrossAmount = offer.totalGrossAmount || {};
+    const totalNetAmount = offer.totalNetAmount || {};
+    const timeSlices = offer.timeSlices || [];
+    
+    // Calculate price per night from timeSlices
+    const pricePerNight = timeSlices.length > 0
+      ? timeSlices.reduce((sum, slice) => {
+          const sliceAmount = slice.totalGrossAmount?.amount || slice.baseAmount?.grossAmount || 0;
+          return sum + sliceAmount;
+        }, 0) / timeSlices.length
+      : (totalGrossAmount.amount || 0) / nights;
+    
+    // Calculate subtotal (net amount or gross - taxes)
+    const grossTotal = totalGrossAmount.amount || 0;
+    const netTotal = totalNetAmount.amount || 0;
+    const subtotal = netTotal > 0 ? netTotal : (grossTotal * 0.9); // Fallback: assume 10% tax if net not available
+    
+    // Calculate taxes (difference between gross and net, or estimate)
+    const taxes = netTotal > 0 
+      ? grossTotal - netTotal 
+      : grossTotal - subtotal;
+    
+    const currency = totalGrossAmount.currency || room.currency || 'EUR';
+    
+    return {
+      pricePerNight: Math.round(pricePerNight * 100) / 100,
+      nights,
+      subtotal: Math.round(subtotal * 100) / 100,
+      taxes: Math.round(taxes * 100) / 100,
+      total: Math.round(grossTotal * 100) / 100,
+      currency,
+    };
+  }
+  
+  // Fallback to room data if no offer data
+  const pricePerNight = room.pricePerNight || 0;
+  const subtotal = pricePerNight * nights;
+  const total = room.totalPrice || subtotal;
+  const taxes = total - subtotal;
+  const currency = room.currency || 'EUR';
+  
   return {
-    basePrice: room.basePrice,
+    pricePerNight: Math.round(pricePerNight * 100) / 100,
     nights,
-    subtotal,
-    tax,
-    serviceFee: 15.00,
-    cleaningFee: 25.00,
-    total,
-    currency: room.currency ?? 'EUR',
+    subtotal: Math.round(subtotal * 100) / 100,
+    taxes: Math.round(Math.max(0, taxes) * 100) / 100,
+    total: Math.round(total * 100) / 100,
+    currency,
   };
 };

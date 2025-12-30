@@ -234,7 +234,9 @@
     "unoHotelLogo": "UNO Hotel Logo",
     "returnToMenu": "Return to Menu",
     "notAvailable": "N/A",
-    "returnToHome": "Return to Home"
+    "returnToHome": "Return to Home",
+    "room": "Room",
+    "propertyLogo": "Property Logo"
   },
   "searchRooms": {
     "title": "Search Rooms",
@@ -424,5 +426,27 @@
     "guestName": "Guest Name",
     "numberOfNights": "Number of Nights",
     "maxGuests": "Max Guests"
+  },
+  "bookingDetails": {
+    "title": "Room Details",
+    "noDescription": "No description available.",
+    "amenities": "Amenities",
+    "bookingSummary": "Booking Summary",
+    "guestName": "Guest Name",
+    "dates": "Dates",
+    "nights": "Nights",
+    "nightsLabel": "Nights",
+    "roomType": "Room Type",
+    "pricePerNight": "Price per night",
+    "subtotal": "Subtotal",
+    "taxesFees": "Taxes & Fees",
+    "total": "Total",
+    "termsText": "I agree to the ",
+    "termsLink": "terms and conditions",
+    "termsTextEnd": " and the cancellation policy.",
+    "termsRequired": "Please accept the terms and conditions to continue.",
+    "confirmBooking": "Confirm Booking",
+    "editDetails": "Edit Details",
+    "processing": "Processing..."
   }
 }
