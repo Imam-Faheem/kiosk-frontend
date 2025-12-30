@@ -45,6 +45,22 @@ const ReservationCompletePage = () => {
     });
   };
 
+  const getReservationNumber = () => {
+    const reservationIdSources = [
+      reservation.bookingId,
+      reservation.reservationId,
+      reservation.id,
+      reservation.bookingData?.bookingId,
+      reservation.bookingData?.id,
+      reservation.bookingData?.reservationId,
+      reservation.bookingData?.reservation?.id,
+      reservation.bookingData?.reservation?.bookingId,
+      reservation.bookingData?.reservations?.[0]?.id,
+      reservation.bookingData?.reservations?.[0]?.bookingId,
+    ];
+    return reservationIdSources.find(id => id != null && id !== 'BOOKING-CREATED') ?? t('common.notAvailable');
+  };
+
   const handleReturnHome = () => {
     navigate('/home');
   };
@@ -165,7 +181,7 @@ const ReservationCompletePage = () => {
           </Title>
 
           <Text size="lg" fw={600} c="#C8653D">
-            {t('reservationComplete.reservationNumber')}: {reservation.reservationId || reservation.id || t('common.notAvailable')}
+            {t('reservationComplete.reservationNumber')}: {getReservationNumber()}
           </Text>
 
           {/* Reservation Details Card */}

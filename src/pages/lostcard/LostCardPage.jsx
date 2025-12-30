@@ -26,12 +26,10 @@ const LostCardPage = () => {
 
   const form = useForm({
     initialValues: {
-      roomType: '',
       reservationNumber: '',
       lastName: ''
     },
     validate: {
-      roomType: (value) => (!value ? t('error.roomTypeRequired') : null),
       reservationNumber: (value) => (!value ? t('error.reservationNumberRequired') : null),
       lastName: (value) => (!value ? t('error.lastNameRequired') : null),
     },
@@ -92,7 +90,6 @@ const LostCardPage = () => {
       
       const result = await validateLostCardGuest({
         reservationNumber: values.reservationNumber,
-        roomNumber: values.roomType,
         lastName: submittedLastName,
       });
       
@@ -209,34 +206,6 @@ const LostCardPage = () => {
                 {error}
               </Alert>
             )}
-
-            <TextInput
-              label={t('lostCard.roomType')}
-              placeholder={t('lostCard.roomTypePlaceholder')}
-              size="lg"
-              {...form.getInputProps('roomType')}
-              styles={{
-                label: {
-                  display: 'inline-flex',
-                  alignItems: 'baseline',
-                  gap: '4px',
-                  marginBottom: '10px',
-                },
-                required: {
-                  marginLeft: '2px',
-                  transform: 'translateY(-1px)',
-                },
-                input: {
-                  height: '48px',
-                  minHeight: '48px',
-                  borderRadius: '8px',
-                  border: '2px solid #E0E0E0',
-                  '&:focus': {
-                    borderColor: '#C8653D',
-                  }
-                }
-              }}
-            />
 
             <TextInput
               label={t('lostCard.reservationNumber')}

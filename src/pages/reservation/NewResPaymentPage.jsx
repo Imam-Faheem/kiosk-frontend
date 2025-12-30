@@ -67,8 +67,20 @@ const NewResPaymentPage = () => {
         // Create booking in Apaleo
         const bookingResult = await createBooking(bookingPayload, hotelId);
         
-        // Extract reservation ID from booking response
-        const reservationId = bookingResult?.id || bookingResult?.reservationId || bookingResult?.reservation?.id;
+        // Extract reservation ID from booking response - check all possible fields
+        const reservationIdSources = [
+          bookingResult?.bookingId,
+          bookingResult?.id,
+          bookingResult?.reservationId,
+          bookingResult?.reservation?.id,
+          bookingResult?.reservation?.bookingId,
+          bookingResult?.reservations?.[0]?.id,
+          bookingResult?.reservations?.[0]?.bookingId,
+          bookingResult?.data?.bookingId,
+          bookingResult?.data?.id,
+          bookingResult?.data?.reservationId,
+        ];
+        const reservationId = reservationIdSources.find(id => id != null && id !== 'BOOKING-CREATED');
         
         if (!reservationId) {
           throw new Error(t('error.noReservationId'));
@@ -85,6 +97,7 @@ const NewResPaymentPage = () => {
         
         // Prepare reservation data
         const reservation = {
+          bookingId: reservationId,
           reservationId,
           id: reservationId,
           guestDetails,

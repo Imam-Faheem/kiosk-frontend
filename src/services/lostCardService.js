@@ -45,7 +45,7 @@ const getPropertyIds = () => {
 const isPresent = (value) => value != null && value !== '';
 
 export const validateLostCardGuest = async (data) => {
-  const { reservationNumber, roomNumber, lastName } = data;
+  const { reservationNumber, lastName } = data;
 
   if (!isPresent(reservationNumber)) {
     throw new Error(translateError('reservationIdRequired'));
