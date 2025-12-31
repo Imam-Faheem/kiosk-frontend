@@ -30,16 +30,20 @@ const PropertySelect = React.memo(({ properties, selectedPropertyId, onPropertyS
   const selectData = useMemo(() =>
     properties
       .filter((p) => p?.id ?? p?.property_id)
-      .map((p) => ({
-        value: p?.id ?? p?.property_id,
-        label: p?.name ?? p?.property_id ?? p?.id ?? "",
-        image: p?.configuration?.logo_url || null,
-      })), [properties]);
+      .map((p) => {
+        const propertyId = p?.id ?? p?.property_id;
+        const propertyName = p?.name ?? propertyId ?? "";
+        return {
+          value: propertyId,
+          label: propertyName,
+          image: p?.configuration?.logo_url || null,
+        };
+      }), [properties]);
 
   return (
     <Select
-      label={t('propertySelection.selectProperty')}
-      placeholder={t('propertySelection.chooseProperty')}
+      label={t('propertySelection.selectProperty') || 'Select Property'}
+      placeholder={t('propertySelection.chooseProperty') || 'Choose a property from the list'}
       data={selectData}
       value={selectedPropertyId}
       onChange={onPropertySelect}
@@ -47,6 +51,9 @@ const PropertySelect = React.memo(({ properties, selectedPropertyId, onPropertyS
       size="lg"
       styles={getInputStyles()}
       itemComponent={SelectItem}
+      required
+      nothingFoundMessage={t('propertySelection.noPropertiesFound') || 'No properties found'}
+      clearable={false}
     />
   );
 });
@@ -194,57 +201,24 @@ const PropertySelectionPage = () => {
         <Stack gap="lg" maw={600} mx="auto" mb="xl" w="100%">
           {properties.length > 0 ? (
             <>
-              <PropertySelect properties={properties} selectedPropertyId={selectedPropertyId} onPropertySelect={handlePropertySelect} t={t} />
-              <PropertyDetails properties={properties} selectedPropertyId={selectedPropertyId} t={t} />
-              <Box mt="md">
-                <Text size="sm" fw={600} mb="md">{t('propertySelection.availableProperties') || 'Available Properties'}:</Text>
-                <List spacing="xs" size="sm" withPadding>
-                  {properties.map((property) => {
-                    const propertyId = property?.id ?? property?.property_id;
-                    const propertyName = property?.name ?? propertyId ?? "";
-                    const isSelected = propertyId === selectedPropertyId;
-                    return (
-                      <List.Item
-                        key={propertyId}
-                        style={{
-                          padding: '8px 12px',
-                          borderRadius: '8px',
-                          backgroundColor: isSelected ? '#fff5f0' : 'transparent',
-                          border: isSelected ? '2px solid #C8653D' : '1px solid #E9ECEF',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                        }}
-                        onClick={() => handlePropertySelect(propertyId)}
-                      >
-                        <Group gap="sm">
-                          {property?.configuration?.logo_url && (
-                            <img
-                              src={property.configuration.logo_url}
-                              alt={propertyName}
-                              style={{
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '6px',
-                                objectFit: 'cover',
-                              }}
-                              onError={(e) => e.target.style.display = 'none'}
-                            />
-                          )}
-                          <Text size="sm" fw={isSelected ? 600 : 400}>
-                            {propertyName}
-                          </Text>
-                          {isSelected && (
-                            <Text size="xs" c="dimmed">({t('propertySelection.selected') || 'Selected'})</Text>
-                          )}
-                        </Group>
-                      </List.Item>
-                    );
-                  })}
-                </List>
-              </Box>
+              <PropertySelect 
+                properties={properties} 
+                selectedPropertyId={selectedPropertyId} 
+                onPropertySelect={handlePropertySelect} 
+                t={t} 
+              />
+              <PropertyDetails 
+                properties={properties} 
+                selectedPropertyId={selectedPropertyId} 
+                t={t} 
+              />
             </>
           ) : !loading ? (
-            <Box mb="xl"><Text c="dimmed" ta="center">{t('propertySelection.noPropertiesAvailable')}</Text></Box>
+            <Box mb="xl">
+              <Text c="dimmed" ta="center">
+                {t('propertySelection.noPropertiesAvailable') || 'No properties available. Please contact support.'}
+              </Text>
+            </Box>
           ) : null}
         </Stack>
         <Stack align="center" gap="md">

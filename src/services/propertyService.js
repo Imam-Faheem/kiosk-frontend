@@ -1,5 +1,5 @@
 import { apiClient } from './api/apiClient';
-import { API_CONFIG } from '../config/constants';
+import { STORAGE_KEYS } from '../config/constants';
 
 const extractProperties = (response) => {
   if (Array.isArray(response)) return { data: response, pagination: null };
@@ -21,14 +21,46 @@ const extractProperties = (response) => {
 };
 
 /**
+ * Get organization ID from localStorage or use default
+ * @returns {string|null} Organization ID if available
+ */
+const getOrganizationId = () => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return null;
+    }
+    
+    const propertyData = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
+    if (propertyData) {
+      const parsed = JSON.parse(propertyData);
+      if (parsed.organizationId) {
+        return parsed.organizationId;
+      }
+    }
+    
+    // Default organization ID - can be overridden via environment variable
+    return process.env.REACT_APP_ORGANIZATION_ID || '0ujsszwN8NRY24YaXiTIE2VWDTS';
+  } catch {
+    // Fallback to default organization ID
+    return process.env.REACT_APP_ORGANIZATION_ID || '0ujsszwN8NRY24YaXiTIE2VWDTS';
+  }
+};
+
+/**
  * Get properties for an organization
  * @param {Object} params - Optional query parameters (page, limit, etc.)
- * @param {string} organizationId - Organization ID (optional, defaults to API_CONFIG.ORGANIZATION_ID)
+ * @param {string} organizationId - Organization ID (optional, will try to get from localStorage or use default)
  * @returns {Promise<Object>} Response with success, data.properties array, and pagination
  */
 export const getProperties = async (params = {}, organizationId = null) => {
   try {
-    const response = await apiClient.get(`/api/kiosk/v1/properties`, { params });
+    // Get organizationId from parameter, localStorage, or use default
+    const orgId = organizationId || getOrganizationId();
+    
+    // Use organization-based endpoint
+    const endpoint = `/api/kiosk/v1/organizations/${orgId}/properties`;
+    
+    const response = await apiClient.get(endpoint, { params });
     const { data, pagination } = extractProperties(response.data);
     return {
       success: response.data?.success !== false,
