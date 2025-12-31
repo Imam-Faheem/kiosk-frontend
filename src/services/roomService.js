@@ -1,197 +1,261 @@
 import { apiClient } from './api/apiClient';
-import usePropertyStore from '../stores/propertyStore';
 
-// Helper to get propertyId from store or fallback
-const getPropertyId = () => {
-  const propertyId = usePropertyStore.getState().propertyId;
-  return propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
+/**
+ * Get property and organization IDs from localStorage and property store
+ * This function is called lazily (only when needed) to avoid initialization issues
+ * @returns {Object} Property context with propertyId, organizationId, and apaleo_external_property_id
+ */
+const getPropertyContext = () => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return { propertyId: null, organizationId: null, apaleoExternalPropertyId: null };
+    }
+    
+    // Use string literal to avoid importing from constants (prevents circular dependencies)
+    const propertyData = localStorage.getItem('kioskProperty');
+    if (!propertyData) {
+      return { propertyId: null, organizationId: null, apaleoExternalPropertyId: null };
+    }
+
+    const parsed = JSON.parse(propertyData);
+    
+    // Get apaleo_external_property_id from selectedProperty if available
+    let apaleoExternalPropertyId = null;
+    try {
+      // Try to get from property-storage (Zustand store)
+      const propertyStoreData = localStorage.getItem('property-storage');
+      if (propertyStoreData) {
+        const storeParsed = JSON.parse(propertyStoreData);
+        const selectedProperty = storeParsed?.state?.selectedProperty;
+        if (selectedProperty) {
+          // Try various possible field names for the external property ID
+          apaleoExternalPropertyId = 
+            selectedProperty.apaleo_external_property_id ||
+            selectedProperty.external_property_id ||
+            selectedProperty.externalId ||
+            selectedProperty.external_id ||
+            selectedProperty.code ||
+            selectedProperty.property_code ||
+            selectedProperty.apaleoPropertyId ||
+            null;
+        }
+      }
+    } catch (e) {
+      // Ignore errors when reading property store
+      console.warn('Could not read apaleo_external_property_id from property store:', e);
+    }
+
+    return {
+      propertyId: parsed.propertyId ?? null,
+      organizationId: parsed.organizationId ?? (typeof process !== 'undefined' && process.env?.REACT_APP_ORGANIZATION_ID) ?? null,
+      apaleoExternalPropertyId,
+    };
+  } catch {
+    return { propertyId: null, organizationId: null, apaleoExternalPropertyId: null };
+  }
 };
 
-// Search room availability
+/**
+ * Search for available rooms
+ * @param {Object} data - Search parameters
+ * @param {string} data.arrival - Check-in date (YYYY-MM-DD)
+ * @param {string} data.departure - Check-out date (YYYY-MM-DD)
+ * @param {number} data.adults - Number of adults
+ * @param {string} [data.propertyId] - Optional property ID override
+ * @returns {Promise<Object>} Available rooms response
+ */
 export const searchRoomAvailability = async (data) => {
-  // Ensure propertyId is sent to backend if configured
-  const propertyId = data?.propertyId || getPropertyId();
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-  
-  // Map frontend field names to backend API field names
-  const arrival = data.checkIn || data.arrival;
-  const departure = data.checkOut || data.departure;
-  const adults = data.guests || data.adults || 1;
-  
-  if (debug) console.log('[rooms/availability] request data', { propertyId, arrival, departure, adults });
-  
-  // Use the working /api/kiosk/offers endpoint with GET method
-  const params = {
-    propertyId,
-    arrival,
-    departure,
-    adults: Number(adults) || 1,
-    channelCode: 'Direct',
-    timeSliceTemplate: 'OverNight',
-    unitGroupTypes: 'BedRoom',
-  };
-  
-  const response = await apiClient.get('/kiosk/offers', { params });
-  let out = response.data;
-  if (debug) console.log('[rooms/availability] raw response', out);
-  
-  // Fetch room types to get images (offers endpoint doesn't include images)
-  let roomTypesMap = {};
-  try {
-    const roomTypesResponse = await apiClient.get('/rooms/types', { params: { propertyId } });
-    const roomTypesData = roomTypesResponse.data;
-    const roomTypes = roomTypesData?.data || roomTypesData || [];
-    if (Array.isArray(roomTypes)) {
-      roomTypesMap = roomTypes.reduce((acc, rt) => {
-        if (rt.roomTypeId && rt.images) {
-          acc[rt.roomTypeId] = rt.images;
-        }
-        return acc;
-      }, {});
-      if (debug) console.log('[rooms/availability] room types with images', roomTypesMap);
-    }
-  } catch (err) {
-    if (debug) console.warn('[rooms/availability] failed to fetch room types/images', err?.message);
+  const { propertyId: contextPropertyId, organizationId, apaleoExternalPropertyId } = getPropertyContext();
+  const propertyId = data.propertyId || contextPropertyId;
+
+  if (!propertyId) {
+    throw new Error('Property ID is required. Please select a property first.');
   }
-  
-  // The /api/kiosk/offers endpoint returns { property: {...}, offers: [...] } directly
-  const offers = out?.offers || [];
-  if (Array.isArray(offers) && offers.length > 0) {
-    const checkIn = arrival;
-    const checkOut = departure;
-    const nights = Math.max(1, Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)));
+
+  if (!organizationId) {
+    throw new Error('Organization ID is required. Please check your configuration.');
+  }
+
+  if (!apaleoExternalPropertyId) {
+    throw new Error('Apaleo external property ID is required. Please ensure property is properly configured.');
+  }
+
+  // Build query parameters according to API specification
+  const params = {
+    apaleo_external_property_id: apaleoExternalPropertyId,
+    arrival: data.arrival,
+    departure: data.departure,
+    adults: Number(data.adults) || 1,
+    childrenAges: 0, // Default to 0 as per API requirement
+  };
+
+  // Build endpoint with organization ID and property ID in path
+  const endpoint = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/offers`;
+
+  try {
+    const response = await apiClient.get(endpoint, { params });
+    
+    // Transform the API response to match the component's expected format
+    const apiData = response.data?.data || response.data;
+    const offers = apiData?.offers || [];
+    
+    // Transform offers to room format expected by the UI
     const availableRooms = offers.map((offer) => {
-      const unitGroup = offer?.unitGroup || {};
-      const ratePlan = offer?.ratePlan || {};
-      const totalGrossAmount = offer?.totalGrossAmount || {};
-      const currency = totalGrossAmount?.currency || ratePlan?.currency || 'EUR';
-      const totalPrice = totalGrossAmount?.amount || 0;
-      const pricePerNight = nights > 0 ? totalPrice / nights : totalPrice;
-      const roomTypeId = unitGroup?.id || ratePlan?.unitGroupId || offer?.id;
+      const unitGroup = offer.unitGroup || {};
+      const totalAmount = offer.totalGrossAmount || {};
+      const ratePlan = offer.ratePlan || {};
       
-      // Get images from room types map, fallback to unitGroup images if available
-      let images = [];
-      if (roomTypeId && roomTypesMap[roomTypeId]) {
-        images = roomTypesMap[roomTypeId];
-      } else if (unitGroup?.images && Array.isArray(unitGroup.images)) {
-        images = unitGroup.images.map(img => img?.url || img).filter(Boolean);
-      }
+      // Calculate price per night from timeSlices
+      const timeSlices = offer.timeSlices || [];
+      const pricePerNight = timeSlices.length > 0
+        ? timeSlices.reduce((sum, slice) => {
+            const sliceAmount = slice.totalGrossAmount?.amount || slice.baseAmount?.grossAmount || 0;
+            return sum + sliceAmount;
+          }, 0) / timeSlices.length
+        : totalAmount.amount || 0;
       
       return {
-        roomTypeId, // unitGroup.id
-        unitGroupId: unitGroup?.id || roomTypeId, // For booking
-        ratePlanId: ratePlan?.id || null, // For booking
-        name: unitGroup?.name || ratePlan?.name || 'Room',
-        description: unitGroup?.description || ratePlan?.description || '',
-        capacity: unitGroup?.maxPersons || Number(adults) || 1,
-        maxGuests: unitGroup?.maxPersons || Number(adults) || 1,
-        amenities: (unitGroup?.amenities || []).map(a => (typeof a === 'string' ? a : a?.name)).filter(Boolean),
-        images: images.length > 0 ? images : [], // Empty array if no images found
-        pricePerNight,
-        totalPrice,
-        currency,
-        available: true,
-        // Store original offer data for booking
-        _offerData: {
-          unitGroupId: unitGroup?.id,
-          ratePlanId: ratePlan?.id,
-          arrival: offer?.arrival,
-          departure: offer?.departure,
-        },
+        roomTypeId: unitGroup.id || unitGroup.code,
+        unitGroupId: unitGroup.id || unitGroup.code,
+        ratePlanId: ratePlan.id || ratePlan.code,
+        name: unitGroup.name || unitGroup.code || 'Room',
+        description: unitGroup.description || '',
+        capacity: unitGroup.maxPersons || 2,
+        maxGuests: unitGroup.maxPersons || 2,
+        currency: totalAmount.currency || 'EUR',
+        pricePerNight: Math.round(pricePerNight * 100) / 100, // Round to 2 decimal places
+        totalPrice: totalAmount.amount || 0,
+        availableUnits: offer.availableUnits || 0,
+        amenities: [], // Can be populated if available in the response
+        images: [], // Can be populated if available in the response
+        // Store original offer data for later use
+        _offerData: offer,
       };
     });
     
-    const normalized = {
-      checkIn,
-      checkOut,
-      guests: Number(adults),
+    // Return in the format expected by the component
+    // The component expects: { availableRooms: [...], totalAvailable: number }
+    return {
       availableRooms,
       totalAvailable: availableRooms.length,
+      property: apiData?.property || {},
     };
+  } catch (error) {
+    // Enhanced error handling with more details
+    console.error('[searchRoomAvailability] Error:', {
+      endpoint,
+      params,
+      propertyId,
+      organizationId,
+      apaleoExternalPropertyId,
+      error: error.message,
+      code: error.code,
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      data: error?.response?.data,
+    });
+
+    // Handle network errors (no response from server)
+    if (!error.response) {
+      let networkError = 'Network error. Please check your connection.';
+      
+      if (error.code === 'ECONNABORTED') {
+        networkError = 'Request timeout. The server took too long to respond.';
+      } else if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
+        networkError = 'Network error. Please check your connection and ensure the server is running at http://localhost:8000';
+      } else if (error.message) {
+        networkError = error.message;
+      }
+      
+      throw new Error(networkError);
+    }
+
+    // Handle HTTP errors (server responded with error status)
+    const errorMessage =
+      error?.response?.data?.message ??
+      error?.response?.data?.error ??
+      error?.response?.statusText ??
+      `Failed to search room availability (${error?.response?.status || 'Unknown error'})`;
     
-    const normalizedOut = { 
-      success: true, 
-      data: normalized, 
-      message: `${availableRooms.length} rooms available for selected dates` 
-    };
-    
-    if (debug) console.log('[rooms/availability] normalized from offers', normalizedOut);
-    return normalizedOut;
-  }
-
-  // Fallback: if backend returns `availableRooms` directly (from /api/rooms/availability endpoint)
-  if (out?.data?.availableRooms && Array.isArray(out.data.availableRooms)) {
-    if (debug) console.log('[rooms/availability] final response with availableRooms', out);
-    return out;
-  }
-
-  // If no offers found, return empty result
-  const emptyResponse = {
-    success: true,
-    data: {
-      checkIn: arrival,
-      checkOut: departure,
-      guests: Number(adults),
-      availableRooms: [],
-      totalAvailable: 0,
-    },
-    message: 'No rooms available for selected dates',
-  };
-  
-  if (debug) console.log('[rooms/availability] empty response', emptyResponse);
-  return emptyResponse;
-};
-
-// Get room details
-export const getRoomDetails = async (roomTypeId, propertyIdArg) => {
-  const propertyId = propertyIdArg || getPropertyId();
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-  try {
-    if (debug) console.log('[rooms/details] request', { roomTypeId, propertyId });
-    const response = await apiClient.get(`/rooms/${roomTypeId}/details`, { params: { propertyId } });
-    if (debug) console.log('[rooms/details] response', response.data);
-    return response.data;
-  } catch (err) {
-    if (debug) console.log('[rooms/details] error', err?.response?.data || err?.message);
-    throw err;
+    throw new Error(errorMessage);
   }
 };
 
-// Get all room types
-export const getAllRoomTypes = async (propertyIdArg) => {
-  const propertyId = propertyIdArg || getPropertyId();
-  const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-  try {
-    if (debug) console.log('[rooms/types] request', { propertyId });
-    const response = await apiClient.get('/rooms/types', { params: { propertyId } });
-    if (debug) console.log('[rooms/types] response', response.data);
-    return response.data;
-  } catch (err) {
-    if (debug) console.log('[rooms/types] error', err?.response?.data || err?.message);
-    throw err;
-  }
+export const getRoomDetails = async (roomTypeId, propertyId) => {
+  const response = await apiClient.get(`/rooms/${roomTypeId}/details`, {
+    params: { propertyId },
+  });
+  return response.data;
 };
 
-// Calculate room pricing
+export const getAllRoomTypes = async (propertyId) => {
+  const response = await apiClient.get('/rooms/types', {
+    params: { propertyId },
+  });
+  return response.data;
+};
+
+/**
+ * Calculate room pricing from offer data
+ * @param {Object} room - Room object with _offerData
+ * @param {string} checkIn - Check-in date
+ * @param {string} checkOut - Check-out date
+ * @returns {Object} Pricing breakdown
+ */
 export const calculateRoomPricing = (room, checkIn, checkOut) => {
   const nights = Math.ceil((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
-  const basePrice = room.basePrice * nights;
-  const taxRate = 0.1; // 10% tax
-  const serviceFee = 15.00;
-  const cleaningFee = 25.00;
   
-  const subtotal = basePrice;
-  const tax = subtotal * taxRate;
-  const total = subtotal + tax + serviceFee + cleaningFee;
+  // Extract pricing from offer data if available
+  const offer = room?._offerData;
+  
+  if (offer) {
+    const totalGrossAmount = offer.totalGrossAmount || {};
+    const totalNetAmount = offer.totalNetAmount || {};
+    const timeSlices = offer.timeSlices || [];
+    
+    // Calculate price per night from timeSlices
+    const pricePerNight = timeSlices.length > 0
+      ? timeSlices.reduce((sum, slice) => {
+          const sliceAmount = slice.totalGrossAmount?.amount || slice.baseAmount?.grossAmount || 0;
+          return sum + sliceAmount;
+        }, 0) / timeSlices.length
+      : (totalGrossAmount.amount || 0) / nights;
+    
+    // Calculate subtotal (net amount or gross - taxes)
+    const grossTotal = totalGrossAmount.amount || 0;
+    const netTotal = totalNetAmount.amount || 0;
+    const subtotal = netTotal > 0 ? netTotal : (grossTotal * 0.9); // Fallback: assume 10% tax if net not available
+    
+    // Calculate taxes (difference between gross and net, or estimate)
+    const taxes = netTotal > 0 
+      ? grossTotal - netTotal 
+      : grossTotal - subtotal;
+    
+    const currency = totalGrossAmount.currency || room.currency || 'EUR';
+    
+    return {
+      pricePerNight: Math.round(pricePerNight * 100) / 100,
+      nights,
+      subtotal: Math.round(subtotal * 100) / 100,
+      taxes: Math.round(taxes * 100) / 100,
+      total: Math.round(grossTotal * 100) / 100,
+      currency,
+    };
+  }
+  
+  // Fallback to room data if no offer data
+  const pricePerNight = room.pricePerNight || 0;
+  const subtotal = pricePerNight * nights;
+  const total = room.totalPrice || subtotal;
+  const taxes = total - subtotal;
+  const currency = room.currency || 'EUR';
   
   return {
-    basePrice: room.basePrice,
+    pricePerNight: Math.round(pricePerNight * 100) / 100,
     nights,
-    subtotal,
-    tax,
-    serviceFee,
-    cleaningFee,
-    total,
-    currency: room.currency
+    subtotal: Math.round(subtotal * 100) / 100,
+    taxes: Math.round(Math.max(0, taxes) * 100) / 100,
+    total: Math.round(total * 100) / 100,
+    currency,
   };
 };

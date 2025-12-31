@@ -1,134 +1,110 @@
 import { apiClient } from './api/apiClient';
+import { translateError } from '../utils/translations';
 import usePropertyStore from '../stores/propertyStore';
+import { STORAGE_KEYS, API_CONFIG } from '../config/constants';
 
-const debug = String(process.env.REACT_APP_DEBUG_API || '').toLowerCase() === 'true';
-
-// Helper to get propertyId from store or fallback
-const getPropertyId = () => {
-  const propertyId = usePropertyStore.getState().propertyId;
-  return propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
+const extractPropertyIdFromStore = (state) => {
+  return state.propertyId ?? state.selectedProperty?.property_id ?? state.selectedProperty?.id;
 };
 
-/**
- * Validate guest for lost card replacement
- * Validates reservation ID, room number, and last name
- * @param {Object} data - Validation data
- * @param {string} data.reservationNumber - Reservation ID
- * @param {string} data.roomNumber - Room number
- * @param {string} data.lastName - Guest's last name
- * @returns {Promise<Object>} Validation result with guest data
- */
-export const validateLostCardGuest = async (data) => {
-  if (debug) console.log('[lostCard] validating guest', data);
-  
+const extractOrganizationIdFromStore = (state) => {
+  return state.selectedProperty?.organizationId ?? 
+         state.selectedProperty?.organization?.id ??
+         state.selectedProperty?.organization_id;
+};
+
+const getStoredPropertyData = () => {
   try {
-    const { reservationNumber, roomNumber, lastName } = data;
-    
-    // First, fetch the reservation from Apaleo
-    const reservationResponse = await apiClient.get(`/reservation/${reservationNumber}`);
-    const reservation = reservationResponse.data;
-    
-    if (debug) console.log('[lostCard] reservation response', reservation);
-    
-    // Validate last name matches (case-insensitive)
-    const lastNameLower = lastName?.trim().toLowerCase();
-    const reservationLastName = reservation?.primaryGuest?.lastName?.trim().toLowerCase();
-    
-    if (!lastNameLower || !reservationLastName || lastNameLower !== reservationLastName) {
-      throw new Error('Last name does not match reservation records');
-    }
-    
-    // Validate room number if available
-    // Note: Room assignment might be in reservation.unit.id or reservation.unit.code
-    const assignedRoom = reservation?.unit?.code || reservation?.unit?.name || reservation?.unit?.id;
-    if (roomNumber && assignedRoom && assignedRoom.toLowerCase() !== roomNumber.toLowerCase()) {
-      throw new Error('Room number does not match reservation records');
-    }
-    
-    // Transform Apaleo reservation to frontend format
-    const guestData = {
-      reservationId: reservation.id,
-      reservationNumber: reservation.id,
-      roomNumber: assignedRoom || roomNumber || 'TBD',
-      lastName: reservation.primaryGuest?.lastName || '',
-      firstName: reservation.primaryGuest?.firstName || '',
-      email: reservation.primaryGuest?.email || '',
-      phone: reservation.primaryGuest?.phone || '',
-      guestName: `${reservation.primaryGuest?.firstName || ''} ${reservation.primaryGuest?.lastName || ''}`.trim(),
-      checkIn: reservation.arrival,
-      checkOut: reservation.departure,
-      propertyId: reservation.property?.id || getPropertyId(),
-      // Include full reservation for later use
-      _apaleoReservation: reservation,
-    };
-    
-    return {
-      success: true,
-      data: guestData,
-      message: 'Guest validated successfully',
-    };
-  } catch (err) {
-    if (debug) console.error('[lostCard] validation error', err?.response?.data || err?.message);
-    
-    if (err?.response?.status === 404) {
-      throw new Error('Reservation not found. Please check your reservation number.');
-    }
-    
-    const errorMessage = err?.response?.data?.message || err?.message || 'Failed to validate guest';
-    throw new Error(errorMessage);
+    const stored = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
   }
 };
 
-/**
- * Regenerate card/passcode for lost card
- * Deactivates old passcodes and creates new ones
- * @param {Object} data - Regeneration data
- * @param {string} data.reservationId - Reservation ID
- * @param {string} data.roomNumber - Room number
- * @param {string} data.propertyId - Property ID
- * @returns {Promise<Object>} New card/passcode data
- */
-export const regenerateLostCard = async (data) => {
-  if (debug) console.log('[lostCard] regenerating card', data);
+const getPropertyIds = () => {
+  const state = usePropertyStore.getState();
   
+  const storePropertyId = extractPropertyIdFromStore(state);
+  const storeOrgId = extractOrganizationIdFromStore(state);
+  
+  if (storePropertyId && storeOrgId) {
+    return { propertyId: storePropertyId, organizationId: storeOrgId };
+  }
+  
+  const storedData = getStoredPropertyData();
+  const storedPropertyId = storedData?.propertyId ?? storedData?.property_id;
+  const storedOrgId = storedData?.organizationId ?? storedData?.organization_id;
+  
+  return {
+    propertyId: storePropertyId ?? storedPropertyId ?? API_CONFIG.DEFAULT_PROPERTY_ID,
+    organizationId: storeOrgId ?? storedOrgId ?? API_CONFIG.ORGANIZATION_ID,
+  };
+};
+
+const isPresent = (value) => value != null && value !== '';
+
+export const validateLostCardGuest = async (data) => {
+  const { reservationNumber } = data;
+
+  if (!isPresent(reservationNumber)) {
+    throw new Error(translateError('reservationIdRequired'));
+  }
+
+  const { propertyId, organizationId } = getPropertyIds();
+  const missingIds = [propertyId, organizationId].filter(id => !isPresent(id));
+  if (missingIds.length > 0) {
+    throw new Error('Property configuration is missing.');
+  }
+
+  const url = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/reservations/${reservationNumber}/check-in`;
+
   try {
-    const { reservationId, roomNumber, propertyId } = data;
-    const property = propertyId || getPropertyId();
+    const response = await apiClient.get(url);
     
-    // Call backend endpoint to regenerate passcode
-    // The backend will:
-    // 1. Delete old passcodes for this reservation
-    // 2. Generate new passcode
-    // 3. Send email with new access details
-    const response = await apiClient.post('/lost-card/regenerate', {
-      reservation_id: reservationId,
-      property_id: property,
-      room_number: roomNumber,
-    });
-    
-    if (debug) console.log('[lostCard] regenerate response', response.data);
-    
+    const apiData = response.data?.success === true && response.data?.data 
+      ? response.data.data 
+      : response.data;
+
+    if (!apiData) {
+      throw new Error(translateError('reservationNotFoundByNumber'));
+    }
+
+    const hasPrimaryGuest = !!apiData.primaryGuest;
+    const hasFolios = Array.isArray(apiData.folios) && apiData.folios.length > 0;
+    const hasGuestName = !!apiData.guest_name;
+
+    if (!hasPrimaryGuest && !hasFolios && !hasGuestName) {
+      throw new Error(translateError('reservationNotFoundByNumber'));
+    }
+
     return {
       success: true,
-      data: {
-        cardId: response.data.cardId || `CARD-${Date.now()}`,
-        accessCode: response.data.accessCode || response.data.passcode,
-        status: 'active',
-        roomNumber: roomNumber,
-        reservationId: reservationId,
-        oldCardDeactivated: response.data.oldCardDeactivated !== false,
-        ...response.data,
-      },
-      message: response.data.message || 'Card regenerated successfully',
+      data: apiData,
     };
-  } catch (err) {
-    if (debug) console.error('[lostCard] regenerate error', err?.response?.data || err?.message);
-    
-    const errorMessage = err?.response?.data?.message || 
-                         err?.response?.data?.error || 
-                         err?.message || 
-                         'Failed to regenerate card';
-    throw new Error(errorMessage);
+  } catch (error) {
+    if (error?.response?.status === 404) {
+      throw new Error(translateError('reservationNotFoundByNumber'));
+    }
+
+    const message = error?.response?.data?.message ??
+                   error?.response?.data?.error ??
+                   error?.message ??
+                   translateError('guestValidationFailed');
+    throw new Error(message);
+  }
+};
+
+export const regenerateLostCard = async (data) => {
+  try {
+    const response = await apiClient.post('/api/kiosk/v1/lost-card/regenerate', data);
+    return response.data;
+  } catch (error) {
+    const message = error?.response?.data?.message ??
+                   error?.response?.data?.error ??
+                   error?.message ??
+                   'Failed to regenerate card';
+    throw new Error(message);
   }
 };
 

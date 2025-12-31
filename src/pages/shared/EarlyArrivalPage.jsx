@@ -1,0 +1,220 @@
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import {
+  Container,
+  Paper,
+  Group,
+  Button,
+  Text,
+  Title,
+  Stack,
+  Box,
+  Alert,
+} from '@mantine/core';
+import { IconAlertCircle, IconHome, IconClock } from '@tabler/icons-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { buttonStyles } from '../../constants/style.constants';
+import { EARLY_ARRIVAL_CONFIG, EARLY_ARRIVAL_STYLES } from '../../config/constants';
+import { EARLY_ARRIVAL_FLOW_CONFIGS } from '../../config/routes';
+import BackButton from '../../components/BackButton';
+import UnoLogo from '../../assets/uno.jpg';
+import useLanguage from '../../hooks/useLanguage';
+
+const getFlowTypeFromPath = (pathname) => {
+  if (pathname.includes('/checkin/early-arrival')) return 'checkin';
+  if (pathname.includes('/reservation/early-arrival')) return 'reservation';
+  if (pathname.includes('/lost-card/early-arrival')) return 'lost-card';
+  return 'checkin';
+};
+
+const WarningIcon = React.memo(() => (
+  <Box style={EARLY_ARRIVAL_STYLES.WARNING_ICON}>
+    <IconAlertCircle size={80} color="#FF6B35" />
+  </Box>
+));
+WarningIcon.displayName = 'WarningIcon';
+
+const TimeInfoCard = React.memo(({ currentTime, t }) => (
+  <Paper withBorder p="lg" radius="md" style={EARLY_ARRIVAL_STYLES.TIME_CARD}>
+    <Stack gap="md" align="center">
+      <Text size="lg" fw={600} c="#0B152A">
+        {t('earlyArrival.currentTime', { time: currentTime })}
+      </Text>
+      <Text size="lg" fw={600} c="#0B152A">
+        {t('earlyArrival.cardsAvailableAfter', { time: EARLY_ARRIVAL_CONFIG.TARGET_TIME })}
+      </Text>
+    </Stack>
+  </Paper>
+));
+TimeInfoCard.displayName = 'TimeInfoCard';
+
+const CountdownDisplay = React.memo(({ countdown, t }) => (
+  <Box style={EARLY_ARRIVAL_STYLES.COUNTDOWN_BOX}>
+    <Text size="md" fw={600} c="white">
+      {t('earlyArrival.returningToMenu', { countdown })}
+    </Text>
+  </Box>
+));
+CountdownDisplay.displayName = 'CountdownDisplay';
+
+const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, returnPath = '/home' }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useLanguage();
+  
+  const detectedFlowType = useMemo(() => {
+    return propFlowType || getFlowTypeFromPath(location.pathname);
+  }, [propFlowType, location.pathname]);
+  
+  const flowConfig = useMemo(() => {
+    return EARLY_ARRIVAL_FLOW_CONFIGS[detectedFlowType] || EARLY_ARRIVAL_FLOW_CONFIGS.checkin;
+  }, [detectedFlowType]);
+  
+  const pageTitle = title || flowConfig.title;
+  const pageMessage = message || flowConfig.message;
+  const defaultBackPath = backPath || flowConfig.backPath;
+  
+  const formatTime = useCallback((date = new Date()) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }, []);
+
+  const [currentTime, setCurrentTime] = useState(() => formatTime());
+  const [countdown, setCountdown] = useState(EARLY_ARRIVAL_CONFIG.COUNTDOWN_DURATION);
+  const countdownIntervalRef = useRef(null);
+  const timeIntervalRef = useRef(null);
+
+  const updateTime = useCallback(() => {
+    setCurrentTime(formatTime());
+  }, [formatTime]);
+
+  const clearAllIntervals = useCallback(() => {
+    if (timeIntervalRef.current) {
+      clearInterval(timeIntervalRef.current);
+      timeIntervalRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+  }, []);
+
+  const handleCountdownComplete = useCallback(() => {
+    clearAllIntervals();
+    navigate(returnPath);
+  }, [navigate, clearAllIntervals, returnPath]);
+
+  useEffect(() => {
+    timeIntervalRef.current = setInterval(updateTime, EARLY_ARRIVAL_CONFIG.TIME_UPDATE_INTERVAL);
+
+    countdownIntervalRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          handleCountdownComplete();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, EARLY_ARRIVAL_CONFIG.COUNTDOWN_INTERVAL);
+
+    return clearAllIntervals;
+  }, [updateTime, handleCountdownComplete, clearAllIntervals]);
+
+  const handleReturnToMenu = useCallback(() => {
+    clearAllIntervals();
+    navigate(returnPath);
+  }, [navigate, clearAllIntervals, returnPath]);
+
+  const handleBack = useCallback(() => {
+    clearAllIntervals();
+    navigate(defaultBackPath);
+  }, [navigate, clearAllIntervals, defaultBackPath]);
+
+  const buttonStyle = useMemo(() => ({
+    backgroundColor: buttonStyles.base.backgroundColor,
+    color: buttonStyles.base.color,
+    borderRadius: '12px',
+    fontWeight: 'bold',
+    fontSize: '18px',
+    minHeight: '60px',
+    transition: 'all 0.3s ease',
+  }), []);
+
+  const handleButtonHover = useCallback((e, isEntering) => {
+    if (isEntering) {
+      e.currentTarget.style.backgroundColor = buttonStyles.hover.backgroundColor;
+      e.currentTarget.style.transform = buttonStyles.hover.transform;
+    } else {
+      e.currentTarget.style.backgroundColor = buttonStyles.base.backgroundColor;
+      e.currentTarget.style.transform = buttonStyles.normal.transform;
+    }
+  }, []);
+
+  const alertTextStyle = useMemo(() => ({
+    fontSize: '24px',
+    lineHeight: '1.5',
+  }), []);
+
+  const titleStyle = useMemo(() => ({
+    textTransform: 'uppercase',
+    fontSize: '32px',
+  }), []);
+
+  return (
+    <Container size="lg" style={EARLY_ARRIVAL_STYLES.CONTAINER}>
+      <Paper withBorder shadow="md" p={40} radius="xl" style={EARLY_ARRIVAL_STYLES.PAPER}>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <Group>
+            <img src={UnoLogo} alt={t('common.unoHotelLogo')} style={EARLY_ARRIVAL_STYLES.LOGO} />
+            <Title order={1} c="#0B152A" fw={700} style={titleStyle}>
+              {pageTitle}
+            </Title>
+          </Group>
+        </Group>
+
+        <Stack gap="xl" align="center" mb="xl">
+          <WarningIcon />
+
+          <Alert
+            icon={<IconClock size={32} />}
+            title={pageTitle}
+            color="orange"
+            variant="filled"
+            style={EARLY_ARRIVAL_STYLES.ALERT}
+          >
+            <Text size="xl" fw={600} c="white" style={alertTextStyle}>
+              {pageMessage}
+            </Text>
+          </Alert>
+
+          <TimeInfoCard currentTime={currentTime} t={t} />
+
+          <CountdownDisplay countdown={countdown} t={t} />
+        </Stack>
+
+        {/* Action Buttons */}
+        <Stack gap="md">
+          <Button
+            size="xl"
+            leftSection={<IconHome size={24} />}
+            onClick={handleReturnToMenu}
+            style={buttonStyle}
+            onMouseEnter={(e) => handleButtonHover(e, true)}
+            onMouseLeave={(e) => handleButtonHover(e, false)}
+          >
+            {t('earlyArrival.returnToMenu')}
+          </Button>
+
+          <Group justify="flex-start">
+            <BackButton onClick={handleBack} />
+          </Group>
+        </Stack>
+      </Paper>
+    </Container>
+  );
+};
+
+export default EarlyArrivalPage;
+

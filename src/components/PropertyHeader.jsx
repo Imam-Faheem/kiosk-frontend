@@ -1,52 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import { Group, Title, Image } from '@mantine/core';
+import React from 'react';
+import { Group, Title } from '@mantine/core';
 import usePropertyStore from '../stores/propertyStore';
-import UnoLogo from '../assets/uno.jpg';
+import PropertyLogo from './PropertyLogo';
+import useLanguage from '../hooks/useLanguage';
 
-const PropertyHeader = () => {
-  const { selectedProperty, propertyId, _hasHydrated } = usePropertyStore();
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  useEffect(() => {
-    if (_hasHydrated !== undefined) {
-      setIsHydrated(_hasHydrated);
-    } else {
-      setIsHydrated(true);
-    }
-  }, [_hasHydrated]);
-
-  const logoUrl = selectedProperty?.configuration?.logo_url || UnoLogo;
-  const propertyName = selectedProperty?.name || 'UNO HOTELS';
+const PropertyHeader = ({ showName = true, logoSize = 50, titleStyle = {}, ...props }) => {
+  const { selectedProperty } = usePropertyStore();
+  const { t } = useLanguage();
+  const propertyName = selectedProperty?.name || selectedProperty?.property_name || '';
 
   return (
-    <Group gap="sm" wrap="nowrap" align="center">
-      <Image
-        src={logoUrl}
-        alt={`${propertyName} Logo`}
-        w={50}
-        h={50}
-        radius="md"
-        fit="cover"
-        fallbackSrc={UnoLogo}
-        style={{ flexShrink: 0 }}
-        onError={(e) => {
-          e.target.src = UnoLogo;
-        }}
-      />
-      <Title 
-        order={2}
-        fw={600}
-        c="dark.9"
-        style={{ 
-          fontSize: '30px',
-          letterSpacing: '1px',
-          lineHeight: '1.2',
-          wordBreak: 'break-word',
-          overflow: 'visible'
-        }}
-      >
-        {propertyName}
-      </Title>
+    <Group gap="md" {...props}>
+      <PropertyLogo size={logoSize} alt={propertyName || t('common.propertyLogo')} />
+      {showName && propertyName && (
+        <Title
+          order={2}
+          style={{
+            fontSize: '30px !important',
+            color: 'rgb(34, 34, 34)',
+            fontWeight: '600',
+            letterSpacing: '2px',
+            ...titleStyle,
+          }}
+        >
+          {propertyName}
+        </Title>
+      )}
     </Group>
   );
 };

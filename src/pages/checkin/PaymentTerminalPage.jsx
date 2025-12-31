@@ -73,6 +73,7 @@ const PaymentTerminalPage = () => {
   const [timeoutId, setTimeoutId] = useState(null);
   const [pollInterval, setPollInterval] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(180); // 3 minutes
+  const [error, setError] = useState(null);
 
   const reservation = location.state?.reservation;
   const existingPaymentStatus = location.state?.paymentStatus;
@@ -83,66 +84,38 @@ const PaymentTerminalPage = () => {
       return;
     }
 
+    if (!existingPaymentStatus || !existingPaymentStatus.transactionId) {
+      setError(t('error.paymentDataMissing'));
+      setPaymentStatus('error');
+      return;
+    }
+
+    const transactionId = existingPaymentStatus.transactionId;
+    setTransactionId(transactionId);
+    setPaymentStatus('processing');
+
     let interval = null;
     let timeout = null;
     let countdownInterval = null;
 
-    const startPayment = async () => {
-      try {
-        setPaymentStatus('initiating');
-        
-        // Simulate payment initiation
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const mockTransactionId = `TXN-${Date.now()}`;
-        setTransactionId(mockTransactionId);
-        setPaymentStatus('processing');
-        
-        // Start polling for payment status
-        interval = setInterval(async () => {
-          try {
-            // Simulate payment completion after 5 seconds
-            const elapsed = Date.now() - parseInt(mockTransactionId.split('-')[1]);
-            if (elapsed > 5000) {
-              setPaymentStatus('completed');
-              clearInterval(interval);
-              
-              // Navigate to card dispensing after success
-              setTimeout(() => {
-                navigate('/checkin/card-dispensing', {
-                  state: { 
-                    reservation, 
-                    paymentStatus: { status: 'completed', transactionId: mockTransactionId },
-                    transactionId: mockTransactionId
-                  }
-                });
-              }, 2000);
-            }
-          } catch (err) {
-            console.error('Payment polling error:', err);
-          }
-        }, 1000); // Poll every 1 second
-        
-        setPollInterval(interval);
-      } catch (err) {
-        console.error('Payment initiation error:', err);
-        setPaymentStatus('failed');
-      }
+    const startPaymentPolling = () => {
+      interval = setInterval(() => {
+        pollPaymentStatus.mutate(transactionId);
+      }, 2000);
+      setPollInterval(interval);
     };
 
-    startPayment();
+    startPaymentPolling();
 
-    // 3-minute timeout
     timeout = setTimeout(() => {
       setPaymentStatus('timeout');
       if (interval) {
         clearInterval(interval);
       }
-    }, 180000); // 3 minutes
+    }, 180000);
 
     setTimeoutId(timeout);
 
-    // Countdown timer
     countdownInterval = setInterval(() => {
       setTimeRemaining(prev => {
         if (prev <= 1) {
@@ -164,7 +137,7 @@ const PaymentTerminalPage = () => {
         clearInterval(countdownInterval);
       }
     };
-  }, [reservation, navigate]);
+  }, [reservation, existingPaymentStatus, navigate, pollPaymentStatus, t]);
 
   const handleCancel = () => {
     if (pollInterval) {
@@ -273,7 +246,7 @@ const PaymentTerminalPage = () => {
                 {t('paymentTerminal.swipeCard')}
               </Text>
               <Text size="md" c="#666666" ta="center">
-                Please insert or swipe your card at the terminal
+                {t('paymentTerminal.insertOrSwipeCard')}
               </Text>
               
               {/* Progress bar */}
@@ -285,7 +258,7 @@ const PaymentTerminalPage = () => {
                   radius="md"
                 />
                 <Text size="sm" c="#666666" ta="center" mt="xs">
-                  Time remaining: {formatTime(timeRemaining)}
+                  {t('paymentTerminal.timeRemaining')}: {formatTime(timeRemaining)}
                 </Text>
               </Box>
             </Stack>
@@ -294,13 +267,13 @@ const PaymentTerminalPage = () => {
           {paymentStatus === 'completed' && (
             <Alert
               icon={<IconCheck size={20} />}
-              title="Payment Successful"
+              title={t('paymentTerminal.paymentSuccessful')}
               color="green"
               variant="light"
               style={{ borderRadius: '8px' }}
             >
               <Text size="lg" fw={500}>
-                Payment completed successfully! Preparing your card...
+                {t('paymentTerminal.paymentCompletedMessage')}
               </Text>
             </Alert>
           )}
@@ -308,7 +281,7 @@ const PaymentTerminalPage = () => {
           {paymentStatus === 'failed' && (
             <Alert
               icon={<IconX size={20} />}
-              title="Payment Failed"
+              title={t('paymentTerminal.paymentFailed')}
               color="red"
               variant="light"
               style={{ borderRadius: '8px' }}
@@ -322,13 +295,27 @@ const PaymentTerminalPage = () => {
           {paymentStatus === 'timeout' && (
             <Alert
               icon={<IconX size={20} />}
-              title="Payment Timeout"
+              title={t('paymentTerminal.paymentTimeout')}
               color="orange"
               variant="light"
               style={{ borderRadius: '8px' }}
             >
               <Text size="lg" fw={500}>
                 {t('paymentTerminal.timeout')}
+              </Text>
+            </Alert>
+          )}
+
+          {paymentStatus === 'error' && error && (
+            <Alert
+              icon={<IconX size={20} />}
+              title={t('paymentTerminal.paymentError')}
+              color="red"
+              variant="light"
+              style={{ borderRadius: '8px' }}
+            >
+              <Text size="lg" fw={500}>
+                {error}
               </Text>
             </Alert>
           )}

@@ -12,11 +12,11 @@ import {
   Alert,
   Divider,
 } from '@mantine/core';
-import { IconSignature, IconCheck, IconX, IconRefresh } from '@tabler/icons-react';
+import { IconSignature, IconCheck, IconRefresh } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SignatureCanvas from 'react-signature-canvas';
 import useLanguage from '../../hooks/useLanguage';
-import UnoLogo from '../../assets/uno.jpg';
+import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import '../../styles/signature.css';
@@ -105,7 +105,7 @@ const SignaturePage = () => {
           }}
         >
           <Text size="lg" c="red">
-            {t('signature.errorMissingData') || 'Missing room or guest details. Please go back and try again.'}
+            {t('signature.errorMissingData')}
           </Text>
           <Button
             variant="outline"
@@ -154,32 +154,32 @@ const SignaturePage = () => {
           <Box style={{ textAlign: 'center' }}>
             <Title order={1} size="h2" mb="md" c="#C8653D">
               <IconSignature size={32} style={{ marginRight: '10px', verticalAlign: 'middle' }} />
-              {t('signature.title') || 'Digital Signature Required'}
+              {t('signature.title')}
             </Title>
             <Text size="lg" c="#666666">
-              {t('signature.subtitle') || 'Please sign below to confirm your reservation agreement'}
+              {t('signature.subtitle')}
             </Text>
           </Box>
 
           <Card withBorder p="lg" radius="md" style={{ backgroundColor: '#f8f9fa' }}>
             <Stack gap="sm">
               <Text size="lg" fw={600} c="#C8653D">
-                {t('signature.guestInfo') || 'Guest Information'}
+                {t('signature.guestInfo')}
               </Text>
               <Group justify="space-between">
-                <Text size="md" c="#666666">{t('signature.guestName') || 'Guest Name'}:</Text>
+                <Text size="md" c="#666666">{t('signature.guestName')}:</Text>
                 <Text size="md" fw={600}>{guestDetails.firstName} {guestDetails.lastName}</Text>
               </Group>
               <Group justify="space-between">
-                <Text size="md" c="#666666">{t('signature.room') || 'Room'}:</Text>
+                <Text size="md" c="#666666">{t('signature.room')}:</Text>
                 <Text size="md" fw={600}>{room.name}</Text>
               </Group>
               <Group justify="space-between">
-                <Text size="md" c="#666666">{t('signature.checkIn') || 'Check-in'}:</Text>
+                <Text size="md" c="#666666">{t('signature.checkIn')}:</Text>
                 <Text size="md" fw={600}>{formatDate(searchCriteria.checkIn)}</Text>
               </Group>
               <Group justify="space-between">
-                <Text size="md" c="#666666">{t('signature.checkOut') || 'Check-out'}:</Text>
+                <Text size="md" c="#666666">{t('signature.checkOut')}:</Text>
                 <Text size="md" fw={600}>{formatDate(searchCriteria.checkOut)}</Text>
               </Group>
             </Stack>
@@ -188,7 +188,7 @@ const SignaturePage = () => {
           <Card withBorder p="lg" radius="md">
             <Stack gap="md">
               <Text size="md" fw={600}>
-                {t('signature.signatureLabel') || 'Please sign in the box below:'}
+                {t('signature.signatureLabel')}
               </Text>
               
               <Box className="signature-container">
@@ -217,7 +217,7 @@ const SignaturePage = () => {
                 
                 {sigCanvas.current && sigCanvas.current.isEmpty() && (
                   <Box className="signature-placeholder">
-                    {t('signature.signHere') || 'Sign here...'}
+                    {t('signature.signHere')}
                   </Box>
                 )}
               </Box>
@@ -225,11 +225,11 @@ const SignaturePage = () => {
               {isSigned && (
                 <Alert
                   icon={<IconCheck size={16} />}
-                  title={t('signature.signed') || 'Signature Captured'}
+                  title={t('signature.signed')}
                   color="green"
                   variant="light"
                 >
-                  {t('signature.signedMessage') || 'Your signature has been successfully captured.'}
+                  {t('signature.signedMessage')}
                 </Alert>
               )}
 
@@ -245,7 +245,7 @@ const SignaturePage = () => {
                     borderRadius: '12px',
                   }}
                 >
-                  {t('signature.clear') || 'Clear'}
+                  {t('signature.clear')}
                 </Button>
                 
                 <Button
@@ -259,7 +259,7 @@ const SignaturePage = () => {
                     borderRadius: '12px',
                   }}
                 >
-                  {t('signature.save') || 'Save Signature'}
+                  {t('signature.save')}
                 </Button>
               </Group>
             </Stack>
@@ -268,10 +268,10 @@ const SignaturePage = () => {
           <Card withBorder p="lg" radius="md" style={{ backgroundColor: '#f8f9fa' }}>
             <Stack gap="sm">
               <Text size="md" fw={600} c="#C8653D">
-                {t('signature.termsTitle') || 'Terms and Conditions'}
+                {t('signature.termsTitle')}
               </Text>
               <Text size="sm" c="#666666">
-                {t('signature.termsText') || 'By signing above, you agree to the hotel\'s terms and conditions, including cancellation policies, check-in/check-out times, and any applicable fees. Your signature serves as electronic consent for this reservation.'}
+                {t('signature.termsText')}
               </Text>
             </Stack>
           </Card>
@@ -303,7 +303,7 @@ const SignaturePage = () => {
                 e.currentTarget.style.color = '#C8653D';
               }}
             >
-              {t('signature.editDetails') || 'Edit Details'}
+              {t('signature.editDetails')}
             </Button>
             
             <Button
@@ -331,7 +331,7 @@ const SignaturePage = () => {
                 }
               }}
             >
-              {t('signature.continue') || 'Continue to Payment'}
+              {t('signature.continue')}
             </Button>
           </Group>
         </Group>

@@ -22,6 +22,7 @@ import CheckInCompletePage from "./pages/checkin/CheckInCompletePage";
 // Reservation flow pages
 import SearchRoomsPage from "./pages/reservation/SearchRoomsPage";
 import GuestDetailsPage from "./pages/reservation/GuestDetailsPage";
+import BookingDetailsPage from "./pages/reservation/BookingDetailsPage";
 import RoomDetailPage from "./pages/reservation/RoomDetailPage";
 import SignaturePage from "./pages/reservation/SignaturePage";
 import NewResPaymentPage from "./pages/reservation/NewResPaymentPage";
@@ -32,6 +33,9 @@ import ReservationCompletePage from "./pages/reservation/ReservationCompletePage
 import LostCardPage from "./pages/lostcard/LostCardPage";
 import RegenerateCardPage from "./pages/lostcard/RegenerateCardPage";
 import CardIssuedPage from "./pages/lostcard/CardIssuedPage";
+
+// Shared pages
+import EarlyArrivalPage from "./pages/shared/EarlyArrivalPage";
 
 // Create a client with optimized settings
 const queryClient = new QueryClient({
@@ -78,20 +82,24 @@ const AppRoutes = () => {
           <Route path="/checkin/payment" element={<PaymentTerminalPage />} />
           <Route path="/checkin/card-dispensing" element={<CardDispensingPage />} />
           <Route path="/checkin/complete" element={<CheckInCompletePage />} />
+          <Route path="/checkin/early-arrival" element={<EarlyArrivalPage />} />
           
           {/* New reservation flow */}
           <Route path="/reservation/search" element={<SearchRoomsPage />} />
           <Route path="/reservation/guest-details" element={<GuestDetailsPage />} />
+          <Route path="/reservation/booking-details" element={<BookingDetailsPage />} />
           <Route path="/reservation/room-details" element={<RoomDetailPage />} />
           <Route path="/reservation/signature" element={<SignaturePage />} />
           <Route path="/reservation/payment" element={<NewResPaymentPage />} />
           <Route path="/reservation/card" element={<NewResCardPage />} />
           <Route path="/reservation/complete" element={<ReservationCompletePage />} />
+          <Route path="/reservation/early-arrival" element={<EarlyArrivalPage />} />
           
           {/* Lost card flow */}
           <Route path="/lost-card" element={<LostCardPage />} />
           <Route path="/lost-card/regenerate" element={<RegenerateCardPage />} />
           <Route path="/lost-card/issued" element={<CardIssuedPage />} />
+          <Route path="/lost-card/early-arrival" element={<EarlyArrivalPage />} />
           
           {/* Error page */}
           <Route path="/error" element={<ErrorPage />} />

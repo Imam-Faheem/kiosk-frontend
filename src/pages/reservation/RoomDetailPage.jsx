@@ -18,10 +18,12 @@ import {
 import { IconWifi, IconSnowflake, IconShield, IconCoffee, IconDeviceTv } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
-import UnoLogo from '../../assets/uno.jpg';
+import usePropertyStore from '../../stores/propertyStore';
+import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import { getRoomDetails } from '../../services/roomService';
+import UnoLogo from '../../assets/uno.jpg';
 
 const RoomDetailPage = () => {
   const navigate = useNavigate();
@@ -44,7 +46,10 @@ const RoomDetailPage = () => {
         if (!hasImages) {
           setLoading(true);
           try {
-            const propertyId = process.env.REACT_APP_PROPERTY_ID || 'BER';
+            const propertyId = usePropertyStore.getState().propertyId;
+            if (!propertyId) {
+              throw new Error('Property ID is required');
+            }
             const result = await getRoomDetails(room.roomTypeId, propertyId);
             
             if (result.success && result.data && result.data.images) {
@@ -61,7 +66,6 @@ const RoomDetailPage = () => {
               });
             }
           } catch (err) {
-            console.error('Error fetching room images:', err);
             // Use default logo on error
             setRoomData({
               ...room,
@@ -92,8 +96,15 @@ const RoomDetailPage = () => {
   const displayRoom = roomData || room;
   
   // Ensure images array exists
-  const roomImages = displayRoom?.images && Array.isArray(displayRoom.images) && displayRoom.images.length > 0
+  const baseImages = displayRoom?.images && Array.isArray(displayRoom.images) && displayRoom.images.length > 0
     ? displayRoom.images
+    : [UnoLogo];
+  
+  // Use available images or default logo
+  const roomImages = baseImages.length >= 2 
+    ? baseImages.slice(0, 3)
+    : baseImages.length === 1
+    ? [baseImages[0], UnoLogo]
     : [UnoLogo];
   const formatDate = (value) => {
     if (!value) return '';
@@ -106,13 +117,23 @@ const RoomDetailPage = () => {
     });
   };
 
-  // Amenity icons mapping
   const amenityIcons = {
     'WiFi': <IconWifi size={16} />,
     'Air Conditioning': <IconSnowflake size={16} />,
     'TV': <IconDeviceTv size={16} />,
     'Safe': <IconShield size={16} />,
     'Mini Bar': <IconCoffee size={16} />,
+  };
+
+  const getAmenityTranslation = (amenity) => {
+    const amenityMap = {
+      'WiFi': t('roomDetail.amenities.wifi'),
+      'Air Conditioning': t('roomDetail.amenities.airConditioning'),
+      'TV': t('roomDetail.amenities.tv'),
+      'Safe': t('roomDetail.amenities.safe'),
+      'Mini Bar': t('roomDetail.amenities.miniBar'),
+    };
+    return amenityMap[amenity] || amenity;
   };
 
   const handleConfirm = () => {
@@ -156,7 +177,7 @@ const RoomDetailPage = () => {
           }}
         >
           <Text size="lg" c="red">
-            {t('roomDetail.errorMissingData') || 'Missing room or guest details. Please go back and try again.'}
+            {t('roomDetail.errorMissingData')}
           </Text>
           <Button
             variant="outline"
@@ -202,13 +223,13 @@ const RoomDetailPage = () => {
         </Group>
 
         <Stack gap="lg" mb="xl">
-          <Card withBorder p="lg" radius="md">
-            <Stack gap="md">
-              <Text size="xl" fw={600}>{displayRoom.name}</Text>
+          {/* Room Images Gallery */}
+          <Stack gap="md">
+            <Text size="xl" fw={600}>{displayRoom.name}</Text>
               
               {loading ? (
                 <Box style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
-                  <Text c="#666666">Loading images...</Text>
+                  <Text c="#666666">{t('common.loading')}</Text>
                 </Box>
               ) : (
                 <Box style={{ position: 'relative' }}>
@@ -265,7 +286,7 @@ const RoomDetailPage = () => {
               <Text size="md" c="#666666">{displayRoom.description}</Text>
 
               <Stack gap="sm">
-                <Text size="md" fw={600}>Amenities:</Text>
+                <Text size="md" fw={600}>{t('roomDetail.amenities.title')}:</Text>
                 <Group gap="sm">
                   {(displayRoom.amenities || []).map((amenity, index) => (
                     <Badge
@@ -275,7 +296,7 @@ const RoomDetailPage = () => {
                       leftSection={amenityIcons[amenity] || null}
                       size="sm"
                     >
-                      {amenity}
+                      {getAmenityTranslation(amenity)}
                     </Badge>
                   ))}
                 </Group>
@@ -283,12 +304,12 @@ const RoomDetailPage = () => {
 
               <Grid>
                 <Grid.Col span={6}>
-                  <Text size="sm" c="#666666">Capacity:</Text>
-                  <Text size="md" fw={600}>{displayRoom.capacity || displayRoom.maxGuests || 1} guests</Text>
+                  <Text size="sm" c="#666666">{t('roomDetail.capacity')}:</Text>
+                  <Text size="md" fw={600}>{displayRoom.capacity || displayRoom.maxGuests || 1} {t('common.guests')}</Text>
                 </Grid.Col>
                 <Grid.Col span={6}>
-                  <Text size="sm" c="#666666">Max Guests:</Text>
-                  <Text size="md" fw={600}>{displayRoom.maxGuests || displayRoom.capacity || 1} guests</Text>
+                  <Text size="sm" c="#666666">{t('roomDetail.maxGuests')}:</Text>
+                  <Text size="md" fw={600}>{displayRoom.maxGuests || displayRoom.capacity || 1} {t('common.guests')}</Text>
                 </Grid.Col>
               </Grid>
 
@@ -297,22 +318,22 @@ const RoomDetailPage = () => {
                   <Text size="lg" fw={600} c="#C8653D">{t('roomDetail.bookingSummary')}</Text>
                   
                   <Group justify="space-between">
-                    <Text size="md" c="#666666">Guest Name:</Text>
+                    <Text size="md" c="#666666">{t('roomDetail.guestName')}:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{guestDetails.firstName} {guestDetails.lastName}</Text>
                   </Group>
                   
                   <Group justify="space-between">
-                    <Text size="md" c="#666666">{t('roomDetail.checkInDate') || 'Check-In Date'}:</Text>
+                    <Text size="md" c="#666666">{t('roomDetail.checkInDate')}:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{formatDate(searchCriteria.checkIn)}</Text>
                   </Group>
                   
                   <Group justify="space-between">
-                    <Text size="md" c="#666666">{t('roomDetail.checkOutDate') || 'Check-Out Date'}:</Text>
+                    <Text size="md" c="#666666">{t('roomDetail.checkOutDate')}:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{formatDate(searchCriteria.checkOut)}</Text>
                   </Group>
                   
                   <Group justify="space-between">
-                    <Text size="md" c="#666666">Number of Nights:</Text>
+                    <Text size="md" c="#666666">{t('roomDetail.numberOfNights')}:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
                       {Math.ceil((new Date(searchCriteria.checkOut) - new Date(searchCriteria.checkIn)) / (1000 * 60 * 60 * 24))} {t('roomDetail.nights')}
                     </Text>
@@ -339,7 +360,6 @@ const RoomDetailPage = () => {
                 </Stack>
               </Card>
             </Stack>
-          </Card>
 
           <Checkbox
             label={t('roomDetail.terms')}

@@ -179,6 +179,7 @@ const SearchRoomsPage = () => {
         </Box>
 
         <Box style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          {/* Search Form */}
           <form onSubmit={form.onSubmit(handleSearch)}>
             <Stack gap="lg" mb="xl">
             <Grid>
@@ -234,6 +235,7 @@ const SearchRoomsPage = () => {
             </Stack>
           </form>
 
+          {/* Search Results Loader */}
           {isSearching && (
             <Stack align="center" gap="md" mb="xl">
               <Loader size="lg" color="#C8653D" />
@@ -243,12 +245,14 @@ const SearchRoomsPage = () => {
             </Stack>
           )}
 
+          {/* Error message from backend */}
           {errorMessage && !isSearching && (
             <Alert color="red" variant="light" mb="xl">
               {errorMessage}
             </Alert>
           )}
 
+          {/* No rooms available message */}
           {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length === 0 && !isSearching && (
             <Alert color="yellow" variant="light" mb="xl">
               {t('searchRooms.noRooms')}
@@ -346,6 +350,7 @@ const SearchRoomsPage = () => {
             </Stack>
           )}
 
+          {/* Back Button */}
           <Group justify="flex-start" mb="md">
             <BackButton onClick={handleBack} text={t('searchRooms.back')} />
           </Group>

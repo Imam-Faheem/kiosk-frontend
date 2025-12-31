@@ -4,63 +4,242 @@ import {
   Paper,
   Group,
   Button,
-  Text,
   Title,
   Stack,
-  Box,
   TextInput,
   Alert,
+  Box,
+  Loader,
+  Text,
 } from '@mantine/core';
-import { IconAlertCircle, IconArrowRight } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
-import { checkinValidationSchema, checkinInitialValues } from '../../schemas/checkin.schema';
+import { checkinInitialValues } from '../../schemas/checkin.schema';
+import { BUTTON_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
-import BackButton from '../../components/BackButton';
+import { performCheckIn } from '../../services/checkinService';
 import PropertyHeader from '../../components/PropertyHeader';
+import BackButton from '../../components/BackButton';
 
 const CheckInPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [error, setError] = useState(null);
-  
-  const validateReservation = useReservationMutation('validate', {
-    onSuccess: (result) => {
-      if (result.success) {
-        navigate('/checkin/payment-check', {
-          state: { reservation: result.data },
-        });
-      }
-    },
-    onError: (err) => {
-      setError(err.message || t('error.reservationNotFound'));
-    },
-  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const validateReservation = useReservationMutation('validate');
 
   const form = useForm({
     initialValues: checkinInitialValues,
     validate: {
-      reservationId: (value) => (!value ? 'Reservation ID is required' : null),
-      lastName: (value) => (!value ? 'Last name is required' : null),
+      reservationId: (value) => (!value ? t('error.reservationIdRequired') : null),
+      lastName: (value) => (!value ? t('error.lastNameRequired') : null),
     },
   });
 
+  const getFormValue = (values, ...keys) => {
+    return keys.map(key => values[key]).find(val => val != null);
+  };
+
+  const extractReservationId = (result, formValues) => {
+    const data = result?.data;
+    const sources = [
+      data?.bookingId,
+      data?.reservation_id,
+      data?.id,
+      data?.reservation?.id,
+      data?.reservation?.bookingId,
+      data?.folios?.[0]?.bookingId,
+      data?.folios?.[0]?.reservation?.bookingId,
+      data?.reservations?.[0]?.id,
+      formValues?.reservationId,
+      formValues?.reservation_id,
+    ];
+    return sources.find(id => id != null);
+  };
+
+  const getCheckInData = async (reservationData, reservationId) => {
+    const hasFolios = Array.isArray(reservationData.folios) && reservationData.folios.length > 0;
+    return hasFolios ? reservationData : (await performCheckIn(reservationId)).data;
+  };
+
+  const navigateToPaymentCheck = (reservationData, checkInData) => {
+    navigate('/checkin/payment-check', {
+      state: {
+        reservation: reservationData,
+        checkInData: checkInData ?? reservationData,
+        folios: checkInData?.folios ?? reservationData?.folios,
+      },
+    });
+  };
+
+  const hasValidGuestData = (data) => {
+    if (!data) return false;
+    
+    // Check for primaryGuest format
+    const primaryGuest = data?.primaryGuest;
+    if (primaryGuest) {
+      const firstName = primaryGuest.firstName ?? '';
+      const lastName = primaryGuest.lastName ?? '';
+      return firstName.trim().length > 0 && lastName.trim().length > 0;
+    }
+    
+    // Check for folios format with debitor
+    const folios = data?.folios;
+    if (Array.isArray(folios) && folios.length > 0) {
+      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
+      const debitor = mainFolio?.debitor;
+      if (debitor) {
+        const firstName = debitor.firstName ?? '';
+        const lastName = debitor.name ?? '';
+        return firstName.trim().length > 0 && lastName.trim().length > 0;
+      }
+    }
+    
+    // Legacy format: guest_name
+    const guestName = data?.guest_name;
+    if (guestName) {
+      const firstName = guestName.first_name ?? guestName.firstName ?? '';
+      const lastName = guestName.last_name ?? guestName.lastName ?? '';
+      return firstName.trim().length > 0 && lastName.trim().length > 0;
+    }
+    
+    return false;
+  };
+
+  const extractLastNameFromResponse = (data) => {
+    if (!data) return null;
+    
+    const primaryGuest = data?.primaryGuest;
+    if (primaryGuest?.lastName) {
+      return primaryGuest.lastName.trim().toLowerCase();
+    }
+    
+    const folios = data?.folios;
+    if (Array.isArray(folios) && folios.length > 0) {
+      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
+      const debitor = mainFolio?.debitor;
+      if (debitor?.name) {
+        return debitor.name.trim().toLowerCase();
+      }
+    }
+    
+    const guestName = data?.guest_name;
+    if (guestName) {
+      const lastName = guestName.last_name ?? guestName.lastName;
+      if (lastName) {
+        return lastName.trim().toLowerCase();
+      }
+    }
+    
+    return null;
+  };
+
+  const validateLastNameMatch = (submittedLastName, apiData) => {
+    const submittedLastNameLower = submittedLastName?.trim().toLowerCase();
+    if (!submittedLastNameLower) {
+      return false;
+    }
+
+    const responseLastName = extractLastNameFromResponse(apiData);
+    if (!responseLastName) {
+      return false;
+    }
+
+    return submittedLastNameLower === responseLastName;
+  };
+
+  const extractReservationIdFromResponse = (data) => {
+    if (!data) return null;
+    
+    const sources = [
+      data?.bookingId,
+      data?.reservation_id,
+      data?.id,
+      data?.reservation?.id,
+      data?.reservation?.bookingId,
+      data?.folios?.[0]?.bookingId,
+      data?.folios?.[0]?.reservation?.bookingId,
+      data?.reservations?.[0]?.id,
+    ];
+    return sources.find(id => id != null);
+  };
+
+  const validateReservationIdMatch = (submittedReservationId, apiData) => {
+    const submittedId = submittedReservationId?.trim().toUpperCase();
+    if (!submittedId) {
+      return false;
+    }
+
+    const responseId = extractReservationIdFromResponse(apiData);
+    if (!responseId) {
+      return false;
+    }
+
+    return submittedId === responseId.toString().toUpperCase();
+  };
+
   const handleSubmit = async (values) => {
     setError(null);
-    
+    form.clearErrors();
+    setIsLoading(true);
+
     try {
-      // Call backend API to validate reservation with Apaleo
-      const result = await validateReservation.mutateAsync(values);
+      const submittedReservationId = getFormValue(values, 'reservationId', 'reservation_id');
+      const submittedLastName = getFormValue(values, 'lastName', 'last_name');
       
-      if (result.success) {
-        // Navigate to payment check page with real reservation data
-        navigate('/checkin/payment-check', {
-          state: { reservation: result.data },
-        });
+      const result = await validateReservation.mutateAsync({
+        reservationId: submittedReservationId,
+        lastName: submittedLastName,
+      });
+
+      const apiData = result.data;
+      
+      const apiDataChecks = [!apiData, !hasValidGuestData(apiData)];
+      if (apiDataChecks.some(check => check === true)) {
+        form.setFieldError('reservationId', t('error.reservationNotFound'));
+        throw new Error(t('error.reservationNotFound'));
       }
-    } catch (err) {
-      setError(err.message || t('error.reservationNotFound'));
+
+      if (!validateLastNameMatch(submittedLastName, apiData)) {
+        form.setFieldError('lastName', t('error.lastNameMismatch'));
+        throw new Error(t('error.lastNameMismatch'));
+      }
+
+      const reservationId = extractReservationId(result, values);
+      const checkInData = await getCheckInData(apiData, reservationId);
+
+      const checkInDataChecks = [!checkInData, !hasValidGuestData(checkInData)];
+      if (checkInDataChecks.some(check => check === true)) {
+        form.setFieldError('reservationId', t('error.reservationNotFound'));
+        throw new Error(t('error.reservationNotFound'));
+      }
+
+      if (!validateLastNameMatch(submittedLastName, checkInData)) {
+        form.setFieldError('lastName', t('error.lastNameMismatch'));
+        throw new Error(t('error.lastNameMismatch'));
+      }
+
+      navigateToPaymentCheck(apiData, checkInData);
+    } catch (error) {
+      const errorStatus = error?.response?.status;
+      const errorMessage = (error?.message ?? '').toLowerCase();
+      
+      const lastNameChecks = [
+        errorStatus === 403,
+        errorMessage.includes('lastname'),
+        errorMessage.includes('last name'),
+        errorMessage.includes('last_name'),
+      ];
+      const isLastNameError = lastNameChecks.some(check => check === true);
+      
+      form.setFieldError(
+        isLastNameError ? 'lastName' : 'reservationId',
+        isLastNameError ? t('error.lastNameMismatch') : t('error.reservationNotFound')
+      );
+      setIsLoading(false);
     }
   };
 
@@ -77,35 +256,36 @@ const CheckInPage = () => {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '20px',
-        backgroundColor: '#FFFFFF',
       }}
+      p={20}
+      bg="#FFFFFF"
     >
       <Paper
         withBorder
         shadow="md"
         p={40}
         radius="xl"
+        w="100%"
+        maw={600}
+        bg="#ffffff"
         style={{
-          width: '100%',
-          maxWidth: '600px',
-          backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
         }}
       >
-        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+        <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <PropertyHeader />
         </Group>
 
-        <Title order={3} style={{
-          fontSize: '26px',
-          fontWeight: 800,
-          color: '#222',
-          marginBottom: '16px',
-          letterSpacing: '0.5px'
-        }}>
-          Find Your Reservation
+        {/* Context Title */}
+        <Title 
+          order={3}
+          fz={26}
+          fw={800}
+          c="#222"
+          mb={16}
+          lts={0.5}
+        >
+          {t('checkIn.title')}
         </Title>
 
         <form onSubmit={form.onSubmit(handleSubmit)}>
@@ -113,10 +293,10 @@ const CheckInPage = () => {
             {error && (
               <Alert
                 icon={<IconAlertCircle size={16} />}
-                title="Error"
+                title={t('error.title')}
                 color="red"
                 variant="light"
-                style={{ borderRadius: '8px' }}
+                radius="md"
               >
                 {error}
               </Alert>
@@ -124,11 +304,10 @@ const CheckInPage = () => {
 
             <TextInput
               label={t('checkIn.reservationId')}
-              placeholder="Enter your 10-digit reservation number"
+              placeholder={t('checkIn.enterReservationNumber')}
               required
               size="lg"
               {...form.getInputProps('reservationId')}
-              description="This can be found in your confirmation email."
               styles={{
                 input: {
                   borderRadius: '12px',
@@ -145,7 +324,7 @@ const CheckInPage = () => {
 
             <TextInput
               label={t('checkIn.lastName')}
-              placeholder="Enter your last name"
+              placeholder={t('checkIn.enterLastName')}
               required
               size="lg"
               {...form.getInputProps('lastName')}
@@ -170,29 +349,25 @@ const CheckInPage = () => {
             <Button
               type="submit"
               size="lg"
-              rightSection={<IconArrowRight size={20} />}
-              loading={validateReservation.isPending}
-              style={{
-                backgroundColor: '#C8653D',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8552F';
-                e.currentTarget.style.transform = 'scale(1.02)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
+              leftSection={<IconCheck size={20} />}
+              disabled={isLoading}
+              styles={BUTTON_STYLES.primarySmall}
+              radius="md"
             >
-              {validateReservation.isPending ? t('checkIn.loading') : t('checkIn.submit')}
+              {t('checkIn.submit')}
             </Button>
           </Group>
         </form>
+
+        {/* Loader */}
+        {isLoading && (
+          <Stack align="center" gap="md" mt="xl">
+            <Loader size="lg" color="#C8653D" />
+            <Text size="lg" c="#666666">
+              {t('checkIn.loading')}
+            </Text>
+          </Stack>
+        )}
       </Paper>
     </Container>
   );

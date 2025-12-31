@@ -15,14 +15,15 @@ import { IconCheck } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
+import useLanguage from "../hooks/useLanguage";
 import usePropertyStore from "../stores/propertyStore";
-import { STORAGE_KEYS, LANGUAGES } from "../config/constants";
-import UnoLogo from "../assets/uno.jpg";
+import PropertyLogo from "../components/PropertyLogo";
 import PropertyHeader from "../components/PropertyHeader";
+import { BUTTON_STYLES, LANGUAGE_OPTIONS } from "../config/constants";
 
 const WelcomePage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t } = useLanguage();
   const { language, setLanguage, initializeLanguage } = useLanguageStore();
   const { isConfigured, propertyId } = usePropertyStore();
 
@@ -31,28 +32,9 @@ const WelcomePage = () => {
     initializeLanguage();
   }, [initializeLanguage]);
 
-  // Check property configuration on mount
   useEffect(() => {
-    // Check localStorage for property selection
-    try {
-      const storedProperty = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
-      if (!storedProperty) {
-        // No property selected, redirect to property selector
-        navigate("/property-selector", { replace: true });
-        return;
-      }
-      
-      const propertyData = JSON.parse(storedProperty);
-      if (!propertyData.propertyId) {
-        // Invalid property data, redirect to property selector
-        navigate("/property-selector", { replace: true });
-        return;
-      }
-    } catch {
-      // On error, redirect to property selector
-      navigate("/property-selector", { replace: true });
-    }
-  }, [navigate]);
+    if (!isConfigured) navigate("/property-selector", { replace: true });
+  }, [isConfigured, navigate]);
 
   const handleLanguageChange = (value) => {
     setLanguage(value);
@@ -94,28 +76,11 @@ const WelcomePage = () => {
           paddingTop: "100px",
         }}
       >
-        <Box
-          style={{
-            position: "absolute",
-            top: "20px",
-            left: "30px",
-          }}
-        >
-          <PropertyHeader />
+        <Box style={{ position: "absolute", top: "20px", left: "30px" }}>
+          <PropertyHeader showName={true} />
         </Box>
-
-        
-        <img
-          src={UnoLogo}
-          alt="UNO Hotel Logo"
-          style={{
-            width: "110px",
-            height: "auto",
-            borderRadius: "8px",
-            marginTop: "40px",
-            marginBottom: "20px",
-          }}
-        />
+ 
+        <PropertyLogo size={110} style={{ marginBottom: "20px", marginTop: "60px" }} />
 
         <h3
           style={{
@@ -125,12 +90,7 @@ const WelcomePage = () => {
             fontWeight: "500",
           }}
         >
-          {language === "de" && "Sprache wählen"}
-          {language === "en" && "Select language"}
-          {language === "es" && "Seleccionar idioma"}
-          {language === "fr" && "Sélectionner la langue"}
-          {language === "it" && "Seleziona lingua"}
-          {language === "pt" && "Selecionar idioma"}
+          {t('welcome.selectLanguage')}
         </h3>
 
         <Box 
@@ -143,7 +103,7 @@ const WelcomePage = () => {
           }}
         >
           <Grid gutter="lg" style={{ maxWidth: '600px', width: '100%' }}>
-            {LANGUAGES.map((lang) => (
+            {LANGUAGE_OPTIONS.map((lang) => (
               <Grid.Col span={6} key={lang.value}>
                 <Card
                 withBorder
@@ -221,32 +181,11 @@ const WelcomePage = () => {
           <Button
             size="xl"
             onClick={handleContinue}
-            style={{
-              backgroundColor: "#C8653D",
-              color: "#FFFFFF",
-              borderRadius: "20px",
-              padding: "20px 80px",
-              fontWeight: "bold",
-              fontSize: "18px",
-              textTransform: "uppercase",
-              boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
-              transition: "all 0.3s ease",
-              border: "none",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.02)";
-              e.currentTarget.style.boxShadow =
-                "0 6px 15px rgba(0, 0, 0, 0.2)";
-              e.currentTarget.style.backgroundColor = "#B8552F";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 10px rgba(0, 0, 0, 0.15)";
-              e.currentTarget.style.backgroundColor = "#C8653D";
-            }}
+            styles={BUTTON_STYLES.primaryRounded}
+            uppercase
+            radius="xl"
           >
-            {t("welcome.continue") || "Continue"}
+            {t("welcome.continue")}
           </Button>
         </Box>
       </Paper>

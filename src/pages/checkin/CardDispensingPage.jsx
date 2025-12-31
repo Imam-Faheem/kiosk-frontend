@@ -1,135 +1,168 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Container,
   Paper,
   Group,
-  Button,
   Text,
   Title,
   Stack,
   Box,
   Stepper,
   Alert,
-  Loader,
+  Badge,
 } from '@mantine/core';
-import { IconCreditCard, IconCheck, IconMail } from '@tabler/icons-react';
+import { 
+  IconCreditCard, 
+  IconMail, 
+  IconLock, 
+  IconCircleCheck,
+  IconLoader2,
+} from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
-import { performCheckIn } from '../../services/checkinService';
+import { useCheckInMutation } from '../../hooks/useCheckInMutation';
+import { CARD_DISPENSING_STEPS, STEP_ICONS } from '../../config/constants';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
-import UnoLogo from '../../assets/uno.jpg';
-import usePropertyStore from '../../stores/propertyStore';
+import '../../styles/animations.css';
 
 const CardDispensingPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const issueCard = useCardMutation('issue', {
-    onSuccess: (result) => {
-      if (result.success) {
-        setCardData(result.data);
-        setCardStatus('completed');
-        setCurrentStep(3);
-      }
-    },
+  const processCheckIn = useCheckInMutation('process', {
     onError: (err) => {
-      console.error('Card issuance error:', err);
-      setError(err.message || t('error.cardIssuanceFailed'));
+      // Check-in error - continue with card issuance
+    }
+  });
+  const issueCard = useCardMutation('issue', {
+    onError: (err) => {
+      setError(err.message ?? t('error.cardIssuanceFailed'));
       setCardStatus('error');
     }
   });
   const [currentStep, setCurrentStep] = useState(0);
   const [cardStatus, setCardStatus] = useState('preparing');
-  const [cardData, setCardData] = useState(null);
   const [error, setError] = useState(null);
+  const hasProcessedRef = useRef(false);
 
   const reservation = location.state?.reservation;
   const paymentStatus = location.state?.paymentStatus;
 
-  const steps = [
-    { label: t('cardDispensing.steps.preparing'), description: 'Preparing your card' },
-    { label: t('cardDispensing.steps.encoding'), description: 'Encoding access credentials' },
-    { label: t('cardDispensing.steps.sending'), description: 'Sending details to your email' },
-  ];
+  const steps = useMemo(() => 
+    CARD_DISPENSING_STEPS.map(step => ({
+      ...step,
+      label: t(step.labelKey) ?? step.defaultLabel,
+      description: t(`${step.labelKey}.description`) ?? step.description,
+      icon: STEP_ICONS[step.iconKey],
+    })), [t]
+  );
+
+  const statusMessage = useMemo(() => {
+    const messages = {
+      preparing: {
+        title: t('cardDispensing.status.preparing.title'),
+        description: t('cardDispensing.status.preparing.description'),
+      },
+      encoding: {
+        title: t('cardDispensing.status.encoding.title'),
+        description: t('cardDispensing.status.encoding.description'),
+      },
+      sending: {
+        title: t('cardDispensing.status.sending.title'),
+        description: t('cardDispensing.status.sending.description'),
+      },
+      completed: {
+        title: t('cardDispensing.status.completed.title'),
+        description: t('cardDispensing.status.completed.description'),
+      },
+    };
+    return messages[cardStatus] ?? messages.preparing;
+  }, [cardStatus, t]);
 
   useEffect(() => {
     if (!reservation) {
       navigate('/checkin');
       return;
     }
+    if (hasProcessedRef.current) return;
+    hasProcessedRef.current = true;
 
     const processCard = async () => {
       try {
-        // Step 1: Perform Apaleo check-in
+        // Step 1: Check-in
         setCurrentStep(0);
         setCardStatus('preparing');
         
+        let checkInResult = null;
         try {
-          // Call Apaleo check-in API
-          const checkInResult = await performCheckIn({
-            reservation_id: reservation.reservationId || reservation.id,
-            property_id: reservation.propertyId || usePropertyStore.getState().propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER',
+          checkInResult = await processCheckIn.mutateAsync({
+            reservation_id: reservation.reservation_id ?? reservation.reservationId ?? reservation.id,
+            guest_email: reservation.guest_email ?? reservation.email ?? reservation.guestEmail,
+            guest_phone: reservation.guest_phone ?? reservation.phone ?? reservation.guestPhone,
+            guest_name: {
+              first_name: reservation.guest_name?.first_name ?? reservation.firstName ?? '',
+              last_name: reservation.guest_name?.last_name ?? reservation.lastName ?? '',
+            },
+            check_in_date: reservation.check_in_date ?? reservation.checkIn ?? reservation.checkInDate ?? new Date().toISOString(),
+            check_out_date: reservation.check_out_date ?? reservation.checkOut ?? reservation.checkOutDate,
+            room_number: reservation.room_number ?? reservation.roomNumber,
+            confirmation_code: reservation.confirmation_code ?? reservation.confirmationCode,
           });
-          
-          if (!checkInResult.success && !checkInResult.already_checked_in) {
-            throw new Error(checkInResult.message || 'Check-in failed');
-          }
-          
-          console.log('Apaleo check-in successful:', checkInResult);
-        } catch (checkInErr) {
-          console.error('Apaleo check-in error:', checkInErr);
-          // Continue with card issuance even if check-in fails (might already be checked in)
-          // The backend will handle this gracefully
+        } catch (err) {
+          // Check-in error - continue with card issuance
         }
         
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Step 2: Encoding card (issuing digital key)
+        // Step 2: Issue card
         setCurrentStep(1);
         setCardStatus('encoding');
         
         const result = await issueCard.mutateAsync({
-          reservationId: reservation.reservationId || reservation.id,
-          roomNumber: reservation.roomNumber || reservation.roomType || 'TBD',
-          guestName: reservation.guestName || `${reservation.firstName || ''} ${reservation.lastName || ''}`.trim() || 'Guest',
-          email: reservation.email
+          reservationId: reservation.reservation_id ?? reservation.reservationId ?? reservation.id,
+          roomNumber: checkInResult?.data?.room_number ?? reservation.room_number ?? reservation.roomNumber ?? reservation.roomType ?? t('common.notAvailable'),
+          guestName: (() => {
+            if (reservation.guest_name) {
+              if (typeof reservation.guest_name === 'string') {
+                return reservation.guest_name;
+              }
+              const firstName = reservation.guest_name.first_name ?? '';
+              const lastName = reservation.guest_name.last_name ?? '';
+              const fullName = `${firstName} ${lastName}`.trim();
+              return fullName ?? t('common.guest');
+            }
+            return reservation.guestName ?? t('common.guest');
+          })(),
+          email: reservation.guest_email ?? reservation.email ?? reservation.guestEmail
         });
 
-        if (result.success) {
-          setCardData(result.data);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-
-          // Step 3: Sending details
-          setCurrentStep(2);
-          setCardStatus('sending');
-          await new Promise(resolve => setTimeout(resolve, 2000));
-
-          // Complete
-          setCardStatus('completed');
-          
-          // Navigate to completion page after 5 seconds
-          setTimeout(() => {
-            navigate('/checkin/complete', {
-              state: { 
-                reservation, 
-                paymentStatus,
-                cardData: result.data
-              }
-            });
-          }, 5000);
-        } else {
+        if (!result.success) {
           setError(t('error.cardDispenserError'));
+          return;
         }
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Step 3: Sending
+        setCurrentStep(2);
+        setCardStatus('sending');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        setCardStatus('completed');
+        setTimeout(() => {
+          navigate('/checkin/complete', {
+            state: { reservation, paymentStatus, cardData: result.data, checkInResult }
+          });
+        }, 5000);
       } catch (err) {
-        console.error('Card issuance error:', err);
-        setError(err.message || t('error.cardDispenserError'));
+        setError(err.message ?? t('error.cardDispenserError'));
       }
     };
 
     processCard();
-  }, [reservation, navigate, issueCard, t, paymentStatus]);
+  }, [reservation, paymentStatus, navigate, t, processCheckIn, issueCard]);
 
   const handleBack = () => {
     navigate('/checkin');
@@ -138,6 +171,22 @@ const CardDispensingPage = () => {
   if (!reservation) {
     return null;
   }
+
+  const getStatusTextProps = () => {
+    const isSending = cardStatus === 'sending';
+    const isCompleted = cardStatus === 'completed';
+    const isHighlighted = isSending ? true : isCompleted;
+    
+    return {
+      size: isCompleted ? 'md' : 'sm',
+      fw: isHighlighted ? 700 : 600,
+      c: isSending ? '#C8653D' : isCompleted ? '#22c55e' : 'dark.9',
+      gap: isSending ? 12 : 8,
+      maw: isSending ? 420 : 400,
+    };
+  };
+
+  const statusTextProps = getStatusTextProps();
 
   return (
     <Container
@@ -148,155 +197,175 @@ const CardDispensingPage = () => {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '20px',
-        backgroundColor: '#FFFFFF',
       }}
+      p={20}
+      bg="#FFFFFF"
     >
       <Paper
         withBorder
         shadow="md"
         p={40}
         radius="xl"
+        w="100%"
+        maw={600}
+        bg="#ffffff"
         style={{
-          width: '100%',
-          maxWidth: '600px',
-          backgroundColor: '#ffffff',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderRadius: '20px',
         }}
       >
-        {/* Header */}
-        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+        <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <PropertyHeader />
         </Group>
 
         {/* Content */}
-        <Stack gap="lg" mb="xl">
+          <Stack gap={32}>
           {error ? (
             <Alert
               icon={<IconCreditCard size={20} />}
-              title="Card Dispenser Error"
+                title={t('error.title')}
               color="red"
               variant="light"
-              style={{ borderRadius: '8px' }}
+                radius="md"
+                styles={{ root: { border: '1px solid rgba(250, 82, 82, 0.2)' } }}
             >
-              <Text size="lg" fw={500}>
+                <Text size="md" fw={500} c="red.7">
                 {error}
               </Text>
+                <Text size="sm" c="dimmed" mt={8}>
+                  {t('paymentCheck.pleaseTryAgainOrContact')}
+                </Text>
             </Alert>
           ) : (
             <>
-              {/* Progress Stepper */}
-              <Stepper
-                active={currentStep}
-                size="lg"
-                color="#C8653D"
-                radius="md"
-                style={{ marginBottom: '20px' }}
-              >
-                {steps.map((step, index) => (
-                  <Stepper.Step
-                    key={index}
-                    label={step.label}
-                    description={step.description}
-                    icon={
-                      index < currentStep ? (
-                        <IconCheck size={16} />
-                      ) : index === currentStep ? (
-                        <Loader size={16} color="#C8653D" />
-                      ) : (
-                        <IconCreditCard size={16} />
-                      )
-                    }
-                  />
-                ))}
-              </Stepper>
-
-              {/* Card Animation */}
-              <Stack align="center" gap="md">
-                <Box
-                  style={{
-                    width: '120px',
-                    height: '80px',
-                    backgroundColor: '#C8653D',
-                    borderRadius: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: '14px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-                    animation: cardStatus === 'completed' ? 'none' : 'pulse 2s infinite',
-                    transform: cardStatus === 'completed' ? 'scale(1.1)' : 'scale(1)',
-                    transition: 'all 0.3s ease',
-                  }}
-                >
-                  <IconCreditCard size={32} />
+                {/* Enhanced Stepper */}
+                <Box>
+                  <Stepper
+                    active={currentStep}
+                    size="lg"
+                    color="#C8653D"
+                    radius="md"
+                    iconSize={42}
+                    orientation="vertical"
+                    styles={{
+                      stepBody: { marginTop: 12 },
+                      stepLabel: { 
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: '#222222',
+                      },
+                      stepDescription: { 
+                        fontSize: '14px',
+                        marginTop: 6,
+                        color: '#666666',
+                        lineHeight: 1.5,
+                      },
+                      separator: {
+                        backgroundColor: '#C8653D',
+                        transition: 'background-color 0.4s ease',
+                      },
+                      step: {
+                        paddingBottom: 24,
+                      },
+                    }}
+                  >
+                    {steps.map((step, index) => {
+                      const isActive = index === currentStep;
+                      const isCompleted = index < currentStep;
+                      const isPending = index > currentStep;
+                      const StepIcon = step.icon;
+                      
+                      return (
+                        <Stepper.Step
+                          key={step.key}
+                          label={step.label}
+                          description={step.description}
+                          icon={
+                            isCompleted ? <IconCircleCheck size={22} stroke={2.5} /> :
+                            isActive ? <IconLoader2 size={22} className="spin-animation" style={{ color: '#C8653D' }} /> :
+                            <StepIcon size={20} />
+                          }
+                          styles={{
+                            stepIcon: {
+                              borderColor: isActive ? '#C8653D' : isCompleted ? '#C8653D' : '#e0e0e0',
+                              backgroundColor: isActive ? 'rgba(200, 101, 61, 0.1)' : isCompleted ? '#C8653D' : isPending ? '#f5f5f5' : '#ffffff',
+                              transition: 'all 0.3s ease',
+                              transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                              borderWidth: isActive ? '2px' : '1px',
+                            },
+                            stepLabel: {
+                              fontWeight: isActive ? 700 : isCompleted ? 600 : 500,
+                              color: isActive ? '#C8653D' : isCompleted ? '#22c55e' : '#666666',
+                            },
+                            stepDescription: {
+                              color: isActive ? '#333333' : isCompleted ? '#666666' : '#999999',
+                            },
+                          }}
+                        />
+                      );
+                    })}
+                  </Stepper>
                 </Box>
 
-                {cardStatus === 'preparing' && (
-                  <Text size="lg" c="#666666" ta="center">
-                    {t('cardDispensing.loading')}
-                  </Text>
-                )}
+                {/* Main Status Display */}
+                <Stack align="center" gap={24} mt={16}>
+                  {/* Card/Status Icon */}
+                  <Box
+                    w={cardStatus === 'sending' ? 140 : 120}
+                    h={cardStatus === 'sending' ? 140 : 100}
+                    bg={cardStatus === 'completed' ? '#22c55e' : '#C8653D'}
+                    style={{
+                      borderRadius: cardStatus === 'sending' ? '20px' : '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      boxShadow: cardStatus === 'sending' 
+                        ? '0 8px 24px rgba(200, 101, 61, 0.25)' 
+                        : '0 4px 16px rgba(0, 0, 0, 0.15)',
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    {cardStatus === 'completed' ? <IconCircleCheck size={48} stroke={2.5} /> :
+                     cardStatus === 'sending' ? <IconMail size={56} stroke={2} /> :
+                     <IconCreditCard size={40} stroke={2} />}
+                  </Box>
 
-                {cardStatus === 'encoding' && (
-                  <Text size="lg" c="#666666" ta="center">
-                    Encoding your access credentials...
-                  </Text>
-                )}
-
-                {cardStatus === 'sending' && (
-                  <Stack align="center" gap="sm">
-                    <IconMail size={32} color="#C8653D" />
-                    <Text size="lg" c="#666666" ta="center">
-                      Sending digital key to your email...
-                    </Text>
-                  </Stack>
-                )}
-
-                {cardStatus === 'completed' && (
-                  <Stack align="center" gap="sm">
-                    <IconCheck size={32} color="green" />
-                    <Text size="lg" fw={600} c="#0B152A" ta="center">
-                      {t('cardDispensing.takeCard')}
-                    </Text>
-                    <Text size="md" c="#666666" ta="center">
-                      Your card is ready! Please take it from the slot.
-                    </Text>
-                  </Stack>
-                )}
+                  {/* Status Messages */}
+                  {statusMessage && (
+                    <Stack align="center" gap={statusTextProps.gap}>
+                      <Text 
+                        size="xl" 
+                        fw={statusTextProps.fw} 
+                        c={statusTextProps.c} 
+                        ta="center"
+                        style={cardStatus === 'sending' ? { letterSpacing: '0.3px', textShadow: '0 2px 4px rgba(200, 101, 61, 0.1)' } : undefined}
+                      >
+                        {statusMessage.title}
+                      </Text>
+                      <Text size={statusTextProps.size} c="dimmed" ta="center" maw={statusTextProps.maw}>
+                        {statusMessage.description}
+                      </Text>
+                      {cardStatus === 'sending' && (
+                        <Badge 
+                          size="lg" 
+                          variant="light" 
+                          color="orange"
+                          mt={4}
+                          styles={{ root: { padding: '6px 16px', fontSize: '12px', fontWeight: 500 } }}
+                        >
+                          <IconMail size={14} style={{ marginRight: 6 }} />
+                          {reservation.guest_email ?? reservation.email ?? t('cardDispensing.yourEmail')}
+                        </Badge>
+                      )}
+                    </Stack>
+                  )}
               </Stack>
-
-              {/* Card Details */}
-              {cardData && (
-                <Alert
-                  icon={<IconCheck size={16} />}
-                  title="Card Details"
-                  color="green"
-                  variant="light"
-                  style={{ borderRadius: '8px' }}
-                >
-                  <Stack gap="xs">
-                    <Text size="sm">
-                      <strong>Access Code:</strong> {cardData.accessCode}
-                    </Text>
-                    <Text size="sm">
-                      <strong>Room:</strong> {reservation.roomNumber}
-                    </Text>
-                    <Text size="sm">
-                      <strong>Valid Until:</strong> {reservation.checkOut}
-                    </Text>
-                  </Stack>
-                </Alert>
-              )}
             </>
           )}
         </Stack>
 
         {/* Back Button */}
-        <Group justify="flex-start">
+        <Group justify="flex-start" mt={32}>
           <BackButton onClick={handleBack} text={t('common.back')} />
         </Group>
       </Paper>

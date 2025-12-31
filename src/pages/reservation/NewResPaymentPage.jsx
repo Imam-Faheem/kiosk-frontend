@@ -25,17 +25,19 @@ const NewResPaymentPage = () => {
   const { t } = useLanguage();
   const [paymentStatus, setPaymentStatus] = useState('idle');
   const [error, setError] = useState(null);
-  const [bookingData, setBookingData] = useState(null);
   const hasProcessed = useRef(false);
 
-  const { room, searchCriteria, guestDetails, savedGuest, signature } = location.state || {};
+  const { room, searchCriteria, guestDetails } = location.state || {};
 
   const processPayment = async () => {
       try {
         hasProcessed.current = true;
         setPaymentStatus('processing');
         
-        const propertyId = usePropertyStore.getState().propertyId || process.env.REACT_APP_PROPERTY_ID || 'BER';
+        const propertyId = usePropertyStore.getState().propertyId;
+        if (!propertyId) {
+          throw new Error('Property ID is required. Please select a property first.');
+        }
         const hotelId = propertyId; // Use propertyId as hotelId for the endpoint
         
         // Prepare booking data for Apaleo
@@ -62,24 +64,35 @@ const NewResPaymentPage = () => {
         };
 
         if (!bookingPayload.unitGroupId || !bookingPayload.ratePlanId) {
-          throw new Error('Missing room information. Please select a room again.');
+          throw new Error(t('error.missingRoomInformation'));
         }
 
         // Create booking in Apaleo
         const bookingResult = await createBooking(bookingPayload, hotelId);
         
-        // Extract reservation ID from booking response
-        const reservationId = bookingResult?.id || bookingResult?.reservationId || bookingResult?.reservation?.id;
+        // Extract reservation ID from booking response - check all possible fields
+        const reservationIdSources = [
+          bookingResult?.bookingId,
+          bookingResult?.id,
+          bookingResult?.reservationId,
+          bookingResult?.reservation?.id,
+          bookingResult?.reservation?.bookingId,
+          bookingResult?.reservations?.[0]?.id,
+          bookingResult?.reservations?.[0]?.bookingId,
+          bookingResult?.data?.bookingId,
+          bookingResult?.data?.id,
+          bookingResult?.data?.reservationId,
+        ];
+        const reservationId = reservationIdSources.find(id => id != null && id !== 'BOOKING-CREATED');
         
         if (!reservationId) {
-          throw new Error('Booking created but no reservation ID returned');
+          throw new Error(t('error.noReservationId'));
         }
 
         // Update Apaleo reservation with additional guest info (if needed)
         try {
           await updateApaleoReservationWithGuest(reservationId, guestDetails, propertyId);
         } catch (updateErr) {
-          console.warn('Failed to update reservation with guest info:', updateErr);
           // Continue even if update fails
         }
 
@@ -87,6 +100,7 @@ const NewResPaymentPage = () => {
         
         // Prepare reservation data
         const reservation = {
+          bookingId: reservationId,
           reservationId,
           id: reservationId,
           guestDetails,
@@ -100,8 +114,6 @@ const NewResPaymentPage = () => {
           bookingData: bookingResult,
         };
 
-        setBookingData(reservation);
-
         // Navigate to completion page after a short delay to show success
         setTimeout(() => {
           navigate('/reservation/complete', {
@@ -114,13 +126,11 @@ const NewResPaymentPage = () => {
         }, 1500);
         
       } catch (err) {
-        console.error('Payment/Booking error:', err);
-        console.error('Error response:', err?.response?.data);
         setPaymentStatus('failed');
         
         // Extract detailed error message from Apaleo
         const errorData = err?.response?.data;
-        let errorMessage = 'Failed to create booking';
+        let errorMessage = t('error.failedToCreateBooking');
         
         if (errorData?.details?.messages && Array.isArray(errorData.details.messages)) {
           errorMessage = errorData.details.messages.join('. ');
@@ -154,6 +164,7 @@ const NewResPaymentPage = () => {
     if (room && guestDetails && searchCriteria && !hasProcessed.current) {
       processPayment();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room, guestDetails, searchCriteria, navigate]);
 
   const handleBack = () => {
@@ -188,7 +199,7 @@ const NewResPaymentPage = () => {
           borderRadius: '20px',
         }}
       >
-        <Group justify="space-between" mb="xl">
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <Group>
             <Box
               style={{
@@ -218,19 +229,19 @@ const NewResPaymentPage = () => {
           <Stack gap="md">
             <Text size="lg" fw={600} c="#C8653D">{t('newResPayment.bookingSummary')}</Text>
             <Group justify="space-between">
-              <Text size="md" c="#666666">Room:</Text>
+              <Text size="md" c="#666666">{t('newResPayment.room')}:</Text>
               <Text size="md" fw={600}>{room.name}</Text>
             </Group>
             <Group justify="space-between">
-              <Text size="md" c="#666666">Guest:</Text>
+              <Text size="md" c="#666666">{t('newResPayment.guest')}:</Text>
               <Text size="md" fw={600}>{guestDetails.firstName} {guestDetails.lastName}</Text>
             </Group>
             <Group justify="space-between">
-              <Text size="md" c="#666666">Check-in:</Text>
+              <Text size="md" c="#666666">{t('newResPayment.checkIn')}:</Text>
               <Text size="md" fw={600}>{new Date(searchCriteria.checkIn).toLocaleDateString()}</Text>
             </Group>
             <Group justify="space-between">
-              <Text size="md" c="#666666">Check-out:</Text>
+              <Text size="md" c="#666666">{t('newResPayment.checkOut')}:</Text>
               <Text size="md" fw={600}>{new Date(searchCriteria.checkOut).toLocaleDateString()}</Text>
             </Group>
           </Stack>
@@ -239,7 +250,7 @@ const NewResPaymentPage = () => {
         {/* Total Amount Display */}
         <Card withBorder p="lg" radius="md" style={{ backgroundColor: '#C8653D', color: 'white', marginBottom: '20px' }}>
           <Stack gap="sm" align="center">
-            <Text size="md" fw={500}>Total Amount</Text>
+            <Text size="md" fw={500}>{t('newResPayment.totalAmount')}</Text>
             <Text size="3xl" fw={700} style={{ fontSize: '48px' }}>
               ${room.totalPrice} {room.currency}
             </Text>
@@ -251,19 +262,19 @@ const NewResPaymentPage = () => {
           <IconCreditCard size={64} color="#C8653D" />
           {paymentStatus === 'processing' && <Loader size="lg" color="#C8653D" />}
           <Text size="xl" fw={600} ta="center">
-            {paymentStatus === 'idle' && 'Ready to process payment'}
-            {paymentStatus === 'processing' && (t('newResPayment.swipeCard') || 'Processing booking...')}
-            {paymentStatus === 'success' && 'Booking Successful!'}
-            {paymentStatus === 'failed' && 'Booking Failed'}
+            {paymentStatus === 'idle' && t('newResPayment.readyToProcessPayment')}
+            {paymentStatus === 'processing' && t('newResPayment.swipeCard')}
+            {paymentStatus === 'success' && t('newResPayment.bookingSuccessful')}
+            {paymentStatus === 'failed' && t('newResPayment.bookingFailed')}
           </Text>
           {paymentStatus === 'processing' && (
             <Text size="md" c="#666666" ta="center">
-              {t('newResPayment.processing') || 'Creating your reservation...'}
+              {t('newResPayment.processing')}
             </Text>
           )}
           {paymentStatus === 'success' && (
             <Text size="md" c="green" ta="center" fw={600}>
-              Redirecting to confirmation...
+              {t('newResPayment.redirectingToConfirmation')}
             </Text>
           )}
           {error && (
@@ -345,7 +356,7 @@ const NewResPaymentPage = () => {
               }
             }}
           >
-            {t('newResPayment.cancelBooking') || 'Cancel'}
+            {t('newResPayment.cancelBooking')}
           </Button>
         </Group>
       </Paper>

@@ -20,16 +20,28 @@ export const roomSearchValidationSchema = yup.object({
   
   guests: yup
     .number()
+    .typeError('Number of guests must be a number')
     .required('Number of guests is required')
     .min(1, 'At least 1 guest is required')
     .max(8, 'Maximum 8 guests allowed')
     .integer('Number of guests must be a whole number')
+    .transform((value, originalValue) => {
+      // Convert string to number for Select component compatibility
+      return originalValue === '' ? undefined : Number(originalValue);
+    })
 });
 
+// Get today's date at midnight for default check-in
+const getTodayDate = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+};
+
 export const roomSearchInitialValues = {
-  checkIn: null,
+  checkIn: getTodayDate(),
   checkOut: null,
-  guests: 1
+  guests: '1' // String for Select component compatibility
 };
 
 export const bookingValidationSchema = yup.object({

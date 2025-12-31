@@ -18,7 +18,12 @@
     "lastName": "Apellido",
     "submit": "Enviar",
     "back": "Atrás",
-    "loading": "Validando reserva..."
+    "loading": "Validando reserva...",
+    "enterReservationNumber": "Ingrese su número de reserva de 10 dígitos",
+    "enterLastName": "Ingrese su apellido",
+    "invalidReservationData": "Datos de reserva inválidos. Por favor intente de nuevo.",
+    "reservationValidationFailed": "Validación de reserva falló. Por favor verifique sus credenciales.",
+    "failedToLoadReservation": "No se pudieron cargar los datos de reserva. Por favor intente de nuevo."
   },
   "paymentCheck": {
     "title": "Estado de Pago",
@@ -30,7 +35,31 @@
     "paymentStatus": "Estado de Pago",
     "paid": "Pagado",
     "pending": "Pendiente",
-    "loading": "Verificando estado de pago..."
+    "loading": "Verificando estado de pago...",
+    "estimatedTime": "Tiempo estimado: {{time}}",
+    "almostDone": "Casi listo",
+    "verificationError": "Error de Verificación",
+    "paymentCompleted": "Pago Completado",
+    "paymentFailed": "Pago Fallido",
+    "paymentVerification": "Verificación de Pago",
+    "paymentConfirmed": "Su pago ha sido confirmado. Procediendo a la emisión de tarjeta...",
+    "unableToVerifyPayment": "No se pudo verificar el pago. Por favor, intente nuevamente o contacte al soporte.",
+    "paymentVerificationInProgress": "Verificación de pago en progreso. Por favor espere...",
+    "paymentRequired": "Pago Requerido",
+    "amountDue": "Monto a Pagar",
+    "amountPaid": "Monto Pagado",
+    "processing": "Procesando...",
+    "pleaseTryAgainOrContact": "Por favor intente de nuevo o contacte la recepción para asistencia.",
+    "threeSeconds": "~3 segundos",
+    "paymentRequiredToProceed": "Pago requerido para continuar",
+    "insertOrSwipeCard": "Por favor inserte o deslice su tarjeta en el terminal",
+    "verifyingPaymentStatus": "Verificando Estado de Pago",
+    "pleaseWaitCheckingPayment": "Por favor espere mientras verificamos su información de pago...",
+    "processingPaymentVerification": "Procesando verificación de pago...",
+    "pleaseWait": "Por favor espere...",
+    "reservationDetails": "Detalles de Reserva",
+    "room": "Habitación",
+    "contactSupport": "Contactar Soporte"
   },
   "paymentTerminal": {
     "title": "Terminal de Pago",
@@ -38,26 +67,64 @@
     "swipeCard": "Por favor deslice su tarjeta",
     "processing": "Procesando pago...",
     "cancel": "Cancelar",
-    "timeout": "Tiempo de espera agotado. Por favor intente de nuevo."
+    "timeout": "Tiempo de espera agotado. Por favor intente de nuevo.",
+    "paymentSuccessful": "Pago Exitoso",
+    "paymentFailed": "Pago Fallido",
+    "paymentTimeout": "Tiempo de Espera Agotado",
+    "paymentError": "Error de Pago",
+    "insertOrSwipeCard": "Por favor inserte o deslice su tarjeta en el terminal",
+    "timeRemaining": "Tiempo restante",
+    "paymentCompletedMessage": "¡Pago completado exitosamente! Preparando su tarjeta..."
   },
   "cardDispensing": {
     "title": "Preparando Su Tarjeta",
     "steps": {
       "preparing": "Preparando tarjeta",
+      "preparing.description": "Preparando su tarjeta de acceso",
       "encoding": "Codificando tarjeta",
-      "sending": "Enviando detalles"
+      "encoding.description": "Asegurando sus credenciales de acceso",
+      "sending": "Enviando detalles",
+      "sending.description": "Enviando a su correo electrónico"
     },
     "takeCard": "Por favor tome su tarjeta",
-    "loading": "Por favor espere..."
+    "loading": "Por favor espere...",
+    "processingError": "Error de Procesamiento",
+    "keySentToEmail": "Clave digital enviada a {{email}}",
+    "yourEmail": "su correo electrónico",
+    "status": {
+      "preparing": {
+        "title": "Preparando Su Tarjeta de Acceso",
+        "description": "Su tarjeta de acceso personalizada está siendo preparada. Esto generalmente toma unos 10-15 segundos."
+      },
+      "encoding": {
+        "title": "Asegurando Sus Credenciales",
+        "description": "Codificando sus credenciales de acceso con encriptación de nivel bancario. Casi listo..."
+      },
+      "sending": {
+        "title": "Enviando Clave Digital",
+        "description": "Su clave digital está siendo enviada de forma segura a su correo electrónico. La recibirá en los próximos momentos."
+      },
+      "completed": {
+        "title": "Su Tarjeta Está Lista",
+        "description": "Por favor tome su tarjeta de acceso de la ranura. Su clave digital ha sido enviada a su correo electrónico."
+      }
+    }
   },
   "checkInComplete": {
     "title": "Check In Completado",
+    "welcomeMessage": "Su habitación está lista. Estamos encantados de darle la bienvenida a UNO Hotels.",
+    "loadingDetails": "Cargando sus detalles...",
     "success": "¡Bienvenido a Uno Hotels!",
     "roomNumber": "Número de Habitación",
+    "checkInTime": "Hora de Check In",
     "checkOut": "Check Out",
+    "guest": "Huésped",
     "keySent": "Clave digital enviada a su email",
-    "enjoyStay": "¡Disfrute su estadía!",
-    "returnHome": "Volver al Inicio"
+    "enjoyStay": "Esperamos que disfrute su estadía con nosotros.",
+    "returnHome": "Volver al Inicio",
+    "returningToMenu": "Volviendo al menú principal en {{countdown}} {{seconds}}...",
+    "second": "segundo",
+    "seconds": "segundos"
   },
   "searchRooms": {
     "title": "Buscar Habitaciones",
@@ -67,11 +134,25 @@
     "search": "Buscar Habitaciones",
     "back": "Atrás",
     "loading": "Buscando habitaciones disponibles...",
-    "noRooms": "No hay habitaciones disponibles para las fechas seleccionadas"
+    "noRooms": "No hay habitaciones disponibles para las fechas seleccionadas",
+    "selectCheckInDate": "Seleccionar fecha de check-in",
+    "selectCheckOutDate": "Seleccionar fecha de check-out",
+    "availableRooms": "Habitaciones Disponibles",
+    "available": "Disponible",
+    "perNight": "por noche",
+    "total": "total"
   },
   "roomDetail": {
     "title": "Detalles de la Habitación",
-    "amenities": "Comodidades",
+    "amenities": {
+      "title": "Comodidades",
+      "wifi": "WiFi",
+      "airConditioning": "Aire Acondicionado",
+      "tv": "TV",
+      "safe": "Caja Fuerte",
+      "miniBar": "Minibar"
+    },
+    "capacity": "Capacidad",
     "bookingSummary": "Resumen de Reserva",
     "nights": "noches",
     "checkInDate": "Fecha de Check In",
@@ -82,7 +163,11 @@
     "terms": "Acepto los términos y condiciones",
     "confirmBooking": "Confirmar Reserva",
     "editDetails": "Editar Detalles",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "errorMissingData": "Faltan datos de habitación o huésped. Por favor regrese e intente de nuevo.",
+    "guestName": "Nombre del Huésped",
+    "numberOfNights": "Número de Noches",
+    "maxGuests": "Huéspedes Máximos"
   },
   "guestDetails": {
     "title": "Detalles del Huésped",
@@ -105,20 +190,19 @@
     "statePlaceholder": "Provincia o estado",
     "postalPlaceholder": "Código postal",
     "continue": "Continuar",
-    "back": "Atrás"
-  },
-  "roomDetail": {
-    "title": "Detalles de la Habitación",
-    "amenities": "Comodidades",
-    "bookingSummary": "Resumen de Reserva",
-    "nights": "noches",
-    "pricePerNight": "Precio por noche",
-    "taxes": "Impuestos",
-    "total": "Total",
-    "terms": "Acepto los términos y condiciones",
-    "confirmBooking": "Confirmar Reserva",
-    "editDetails": "Editar Detalles",
-    "cancel": "Cancelar"
+    "back": "Atrás",
+    "firstNamePlaceholder": "Ingrese su nombre",
+    "lastNamePlaceholder": "Ingrese su apellido",
+    "emailPlaceholder": "Ingrese su email",
+    "countries": {
+      "us": "Estados Unidos (+1)",
+      "gb": "Reino Unido (+44)",
+      "de": "Alemania (+49)",
+      "fr": "Francia (+33)",
+      "it": "Italia (+39)",
+      "es": "España (+34)",
+      "pt": "Portugal (+351)"
+    }
   },
   "signature": {
     "title": "Firma digital requerida",
@@ -145,35 +229,60 @@
     "bookingSummary": "Resumen de Reserva",
     "totalAmount": "Cantidad Total",
     "swipeCard": "Por favor deslice su tarjeta",
-    "processing": "Procesando pago..."
+    "processing": "Procesando pago...",
+    "cancelBooking": "Cancelar Reserva",
+    "readyToProcessPayment": "Listo para procesar el pago",
+    "processingBooking": "Creando su reserva...",
+    "bookingSuccessful": "¡Reserva Exitosa!",
+    "bookingFailed": "Reserva Fallida",
+    "missingRoomInformation": "Faltan datos de habitación. Por favor seleccione una habitación nuevamente.",
+    "noReservationId": "Reserva creada pero no se devolvió ID de reserva",
+    "redirectingToConfirmation": "Redirigiendo a confirmación...",
+    "room": "Habitación",
+    "guest": "Huésped",
+    "checkIn": "Check In",
+    "checkOut": "Check Out"
   },
   "newResCard": {
     "title": "Preparando Su Tarjeta",
     "steps": {
       "preparing": "Preparando tarjeta",
+      "preparingDescription": "Preparando su nueva tarjeta",
       "encoding": "Codificando tarjeta",
-      "sending": "Enviando detalles"
+      "encodingDescription": "Codificando tarjeta con sus datos",
+      "sending": "Enviando detalles",
+      "sendingDescription": "Enviando confirmación"
     },
     "takeCard": "Por favor tome su tarjeta"
   },
   "reservationComplete": {
     "title": "Reserva Completada",
     "success": "¡Reserva Confirmada!",
+    "paymentSuccessful": "Pago Exitoso",
+    "paymentProcessedSuccessfully": "Su pago ha sido procesado exitosamente",
     "reservationNumber": "Número de Reserva",
     "roomNumber": "Número de Habitación",
     "checkIn": "Check In",
     "checkOut": "Check Out",
     "confirmationSent": "Confirmación enviada a su email",
     "printReceipt": "Imprimir Recibo",
-    "returnHome": "Volver al Inicio"
+    "returnHome": "Volver al Inicio",
+    "guest": "Huésped",
+    "room": "Habitación",
+    "totalAmount": "Cantidad Total"
   },
   "lostCard": {
     "title": "Tarjeta Perdida",
+    "roomType": "Tipo de Habitación",
+    "roomTypePlaceholder": "Ingrese el tipo de habitación (ej: Doble, Individual, Suite)",
     "roomNumber": "Número de Habitación",
     "reservationNumber": "Número de Reserva",
+    "reservationNumberPlaceholder": "Ingrese su número de reserva",
     "lastName": "Apellido",
+    "lastNamePlaceholder": "Ingrese su apellido",
     "submit": "Enviar",
     "back": "Atrás",
+    "validating": "Validando...",
     "helpText": "Por favor proporcione su número de habitación, número de reserva y apellido para regenerar su tarjeta."
   },
   "regenerateCard": {
@@ -183,15 +292,39 @@
       "generating": "Generando nuevas credenciales",
       "programming": "Programando nueva tarjeta"
     },
-    "pleaseWait": "Por favor espere..."
+    "pleaseWait": "Por favor espere...",
+    "pleaseWaitMessage": "Por favor espere mientras actualizamos su tarjeta de acceso. No retire la tarjeta durante este proceso.",
+    "cardRegenerationError": "Error de Regeneración de Tarjeta",
+    "cardUpdateComplete": "Actualización de Tarjeta Completada",
+    "updatingRoomAccess": "Actualizando Acceso a la Habitación",
+    "newCardDetails": "Detalles de la Nueva Tarjeta",
+    "newAccessCode": "Nuevo Código de Acceso",
+    "processing": "Procesando...",
+    "cardRegeneratedSuccessfully": "¡Tarjeta regenerada exitosamente!",
+    "newCardReady": "Su nueva tarjeta está lista.",
+    "room": "Habitación",
+    "status": "Estado"
   },
   "cardIssued": {
     "title": "Nueva Tarjeta Emitida",
+    "newCardIssued": "Nueva tarjeta emitida exitosamente",
     "success": "Nueva tarjeta emitida exitosamente",
     "takeCard": "Por favor tome su tarjeta",
+    "takeCardFromSlot": "Por favor tome su tarjeta de la ranura",
     "oldCardDeactivated": "La tarjeta anterior ha sido desactivada",
     "roomNumber": "Número de Habitación",
+    "digitalAccessCode": "Código de Acceso Digital",
+    "digitalAccessCodeDescription": "Use este código si necesita acceder a su habitación digitalmente",
+    "securityNotice": "Aviso de Seguridad",
+    "secure": "Seguro",
+    "deactivatedAt": "Desactivada a las {{time}}",
+    "digitalKey": "Clave Digital",
+    "newKeySentToEmail": "Nueva clave enviada a su email",
     "keySent": "Nueva clave enviada a su email",
+    "checkEmailForInstructions": "Revise su correo electrónico para instrucciones detalladas y acceso de respaldo.",
+    "returningToMenu": "Volviendo al menú principal en {{countdown}} {{seconds}}...",
+    "second": "segundo",
+    "seconds": "segundos",
     "returnHome": "Volver al Inicio"
   },
   "error": {
@@ -204,7 +337,49 @@
     "paymentFailed": "Pago falló. Por favor intente de nuevo.",
     "cardDispenserError": "Error del dispensador de tarjetas. Por favor contacte soporte.",
     "roomNotAvailable": "No hay habitaciones disponibles para las fechas seleccionadas.",
-    "guestValidationFailed": "Validación de huésped falló. Por favor verifique sus detalles."
+    "guestValidationFailed": "Validación de huésped falló. Por favor verifique sus detalles.",
+    "cardRegenerationFailed": "Regeneración de tarjeta falló. Por favor intente de nuevo.",
+    "cardIssuanceFailed": "Emisión de tarjeta falló. Por favor intente de nuevo.",
+    "invalidReservationData": "Datos de reserva inválidos. Por favor intente de nuevo.",
+    "reservationValidationFailed": "Validación de reserva falló. Por favor verifique sus credenciales.",
+    "failedToLoadReservation": "No se pudieron cargar los datos de reserva. Por favor intente de nuevo.",
+    "requestFailed": "Solicitud falló",
+    "checkinNotFound": "Check-in no encontrado",
+    "reservationIdRequired": "ID de reserva es requerido",
+    "lastNameRequired": "Apellido es requerido",
+    "invalidLastName": "Apellido inválido. Por favor verifique su información.",
+    "lastNameMismatch": "El apellido no coincide con los registros de reserva",
+    "roomNumberMismatch": "El número de habitación no coincide con los registros de reserva",
+    "reservationNotFoundByNumber": "Reserva no encontrada. Por favor verifique su número de reserva.",
+    "paymentStatusNotFound": "Estado de pago no encontrado",
+    "paymentDataMissing": "Faltan datos de pago. Por favor regrese al check-in.",
+    "paymentAccountNotFound": "Cuenta de pago no encontrada",
+    "digitalKeyNotFound": "Clave digital no encontrada",
+    "checkoutNotFound": "Check-out no encontrado",
+    "cannotConnectToServer": "No se puede conectar al servidor. Por favor asegúrese de que el servidor backend esté ejecutándose.",
+    "requestTimedOut": "Solicitud agotó el tiempo de espera. Por favor verifique su conexión e intente de nuevo.",
+    "networkError": "Error de red. Por favor verifique su conexión.",
+    "roomTypeRequired": "Tipo de habitación es requerido",
+    "reservationNumberRequired": "Número de reserva es requerido",
+    "failedToCreateBooking": "No se pudo crear la reserva",
+    "missingRoomInformation": "Faltan datos de habitación. Por favor seleccione una habitación nuevamente.",
+    "noReservationId": "Reserva creada pero no se devolvió ID de reserva",
+    "failedToLoadProperties": "No se pudieron cargar las propiedades. Por favor intente de nuevo.",
+    "pleaseSelectProperty": "Por favor seleccione una propiedad para continuar",
+    "selectedPropertyNotFound": "Propiedad seleccionada no encontrada",
+    "failedToSaveProperty": "No se pudo guardar la selección de propiedad. Por favor intente de nuevo.",
+    "failedToSaveGuestDetails": "No se pudieron guardar los detalles del huésped",
+    "validationFailed": "Validación falló",
+    "whatHappened": "¿Qué pasó?",
+    "paymentFailedExplanation": "Su pago no pudo ser procesado. Por favor verifique los detalles de su tarjeta e intente de nuevo.",
+    "cardDispenserErrorExplanation": "Hubo un problema con el dispensador de tarjetas. Nuestro equipo técnico ha sido notificado.",
+    "reservationNotFoundExplanation": "No pudimos encontrar su reserva. Por favor verifique sus detalles e intente de nuevo.",
+    "roomNotAvailableExplanation": "La habitación seleccionada ya no está disponible. Por favor elija una habitación diferente o fechas.",
+    "genericExplanation": "Algo inesperado sucedió. ¡No se preocupe, estamos aquí para ayudar!",
+    "needHelp": "¿Necesita Ayuda?",
+    "supportAvailable": "Nuestro equipo de soporte está disponible 24/7 para asistirle",
+    "phone": "Teléfono",
+    "email": "Email"
   },
   "common": {
     "loading": "Cargando...",
@@ -216,6 +391,40 @@
     "submit": "Enviar",
     "confirm": "Confirmar",
     "yes": "Sí",
-    "no": "No"
+    "no": "No",
+    "select": "Seleccionar",
+    "choose": "Elegir",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "guest": "Huésped",
+    "guests": "Huéspedes",
+    "unoHotelLogo": "Logo de UNO Hotel",
+    "returnToMenu": "Volver al Menú",
+    "notAvailable": "N/D",
+    "returnToHome": "Volver al Inicio"
+  },
+  "propertySelection": {
+    "title": "Selección de Propiedad",
+    "selectProperty": "Seleccionar Propiedad",
+    "chooseProperty": "Elija una propiedad",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "failedToLoadProperties": "No se pudieron cargar las propiedades. Por favor intente de nuevo.",
+    "pleaseSelectProperty": "Por favor seleccione una propiedad para continuar",
+    "selectedPropertyNotFound": "Propiedad seleccionada no encontrada",
+    "failedToSaveProperty": "No se pudo guardar la selección de propiedad. Por favor intente de nuevo.",
+    "propertyDetails": "Detalles de la Propiedad",
+    "name": "Nombre",
+    "address": "Dirección",
+    "property": "Propiedad",
+    "noPropertiesAvailable": "No hay propiedades disponibles. Por favor contacte al soporte."
+  },
+  "earlyArrival": {
+    "title": "Llegada Temprana",
+    "message": "La tarjeta no puede ser entregada antes de las 2pm. Por favor regrese después de las 2pm.",
+    "currentTime": "Hora actual: {{time}}",
+    "cardsAvailableAfter": "Tarjetas disponibles después de: {{time}}",
+    "returningToMenu": "Volviendo al menú en: {{countdown}}...",
+    "returnToMenu": "Volver al Menú"
   }
 }

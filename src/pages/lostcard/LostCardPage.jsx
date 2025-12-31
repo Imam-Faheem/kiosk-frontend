@@ -4,10 +4,8 @@ import {
   Paper,
   Group,
   Button,
-  Text,
   Title,
   Stack,
-  Box,
   TextInput,
   Alert,
 } from '@mantine/core';
@@ -17,8 +15,9 @@ import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import { useForm } from '@mantine/form';
-import { apiClient } from '../../services/api/apiClient';
-import UnoLogo from '../../assets/uno.jpg';
+import { validateLostCardGuest } from '../../services/lostCardService';
+import PropertyHeader from '../../components/PropertyHeader';
+import { BUTTON_STYLES } from '../../config/constants';
 
 const LostCardPage = () => {
   const navigate = useNavigate();
@@ -28,46 +27,79 @@ const LostCardPage = () => {
 
   const form = useForm({
     initialValues: {
-      roomType: '',
       reservationNumber: '',
-      lastName: ''
     },
     validate: {
-      roomType: (value) => (!value ? 'Room type is required' : null),
-      reservationNumber: (value) => (!value ? 'Reservation number is required' : null),
-      lastName: (value) => (!value ? 'Last name is required' : null),
+      reservationNumber: (value) => (!value ? t('error.reservationNumberRequired') : null),
     },
   });
 
+  const hasValidGuestData = (data) => {
+    if (!data) return false;
+    
+    const lastNameSources = [
+      data?.primaryGuest?.lastName,
+      Array.isArray(data?.folios) && data.folios.length > 0
+        ? (data.folios.find(f => f.isMainFolio) ?? data.folios[0])?.debitor?.name
+        : null,
+      data?.guest_name?.last_name,
+      data?.guest_name?.lastName,
+    ];
+    
+    return lastNameSources.some(name => name?.trim()?.length > 0);
+  };
+
+
   const handleSubmit = async (values) => {
     setError(null);
+    form.clearErrors();
     setIsLoading(true);
     
     try {
-      // Call backend API to validate guest with Apaleo
-      const response = await apiClient.post('/lost-card/validate', {
+      const result = await validateLostCardGuest({
         reservationNumber: values.reservationNumber,
-        roomType: values.roomType,
-        lastName: values.lastName,
       });
       
-      if (response.data.success) {
-        const guestData = response.data.data;
-        
-        // Navigate to regenerate card page with validated data
-        navigate('/lost-card/regenerate', {
-          state: {
-            guestData: guestData,
-            validationData: values,
-          },
-        });
-      } else {
-        throw new Error(response.data.message || 'Validation failed');
+      if (!result.success) {
+        throw new Error(result.message ?? t('error.validationFailed'));
       }
+
+      if (!result.data) {
+        throw new Error(t('error.reservationNotFound'));
+      }
+
+      const guestData = result.data;
+      
+      if (!hasValidGuestData(guestData)) {
+        throw new Error(t('error.reservationNotFound'));
+      }
+      
+      navigate('/lost-card/regenerate', {
+        state: {
+          guestData: guestData,
+          validationData: values,
+        },
+      });
     } catch (err) {
-      console.error('Guest validation error:', err);
-      const errorMessage = err?.response?.data?.message || err?.message || t('error.guestValidationFailed');
-      setError(errorMessage);
+      const errorStatus = err?.response?.status;
+      const errorMessage = err?.message ?? t('error.guestValidationFailed');
+      
+      const reservationErrorChecks = [
+        errorStatus === 404,
+        errorStatus === 500,
+        errorMessage.toLowerCase().includes('not found'),
+        errorMessage.includes('status code 500'),
+        errorMessage.includes('Request failed'),
+      ];
+      const isReservationError = reservationErrorChecks.some(check => check === true);
+      
+      if (isReservationError) {
+        form.setFieldError('reservationNumber', t('error.reservationNotFound'));
+        setError(t('error.reservationNotFound'));
+      } else {
+        form.setFieldError('reservationNumber', t('error.reservationNotFound'));
+        setError(t('error.reservationNotFound'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +144,7 @@ const LostCardPage = () => {
             {error && (
               <Alert
                 icon={<IconAlertCircle size={16} />}
-                title="Validation Failed"
+                title={t('error.title')}
                 color="red"
                 variant="light"
                 style={{ borderRadius: '8px' }}
@@ -122,70 +154,11 @@ const LostCardPage = () => {
             )}
 
             <TextInput
-              label={t('lostCard.roomType') || 'Room Type'}
-              placeholder="Enter room type (e.g., Double, Single, Suite)"
-              required
-              size="lg"
-              {...form.getInputProps('roomType')}
-              description="Room type from your reservation (e.g., Double, Single, Suite)"
-              styles={{
-                label: {
-                  display: 'inline-flex',
-                  alignItems: 'baseline',
-                  gap: '4px',
-                  marginBottom: '10px',
-                },
-                required: {
-                  marginLeft: '2px',
-                  transform: 'translateY(-1px)',
-                },
-                input: {
-                  height: '48px',
-                  minHeight: '48px',
-                  borderRadius: '8px',
-                  border: '2px solid #E0E0E0',
-                  '&:focus': {
-                    borderColor: '#C8653D',
-                  }
-                }
-              }}
-            />
-
-            <TextInput
               label={t('lostCard.reservationNumber')}
-              placeholder="Enter your reservation number"
+              placeholder={t('lostCard.reservationNumberPlaceholder')}
               required
               size="lg"
               {...form.getInputProps('reservationNumber')}
-              styles={{
-                label: {
-                  display: 'inline-flex',
-                  alignItems: 'baseline',
-                  gap: '4px',
-                  marginBottom: '10px',
-                },
-                required: {
-                  marginLeft: '2px',
-                  transform: 'translateY(-1px)',
-                },
-                input: {
-                  height: '48px',
-                  minHeight: '48px',
-                  borderRadius: '8px',
-                  border: '2px solid #E0E0E0',
-                  '&:focus': {
-                    borderColor: '#C8653D',
-                  }
-                }
-              }}
-            />
-
-            <TextInput
-              label={t('lostCard.lastName')}
-              placeholder="Enter your last name"
-              required
-              size="lg"
-              {...form.getInputProps('lastName')}
               styles={{
                 label: {
                   display: 'inline-flex',
@@ -218,28 +191,10 @@ const LostCardPage = () => {
               size="lg"
               leftSection={<IconCheck size={20} />}
               loading={isLoading}
-              style={{
-                backgroundColor: '#C8653D',
-                color: '#FFFFFF',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#B8552F';
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#C8653D';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }
-              }}
+              styles={BUTTON_STYLES.primarySmall}
+              radius="md"
             >
-              {isLoading ? 'Validating...' : t('lostCard.submit')}
+              {isLoading ? t('lostCard.validating') : t('lostCard.submit')}
             </Button>
           </Group>
         </form>

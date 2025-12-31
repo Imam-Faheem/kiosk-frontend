@@ -15,7 +15,7 @@ import { IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
-import UnoLogo from '../../assets/uno.jpg';
+import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 
@@ -94,7 +94,7 @@ const NewResCardPage = () => {
           borderRadius: '20px',
         }}
       >
-        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+        <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <PropertyHeader />
         </Group>
 
@@ -109,16 +109,16 @@ const NewResCardPage = () => {
           <Stepper active={0} orientation="vertical" size="sm" style={{ width: '100%' }} allowNextStepsSelect={false}>
             <Stepper.Step 
               label={t('newResCard.steps.preparing')} 
-              description="Preparing your new card"
+              description={t('newResCard.steps.preparingDescription')}
               icon={<Loader size="sm" color="#C8653D" />}
             />
             <Stepper.Step 
               label={t('newResCard.steps.encoding')} 
-              description="Encoding card with your details"
+              description={t('newResCard.steps.encodingDescription')}
             />
             <Stepper.Step 
               label={t('newResCard.steps.sending')} 
-              description="Sending confirmation"
+              description={t('newResCard.steps.sendingDescription')}
             />
           </Stepper>
         </Stack>

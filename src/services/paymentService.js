@@ -1,100 +1,104 @@
 import { apiClient } from './api/apiClient';
-import { simulateApiDelay, mockPaymentTransactions, mockSuccessResponses, mockErrors } from './mockData';
+import { translateError } from '../utils/translations';
 
-// Payment status check
-export const checkPaymentStatus = async (reservationId) => {
-  try {
-    await simulateApiDelay();
-    
-    // Mock implementation - in real app, this would call your backend
-    const mockResponse = await apiClient.get(`/payments/status/${reservationId}`);
-    return mockResponse.data;
-  } catch (error) {
-    // Fallback to mock data if API fails
-    const transaction = mockPaymentTransactions.find(t => t.reservationId === reservationId);
-    if (transaction) {
-      return {
-        success: true,
-        data: {
-          reservationId,
-          status: transaction.status,
-          amount: transaction.amount,
-          currency: transaction.currency,
-          transactionId: transaction.transactionId
-        }
-      };
-    }
-    throw new Error('Payment status not found');
-  }
-};
-
-// Initiate payment
-export const initiatePayment = async (data) => {
-  try {
-    await simulateApiDelay();
-    
-    // Mock implementation - in real app, this would call your backend
-    const mockResponse = await apiClient.post('/payments/initiate', data);
-    return mockResponse.data;
-  } catch (error) {
-    // Fallback to mock data if API fails
-    return {
-      success: true,
-      data: {
-        transactionId: `TXN-${Date.now()}`,
-        status: 'processing',
-        amount: data.amount,
-        currency: data.currency || 'USD'
-      },
-      message: 'Payment initiated successfully'
-    };
-  }
-};
-
-// Poll payment status
-export const pollPaymentStatus = async (transactionId) => {
-  try {
-    await simulateApiDelay(1000, 2000);
-    
-    // Mock implementation - simulate payment processing
-    const mockResponse = await apiClient.get(`/payments/status/${transactionId}`);
-    return mockResponse.data;
-  } catch (error) {
-    // Fallback to mock data if API fails
-    // Simulate payment completion after a few polls
-    const isCompleted = Math.random() > 0.3; // 70% chance of completion
-    
-    return {
-      success: true,
-      data: {
-        transactionId,
-        status: isCompleted ? 'completed' : 'processing',
-        amount: 320.00,
-        currency: 'USD'
-      }
-    };
-  }
-};
-
-// Process payment (for new reservations)
+/**
+ * Process payment for a reservation
+ * @param {Object} data - Payment data
+ * @returns {Promise<Object>} Payment response
+ */
 export const processPayment = async (data) => {
   try {
-    await simulateApiDelay();
-    
-    // Mock implementation - in real app, this would call your backend
-    const mockResponse = await apiClient.post('/payments/process', data);
-    return mockResponse.data;
-  } catch (error) {
-    // Fallback to mock data if API fails
-    return {
-      success: true,
-      data: {
-        transactionId: `TXN-${Date.now()}`,
-        status: 'completed',
-        amount: data.amount,
-        currency: data.currency || 'USD'
-      },
-      message: 'Payment processed successfully'
-    };
+    const response = await apiClient.post('/api/kiosk/v1/payment', data);
+    return response.data;
+  } catch (err) {
+    const errorMessage = err?.response?.data?.message ?? 
+                         err?.response?.data?.error ?? 
+                         err?.message ?? 
+                         'Failed to process payment';
+    throw new Error(errorMessage);
   }
 };
+
+/**
+ * Get payment status for a reservation
+ * @param {string} reservationId - Reservation ID
+ * @returns {Promise<Object>} Payment status
+ */
+export const getPaymentStatus = async (reservationId) => {
+  try {
+    const response = await apiClient.get(`/api/kiosk/v1/payment/status/${reservationId}`);
+    return response.data;
+  } catch (err) {
+    if (err?.response?.status === 404) {
+      throw new Error(translateError('paymentStatusNotFound'));
+    }
+    
+    const errorMessage = err?.response?.data?.message ?? err?.message ?? translateError('generic');
+    throw new Error(errorMessage);
+  }
+};
+
+/**
+ * Get payment history for a reservation
+ * @param {Object} params - Query parameters
+ * @returns {Promise<Object>} Payment history
+ */
+export const getPaymentHistory = async (params = {}) => {
+  try {
+    const queryParams = {};
+    if (params.reservationId) queryParams.reservationId = params.reservationId;
+    if (params.page) queryParams.page = params.page;
+    if (params.limit) queryParams.limit = params.limit;
+
+    const response = await apiClient.get('/api/kiosk/v1/payment/history', { params: queryParams });
+    return response.data;
+  } catch (err) {
+    const errorMessage = err?.response?.data?.message ?? err?.message ?? 'Failed to fetch payment history';
+    throw new Error(errorMessage);
+  }
+};
+
+/**
+ * Process refund for a payment
+ * @param {string} transactionId - Transaction ID
+ * @param {Object} data - Refund data
+ * @returns {Promise<Object>} Refund response
+ */
+export const processRefund = async (transactionId, data) => {
+  try {
+    const response = await apiClient.post(`/api/kiosk/v1/payment/${transactionId}/refund`, data);
+    return response.data;
+  } catch (err) {
+    const errorMessage = err?.response?.data?.message ?? 
+                         err?.response?.data?.error ?? 
+                         err?.message ?? 
+                         'Failed to process refund';
+    throw new Error(errorMessage);
+  }
+};
+
+/**
+ * Get payment account details
+ * @param {string} paymentAccountId - Payment account ID
+ * @returns {Promise<Object>} Payment account response
+ */
+export const getPaymentAccount = async (paymentAccountId) => {
+  if (!paymentAccountId) {
+    throw new Error('Payment account ID is required.');
+  }
+  try {
+    const response = await apiClient.get(`/api/kiosk/v1/payment-accounts/${paymentAccountId}`);
+    return response.data;
+  } catch (err) {
+    const errorMessage = err?.response?.data?.message ??
+                         err?.response?.data?.error ??
+                         err?.message ??
+                         'Failed to fetch payment account';
+    throw new Error(errorMessage);
+  }
+};
+
+// Legacy function names for backward compatibility
+export const checkPaymentStatus = getPaymentStatus;
+export const initiatePayment = processPayment;
+export const pollPaymentStatus = getPaymentStatus;
