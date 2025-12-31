@@ -17,6 +17,7 @@ import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
+import PropertyHeader from '../../components/PropertyHeader';
 
 const NewResCardPage = () => {
   const navigate = useNavigate();
@@ -93,45 +94,18 @@ const NewResCardPage = () => {
           borderRadius: '20px',
         }}
       >
-        <Group justify="space-between" mb="xl">
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
         </Group>
 
-        {/* Page title under logo */}
         <Title order={3} style={{ fontSize: '24px', fontWeight: 800, color: '#222', textAlign: 'center', marginBottom: '12px' }}>
           Issuing Your New Key Card
         </Title>
 
         <Stack gap="lg" mb="xl" align="center">
-          {/* Animated card icon to indicate progress */}
           <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
           <IconCreditCard size={96} color="#C8653D" style={{ animation: 'spin 3s linear infinite' }} />
           
-          {/* Progress Steps */}
           <Stepper active={0} orientation="vertical" size="sm" style={{ width: '100%' }} allowNextStepsSelect={false}>
             <Stepper.Step 
               label={t('newResCard.steps.preparing')} 
@@ -147,7 +121,6 @@ const NewResCardPage = () => {
               description="Sending confirmation"
             />
           </Stepper>
-          {/* No final message on in-progress screen */}
         </Stack>
       </Paper>
     </Container>

@@ -15,6 +15,7 @@ import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
+import PropertyHeader from '../../components/PropertyHeader';
 import { useForm } from '@mantine/form';
 import { apiClient } from '../../services/api/apiClient';
 import UnoLogo from '../../assets/uno.jpg';
@@ -102,37 +103,10 @@ const LostCardPage = () => {
           borderRadius: '10px',
         }}
       >
-        {/* Header */}
-        <Group justify="space-between" mb="xl">
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
         </Group>
 
-
-        {/* Form */}
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="xl" mb="xl">
             {error && (
@@ -236,7 +210,6 @@ const LostCardPage = () => {
             />
           </Stack>
 
-          {/* Action Buttons */}
           <Group justify="space-between">
             <BackButton onClick={handleBack} text={t('lostCard.back')} />
 

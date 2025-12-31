@@ -17,8 +17,8 @@ import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
 import { checkinValidationSchema, checkinInitialValues } from '../../schemas/checkin.schema';
 import useLanguage from '../../hooks/useLanguage';
-import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
+import PropertyHeader from '../../components/PropertyHeader';
 
 const CheckInPage = () => {
   const navigate = useNavigate();
@@ -94,36 +94,10 @@ const CheckInPage = () => {
           borderRadius: '20px',
         }}
       >
-        {/* Header */}
-        <Group justify="space-between" mb="xl">
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
         </Group>
 
-        {/* Context Title */}
         <Title order={3} style={{
           fontSize: '26px',
           fontWeight: 800,
@@ -134,7 +108,6 @@ const CheckInPage = () => {
           Find Your Reservation
         </Title>
 
-        {/* Form */}
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="lg" mb="xl">
             {error && (
@@ -191,7 +164,6 @@ const CheckInPage = () => {
             />
           </Stack>
 
-          {/* Action Buttons */}
           <Group justify="space-between">
             <BackButton onClick={handleBack} text={t('checkIn.back')} />
 

@@ -20,6 +20,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
+import PropertyHeader from '../../components/PropertyHeader';
 import { getRoomDetails } from '../../services/roomService';
 
 const RoomDetailPage = () => {
@@ -196,41 +197,15 @@ const RoomDetailPage = () => {
           borderRadius: '20px',
         }}
       >
-        <Group justify="space-between" mb="xl">
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
         </Group>
 
         <Stack gap="lg" mb="xl">
-          {/* Room Images Gallery */}
           <Card withBorder p="lg" radius="md">
             <Stack gap="md">
               <Text size="xl" fw={600}>{displayRoom.name}</Text>
               
-              {/* Main Image */}
               {loading ? (
                 <Box style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
                   <Text c="#666666">Loading images...</Text>
@@ -259,7 +234,6 @@ const RoomDetailPage = () => {
                 </Box>
               )}
 
-              {/* Thumbnail Images */}
               {!loading && roomImages.length > 1 && (
                 <SimpleGrid cols={3} spacing="sm">
                   {roomImages.map((image, index) => (
@@ -288,10 +262,8 @@ const RoomDetailPage = () => {
                 </SimpleGrid>
               )}
 
-              {/* Room Description */}
               <Text size="md" c="#666666">{displayRoom.description}</Text>
 
-              {/* Room Amenities */}
               <Stack gap="sm">
                 <Text size="md" fw={600}>Amenities:</Text>
                 <Group gap="sm">
@@ -309,7 +281,6 @@ const RoomDetailPage = () => {
                 </Group>
               </Stack>
 
-              {/* Room Details */}
               <Grid>
                 <Grid.Col span={6}>
                   <Text size="sm" c="#666666">Capacity:</Text>
@@ -321,18 +292,15 @@ const RoomDetailPage = () => {
                 </Grid.Col>
               </Grid>
 
-              {/* Booking Summary Card */}
               <Card withBorder p="lg" radius="md" style={{ backgroundColor: '#f8f9fa', border: '2px solid #C8653D' }}>
                 <Stack gap="md">
                   <Text size="lg" fw={600} c="#C8653D">{t('roomDetail.bookingSummary')}</Text>
                   
-                  {/* Guest Name */}
                   <Group justify="space-between">
                     <Text size="md" c="#666666">Guest Name:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{guestDetails.firstName} {guestDetails.lastName}</Text>
                   </Group>
                   
-                  {/* Dates */}
                   <Group justify="space-between">
                     <Text size="md" c="#666666">{t('roomDetail.checkInDate') || 'Check-In Date'}:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{formatDate(searchCriteria.checkIn)}</Text>
@@ -343,7 +311,6 @@ const RoomDetailPage = () => {
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{formatDate(searchCriteria.checkOut)}</Text>
                   </Group>
                   
-                  {/* Number of Nights */}
                   <Group justify="space-between">
                     <Text size="md" c="#666666">Number of Nights:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
@@ -351,7 +318,6 @@ const RoomDetailPage = () => {
                     </Text>
                   </Group>
                   
-                  {/* Financial Summary */}
                   <Box style={{ borderTop: '1px solid #e5e7eb', paddingTop: '8px', backgroundColor: '#fff', borderRadius: '8px' }}>
                     <Stack gap="xs">
                       <Group justify="space-between">

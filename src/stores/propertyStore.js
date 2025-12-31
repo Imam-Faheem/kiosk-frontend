@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 const usePropertyStore = create(
   persist(
@@ -16,6 +16,7 @@ const usePropertyStore = create(
       isConfigured: false,
       configuredAt: null,
       selectedProperty: null, // Store full property object
+      _hasHydrated: false, // Internal flag for hydration
 
       // Actions
       setProperty: (propertyId, propertyData = null) => {
@@ -55,8 +56,14 @@ const usePropertyStore = create(
         });
       },
 
+      // Mark store as hydrated
+      setHasHydrated: (state) => {
+        set({ _hasHydrated: state });
+      },
+
       initializeProperty: () => {
         const state = get();
+        
         // Check if property is configured (both propertyId and isConfigured must be true)
         if (state.propertyId && state.isConfigured) {
           return true;
@@ -87,14 +94,21 @@ const usePropertyStore = create(
     }),
     {
       name: 'property-storage',
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         propertyId: state.propertyId,
         kioskId: state.kioskId,
         capabilities: state.capabilities,
         isConfigured: state.isConfigured,
         configuredAt: state.configuredAt,
-        selectedProperty: state.selectedProperty,
+        selectedProperty: state.selectedProperty, // Ensure full property object is persisted
       }),
+      onRehydrateStorage: () => (state) => {
+        // Called after rehydration
+        if (state) {
+          state.setHasHydrated(true);
+        }
+      },
     }
   )
 );

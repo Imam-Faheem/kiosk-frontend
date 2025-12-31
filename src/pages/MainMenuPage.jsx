@@ -11,8 +11,8 @@ import { IconKey, IconCalendar, IconCreditCardOff } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import useLanguage from '../hooks/useLanguage';
 import usePropertyStore from '../stores/propertyStore';
-import UnoLogo from '../assets/uno.jpg';
 import BackButton from '../components/BackButton';
+import PropertyHeader from '../components/PropertyHeader';
 
 const MainMenuPage = () => {
   const navigate = useNavigate();
@@ -86,38 +86,10 @@ const MainMenuPage = () => {
           borderRadius: '20px',
         }}
       >
-        {/* Header */}
         <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: 800,
-                letterSpacing: '1px',
-                marginLeft: '-9px',
-                fontFamily: 'Montserrat, Poppins, Roboto, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
-          
+          <PropertyHeader />
         </Group>
 
-        {/* Main Buttons Section */}
         <Stack gap="xl" mb="xl" align="center" style={{ minHeight: '420px', justifyContent: 'center', gap: '32px' }}>
           <Button
             size="xl"
@@ -184,7 +156,6 @@ const MainMenuPage = () => {
           </Button>
         </Stack>
 
-        {/* Bottom Section - Back Button */}
         <Group justify="flex-start" style={{ marginTop: '20px' }}>
           <BackButton onClick={handleBack} text={t('mainMenu.back')} />
         </Group>

@@ -9,6 +9,8 @@ import {
   Alert,
   Title,
   Group,
+  Image,
+  Badge,
 } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +26,7 @@ import { getPrimaryButtonStyles, getInputStyles } from "../constants/style.const
 import { STORAGE_KEYS, REVERSE_CAPABILITY_MAP } from "../config/constants";
 import UnoLogo from "../assets/uno.jpg";
 import { Select, Button } from "@mantine/core";
+import PropertyHeader from "../components/PropertyHeader";
 
 // Convert capabilities object to array for storage
 const convertCapabilitiesToArray = (capabilitiesObj) => {
@@ -32,7 +35,7 @@ const convertCapabilitiesToArray = (capabilitiesObj) => {
     .map(([key]) => REVERSE_CAPABILITY_MAP[key] ?? key);
 };
 
-// Property Select Component
+// Property Select Dropdown Component
 const PropertySelect = React.memo(({ properties, selectedPropertyId, onPropertySelect }) => {
   const selectData = useMemo(() => {
     return properties
@@ -46,13 +49,14 @@ const PropertySelect = React.memo(({ properties, selectedPropertyId, onPropertyS
   return (
     <Select
       label="Select Property"
-      placeholder="Choose a property"
+      placeholder="Choose a property from the list"
       data={selectData}
       value={selectedPropertyId}
       onChange={onPropertySelect}
       searchable
       size="lg"
       styles={getInputStyles()}
+      required
     />
   );
 });
@@ -68,13 +72,49 @@ const PropertyDetails = React.memo(({ properties, selectedPropertyId }) => {
 
   if (!selectedPropertyId || !selectedProperty) return null;
 
+  const logoUrl = selectedProperty?.configuration?.logo_url || UnoLogo;
+  const propertyName = selectedProperty?.name || 'Unknown Property';
+  const pmsType = selectedProperty?.pms_type || 'unknown';
+  const config = selectedProperty?.configuration || {};
+
   return (
-    <Box p="md" bg="gray.0" style={{ borderRadius: 12, border: "1px solid #E9ECEF" }}>
-      <Stack gap="xs">
-        <Text size="sm" fw={600}>Property Details:</Text>
-        <Text size="sm" c="dimmed">
-          <strong>Name:</strong> {selectedProperty.name ?? getPropertyId(selectedProperty)}
-        </Text>
+    <Box p="md" bg="gray.0" style={{ borderRadius: 12, border: "2px solid #C8653D" }}>
+      <Stack gap="md">
+        <Group gap="md">
+          <Image
+            src={logoUrl}
+            alt={propertyName}
+            height={80}
+            width={80}
+            radius="md"
+            fit="cover"
+            onError={(e) => {
+              e.target.src = UnoLogo;
+            }}
+          />
+          <Stack gap="xs" style={{ flex: 1 }}>
+            <Text size="lg" fw={700}>{propertyName}</Text>
+            <Badge color="orange" variant="light">{pmsType.toUpperCase()}</Badge>
+          </Stack>
+        </Group>
+        <Stack gap="xs">
+          <Text size="sm" fw={600}>Property Details:</Text>
+          {config.support_email && (
+            <Text size="sm" c="dimmed">
+              <strong>Email:</strong> {config.support_email}
+            </Text>
+          )}
+          {config.support_phone && (
+            <Text size="sm" c="dimmed">
+              <strong>Phone:</strong> {config.support_phone}
+            </Text>
+          )}
+          {config.website_url && (
+            <Text size="sm" c="dimmed">
+              <strong>Website:</strong> {config.website_url}
+            </Text>
+          )}
+        </Stack>
       </Stack>
     </Box>
   );
@@ -137,7 +177,9 @@ const PropertySelectionPage = () => {
         setLoading(true);
         setError(null);
         const response = await getProperties();
-        const propertiesData = response.data ?? [];
+        
+        // API returns: { success: true, data: { properties: [...], pagination: {...} } }
+        const propertiesData = response?.data?.properties ?? [];
         
         if (!response.success && response.message) {
           setError(response.message ?? 'Failed to load properties. Please try again.');
@@ -151,8 +193,8 @@ const PropertySelectionPage = () => {
             setSelectedPropertyId(firstPropertyId);
           }
         }
-      } catch {
-        setError("Failed to load properties. Please try again.");
+      } catch (err) {
+        setError(err.message ?? "Failed to load properties. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -273,31 +315,7 @@ const PropertySelectionPage = () => {
         }}
       >
         <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
+          <PropertyHeader />
         </Group>
 
         <Title order={3} style={{ fontSize: '24px', fontWeight: 800, color: '#222', marginBottom: '24px' }}>
@@ -314,17 +332,11 @@ const PropertySelectionPage = () => {
 
         <Stack gap="lg" maw={600} mx="auto" mb="xl" w="100%">
           {properties.length > 0 ? (
-            <>
-              <PropertySelect
-                properties={properties}
-                selectedPropertyId={selectedPropertyId}
-                onPropertySelect={handlePropertySelect}
-              />
-              <PropertyDetails
-                properties={properties}
-                selectedPropertyId={selectedPropertyId}
-              />
-            </>
+            <PropertySelect
+              properties={properties}
+              selectedPropertyId={selectedPropertyId}
+              onPropertySelect={handlePropertySelect}
+            />
           ) : (
             <Box mb="xl">
               <Text c="dimmed" ta="center">

@@ -18,6 +18,7 @@ import SignatureCanvas from 'react-signature-canvas';
 import useLanguage from '../../hooks/useLanguage';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
+import PropertyHeader from '../../components/PropertyHeader';
 import '../../styles/signature.css';
 
 const SignaturePage = () => {
@@ -145,36 +146,11 @@ const SignaturePage = () => {
           borderRadius: '20px',
         }}
       >
-        <Group justify="space-between" mb="xl">
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
         </Group>
 
         <Stack gap="lg" mb="xl">
-          {/* Page Title */}
           <Box style={{ textAlign: 'center' }}>
             <Title order={1} size="h2" mb="md" c="#C8653D">
               <IconSignature size={32} style={{ marginRight: '10px', verticalAlign: 'middle' }} />
@@ -185,7 +161,6 @@ const SignaturePage = () => {
             </Text>
           </Box>
 
-          {/* Guest Information Card */}
           <Card withBorder p="lg" radius="md" style={{ backgroundColor: '#f8f9fa' }}>
             <Stack gap="sm">
               <Text size="lg" fw={600} c="#C8653D">
@@ -210,7 +185,6 @@ const SignaturePage = () => {
             </Stack>
           </Card>
 
-          {/* Signature Canvas */}
           <Card withBorder p="lg" radius="md">
             <Stack gap="md">
               <Text size="md" fw={600}>
@@ -248,7 +222,6 @@ const SignaturePage = () => {
                 )}
               </Box>
 
-              {/* Signature Status */}
               {isSigned && (
                 <Alert
                   icon={<IconCheck size={16} />}
@@ -260,7 +233,6 @@ const SignaturePage = () => {
                 </Alert>
               )}
 
-              {/* Signature Controls */}
               <Group justify="center" gap="md">
                 <Button
                   leftSection={<IconRefresh size={16} />}
@@ -293,7 +265,6 @@ const SignaturePage = () => {
             </Stack>
           </Card>
 
-          {/* Terms and Conditions */}
           <Card withBorder p="lg" radius="md" style={{ backgroundColor: '#f8f9fa' }}>
             <Stack gap="sm">
               <Text size="md" fw={600} c="#C8653D">
@@ -308,7 +279,6 @@ const SignaturePage = () => {
 
         <Divider my="lg" />
 
-        {/* Navigation Buttons */}
         <Group justify="space-between">
           <BackButton onClick={handleBack} text={t('common.back')} />
           <Group gap="md">

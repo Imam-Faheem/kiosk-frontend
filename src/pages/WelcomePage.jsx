@@ -16,17 +16,9 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
 import usePropertyStore from "../stores/propertyStore";
-import { STORAGE_KEYS } from "../config/constants";
+import { STORAGE_KEYS, LANGUAGES } from "../config/constants";
 import UnoLogo from "../assets/uno.jpg";
-
-const languages = [
-  { value: "de", label: "Deutsch", flag: "/flags/de.png" },
-  { value: "en", label: "English", flag: "/flags/gb.png" },
-  { value: "es", label: "Español", flag: "/flags/es.png" },
-  { value: "fr", label: "Français", flag: "/flags/fr.png" },
-  { value: "it", label: "Italiano", flag: "/flags/it.png" },
-  { value: "pt", label: "Português", flag: "/flags/pt.png" },
-];
+import PropertyHeader from "../components/PropertyHeader";
 
 const WelcomePage = () => {
   const navigate = useNavigate();
@@ -102,24 +94,17 @@ const WelcomePage = () => {
           paddingTop: "100px",
         }}
       >
-        {/* ✅ Top-left hotel name */}
-        <h2
+        <Box
           style={{
             position: "absolute",
             top: "20px",
             left: "30px",
-            fontSize: "30px !important",
-            color: "#222",
-            fontWeight: "600",
-            letterSpacing: "1px",
-            marginLeft: "-9px"
           }}
         >
-          UNO HOTELS
-        </h2>
+          <PropertyHeader />
+        </Box>
 
-
-        {/* ✅ Centered Logo */}
+        
         <img
           src={UnoLogo}
           alt="UNO Hotel Logo"
@@ -127,11 +112,11 @@ const WelcomePage = () => {
             width: "110px",
             height: "auto",
             borderRadius: "8px",
+            marginTop: "40px",
             marginBottom: "20px",
           }}
         />
 
-        {/* ✅ Main heading with dynamic language text */}
         <h3
           style={{
             color: "#333",
@@ -148,7 +133,6 @@ const WelcomePage = () => {
           {language === "pt" && "Selecionar idioma"}
         </h3>
 
-        {/* ✅ Language Selection - Centered Grid */}
         <Box 
           style={{ 
             display: 'flex', 
@@ -159,7 +143,7 @@ const WelcomePage = () => {
           }}
         >
           <Grid gutter="lg" style={{ maxWidth: '600px', width: '100%' }}>
-            {languages.map((lang) => (
+            {LANGUAGES.map((lang) => (
               <Grid.Col span={6} key={lang.value}>
                 <Card
                 withBorder
@@ -233,7 +217,6 @@ const WelcomePage = () => {
           </Grid>
         </Box>
 
-        {/* ✅ Continue Button */}
         <Box ta="center" mb="xl">
           <Button
             size="xl"

@@ -14,6 +14,7 @@ import {
 import { IconCheck, IconHome, IconMail, IconCalendar } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
+import PropertyHeader from '../../components/PropertyHeader';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../services/api/apiClient';
 
@@ -106,29 +107,8 @@ const CheckInCompletePage = () => {
         }}
       >
         {/* Header */}
-        <Group justify="space-between" mb="xl">
-          <Group>
-            <Box
-              style={{
-                width: '50px',
-                height: '50px',
-                backgroundColor: '#C8653D',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                marginRight: '0px',
-              }}
-            >
-              UNO
-            </Box>
-            <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
-              {t('checkInComplete.title')}
-            </Title>
-          </Group>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
         </Group>
 
         {/* Success Content */}

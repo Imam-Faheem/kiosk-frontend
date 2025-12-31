@@ -19,6 +19,7 @@ import useLanguage from '../../hooks/useLanguage';
 import { usePaymentMutation } from '../../hooks/usePaymentMutation';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
+import PropertyHeader from '../../components/PropertyHeader';
 
 const PaymentCheckPage = () => {
   const navigate = useNavigate();
@@ -147,32 +148,8 @@ const PaymentCheckPage = () => {
         }}
       >
         {/* Header */}
-        <Group justify="space-between" mb="xl">
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
         </Group>
 
         {/* Content */}

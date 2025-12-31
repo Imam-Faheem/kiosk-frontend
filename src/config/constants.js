@@ -148,3 +148,69 @@ export const REVERSE_CAPABILITY_MAP = {
   lostCard: 'lost-card',
   roomService: 'room-service',
 };
+
+// Early Arrival Configuration
+export const EARLY_ARRIVAL_CONFIG = {
+  TARGET_TIME: '2:00 PM',
+};
+
+// Button Styles for Mantine components
+export const BUTTON_STYLES = {
+  primary: {
+    root: {
+      backgroundColor: '#C8653D',
+      color: '#FFFFFF',
+      borderRadius: '12px',
+      fontWeight: 'bold',
+      fontSize: '16px',
+      transition: 'all 0.3s ease',
+      '&:hover': {
+        backgroundColor: '#B8552F',
+        transform: 'scale(1.02)',
+      },
+      '&:disabled': {
+        backgroundColor: '#CED4DA',
+        color: '#868E96',
+        transform: 'none',
+      },
+    },
+  },
+};
+
+// Form Input Styles for Mantine components
+export const FORM_INPUT_STYLES = {
+  dateInput: {
+    input: {
+      borderRadius: '12px',
+      fontSize: '16px',
+      padding: '16px',
+    },
+    label: {
+      fontSize: '14px',
+      fontWeight: 600,
+      marginBottom: '8px',
+    },
+  },
+  select: {
+    input: {
+      borderRadius: '12px',
+      fontSize: '16px',
+      padding: '16px',
+    },
+    label: {
+      fontSize: '14px',
+      fontWeight: 600,
+      marginBottom: '8px',
+    },
+  },
+};
+
+// Language Options
+export const LANGUAGES = [
+  { value: "de", label: "Deutsch", flag: "/flags/de.png" },
+  { value: "en", label: "English", flag: "/flags/gb.png" },
+  { value: "es", label: "Español", flag: "/flags/es.png" },
+  { value: "fr", label: "Français", flag: "/flags/fr.png" },
+  { value: "it", label: "Italiano", flag: "/flags/it.png" },
+  { value: "pt", label: "Português", flag: "/flags/pt.png" },
+];

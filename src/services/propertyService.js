@@ -1,93 +1,55 @@
 import { apiClient } from './api/apiClient';
 import { getDefaultCapabilities } from '../lib/propertyUtils';
+import { API_CONFIG } from '../config/constants';
 
-export const getProperties = async (params) => {
+/**
+ * Get properties for an organization
+ * @param {Object} params - Optional query parameters (page, limit, etc.)
+ * @param {string} organizationId - Organization ID (optional, defaults to API_CONFIG.ORGANIZATION_ID)
+ * @returns {Promise<Object>} Response with success, data.properties array, and pagination
+ */
+export const getProperties = async (params = {}, organizationId = null) => {
   try {
-    const response = await apiClient.get('/api/kiosk/v1/properties', { params });
+    const orgId = organizationId || API_CONFIG.ORGANIZATION_ID;
+    const endpoint = `/api/kiosk/v1/organizations/${orgId}/properties`;
     
-    // Return the response data as-is (should have success, data, pagination)
+    const response = await apiClient.get(endpoint, { params });
+    
+    // The API returns: { success: true, data: { properties: [...], pagination: {...} } }
+    // Return the response data as-is
     return response.data;
   } catch (err) {
-    // Return mock data on error
-    return {
-      "success": true,
-      "data": [
-        {
-          "property_id": "0ujsszwN8NRY24YaXiTIE2VWDTJ",
-          "organization_id": "0ujsszwN8NRY24YaXiTIE2VWDTS",
-          "pms_type": "apaleo",
-          "apaleo_external_property_id": "BER",
-          "name": "UNO Apaleo Hotel Downtown",
-          "status": "active",
-          "createdAt": "2025-12-13T11:13:17.581Z",
-          "updatedAt": "2025-12-13T11:13:17.581Z",
-          "deletedAt": null
-        },
-        {
-          "property_id": "0ujsszwN8NRY24YaXiTIE2VWDTK",
-          "organization_id": "0ujsszwN8NRY24YaXiTIE2VWDTS",
-          "pms_type": "apaleo",
-          "apaleo_external_property_id": "COD",
-          "name": "UNO Apaleo Resort Beachside",
-          "status": "active",
-          "createdAt": "2025-12-13T11:13:17.581Z",
-          "updatedAt": "2025-12-13T11:13:17.581Z",
-          "deletedAt": null
-        },
-        {
-          "property_id": "0ujsszwN8NRY24YaXiTIE2VWDTL",
-          "organization_id": "0ujsszwN8NRY24YaXiTIE2VWDTS",
-          "pms_type": "apaleo",
-          "apaleo_external_property_id": "IMAM",
-          "name": "UNO Apaleo Grand Plaza",
-          "status": "active",
-          "createdAt": "2025-12-13T11:13:17.581Z",
-          "updatedAt": "2025-12-13T11:13:17.581Z",
-          "deletedAt": null
-        },
-        {
-          "property_id": "0ujsszwN8NRY24YaXiTIE2VWDTN",
-          "organization_id": "0ujsszwN8NRY24YaXiTIE2VWDTS",
-          "pms_type": "mews",
-          "apaleo_external_property_id": null,
-          "name": "UNO Mews Boutique Hotel",
-          "status": "active",
-          "createdAt": "2025-12-13T11:13:17.581Z",
-          "updatedAt": "2025-12-13T11:13:17.581Z",
-          "deletedAt": null
-        },
-        {
-          "property_id": "0ujsszwN8NRY24YaXiTIE2VWDTO",
-          "organization_id": "0ujsszwN8NRY24YaXiTIE2VWDTS",
-          "pms_type": "mews",
-          "apaleo_external_property_id": null,
-          "name": "UNO Mews City Center",
-          "status": "active",
-          "createdAt": "2025-12-13T11:13:17.581Z",
-          "updatedAt": "2025-12-13T11:13:17.581Z",
-          "deletedAt": null
-        },
-        {
-          "property_id": "0ujsszwN8NRY24YaXiTIE2VWDTQ",
-          "organization_id": "0ujsszwN8NRY24YaXiTIE2VWDTS",
-          "pms_type": "opera",
-          "apaleo_external_property_id": null,
-          "name": "UNO Opera Luxury Suites",
-          "status": "active",
-          "createdAt": "2025-12-13T11:13:17.581Z",
-          "updatedAt": "2025-12-13T11:13:17.581Z",
-          "deletedAt": null
-        }
-      ],
-      "pagination": {
-        "page": 1,
-        "limit": 20,
-        "total": 6,
-        "total_pages": 1,
-        "has_next": false,
-        "has_prev": false
+    console.error('[getProperties] Error:', {
+      endpoint: `/api/kiosk/v1/organizations/${organizationId || API_CONFIG.ORGANIZATION_ID}/properties`,
+      error: err.message,
+      status: err?.response?.status,
+      statusText: err?.response?.statusText,
+      data: err?.response?.data,
+    });
+
+    // Handle network errors
+    if (!err.response) {
+      let networkError = 'Network error. Please check your connection.';
+      
+      if (err.code === 'ECONNABORTED') {
+        networkError = 'Request timeout. The server took too long to respond.';
+      } else if (err.code === 'ERR_NETWORK' || err.message?.includes('Network Error')) {
+        networkError = 'Network error. Please check your connection and ensure the server is running.';
+      } else if (err.message) {
+        networkError = err.message;
       }
-    };
+      
+      throw new Error(networkError);
+    }
+
+    // Handle HTTP errors
+    const errorMessage =
+      err?.response?.data?.message ??
+      err?.response?.data?.error ??
+      err?.response?.statusText ??
+      `Failed to fetch properties (${err?.response?.status || 'Unknown error'})`;
+    
+    throw new Error(errorMessage);
   }
 };
 
