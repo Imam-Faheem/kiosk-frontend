@@ -4,10 +4,8 @@ import {
   Paper,
   Group,
   Button,
-  Text,
   Title,
   Stack,
-  Box,
   TextInput,
   Select,
   Alert,
@@ -18,7 +16,7 @@ import { useForm } from '@mantine/form';
 import { guestValidationSchema, guestInitialValues } from '../../schemas/guest.schema';
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
-import UnoLogo from '../../assets/uno.jpg';
+import PropertyHeader from '../../components/PropertyHeader';
 import { saveGuestDetails } from '../../services/guestService';
 
 const GuestDetailsPage = () => {
@@ -51,34 +49,25 @@ const GuestDetailsPage = () => {
     setError(null);
 
     try {
-      // Prepare guest data with propertyId if available
-      const guestData = {
-        ...values,
-        propertyId: process.env.REACT_APP_PROPERTY_ID || 'BER',
-        // reservationId can be added later when reservation is created
-      };
-
       // Save guest details to backend
-      const result = await saveGuestDetails(guestData);
+      const result = await saveGuestDetails(values);
 
-      if (result.success) {
-        // Navigate with both guest details and saved guest data
+      if (result?.success ?? result?.data) {
         navigate('/reservation/room-details', {
           state: {
             room,
             searchCriteria,
             guestDetails: values,
-            savedGuest: result.data, // Include saved guest data (with guestId)
+            savedGuest: result?.data ?? result,
           },
         });
       } else {
-        setError(result.message || 'Failed to save guest details');
+        setError(result?.message ?? t('error.failedToSaveGuestDetails'));
+        setLoading(false);
       }
     } catch (err) {
-      console.error('Error saving guest details:', err);
-      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to save guest details';
+      const errorMessage = err?.message || err?.response?.data?.message || t('error.failedToSaveGuestDetails');
       setError(errorMessage);
-    } finally {
       setLoading(false);
     }
   };
@@ -118,32 +107,8 @@ const GuestDetailsPage = () => {
           borderRadius: '20px',
         }}
       >
-        <Group justify="space-between" mb="xl">
-          <Group>
-            <img
-              src={UnoLogo}
-              alt="UNO Hotel Logo"
-              style={{
-                width: '50px',
-                height: '50px',
-                borderRadius: '8px',
-                marginRight: '0px',
-                objectFit: 'cover',
-              }}
-            />
-            <Title 
-              order={2} 
-              style={{ 
-                fontSize: '30px !important',
-                color: 'rgb(34, 34, 34)',
-                fontWeight: '600',
-                letterSpacing: '1px',
-                marginLeft: '-9px'
-              }}
-            >
-              UNO HOTELS
-            </Title>
-          </Group>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
         </Group>
 
         <form onSubmit={form.onSubmit(handleSubmit)}>
@@ -151,28 +116,28 @@ const GuestDetailsPage = () => {
             <Title order={3} style={{ fontSize: '24px', fontWeight: 800, color: '#222' }}>{t('guestDetails.formTitle')}</Title>
 
             {error && (
-              <Alert color="red" variant="light" onClose={() => setError(null)} withCloseButton>
+              <Alert color="red" title={t('error.title') || 'Error'}>
                 {error}
               </Alert>
             )}
 
             <TextInput
               label={t('guestDetails.firstName')}
-              placeholder="Enter your first name"
+              placeholder={t('guestDetails.firstNamePlaceholder')}
               required
               size="lg"
               {...form.getInputProps('firstName')}
             />
             <TextInput
               label={t('guestDetails.lastName')}
-              placeholder="Enter your last name"
+              placeholder={t('guestDetails.lastNamePlaceholder')}
               required
               size="lg"
               {...form.getInputProps('lastName')}
             />
             <TextInput
               label={t('guestDetails.email')}
-              placeholder="Enter your email"
+              placeholder={t('guestDetails.emailPlaceholder')}
               required
               size="lg"
               type="email"
@@ -185,13 +150,13 @@ const GuestDetailsPage = () => {
                 required
                 size="lg"
                 data={[
-                  { value: 'US', label: 'United States (+1)' },
-                  { value: 'GB', label: 'United Kingdom (+44)' },
-                  { value: 'DE', label: 'Germany (+49)' },
-                  { value: 'FR', label: 'France (+33)' },
-                  { value: 'IT', label: 'Italy (+39)' },
-                  { value: 'ES', label: 'Spain (+34)' },
-                  { value: 'PT', label: 'Portugal (+351)' },
+                  { value: 'US', label: t('guestDetails.countries.us') },
+                  { value: 'GB', label: t('guestDetails.countries.gb') },
+                  { value: 'DE', label: t('guestDetails.countries.de') },
+                  { value: 'FR', label: t('guestDetails.countries.fr') },
+                  { value: 'IT', label: t('guestDetails.countries.it') },
+                  { value: 'ES', label: t('guestDetails.countries.es') },
+                  { value: 'PT', label: t('guestDetails.countries.pt') },
                 ]}
                 {...form.getInputProps('country')}
               />
@@ -243,8 +208,8 @@ const GuestDetailsPage = () => {
               type="submit"
               size="lg"
               loading={loading}
-              rightSection={!loading && <span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
               disabled={loading}
+              rightSection={!loading && <span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
               style={{
                 backgroundColor: '#C8653D',
                 color: '#FFFFFF',
@@ -260,13 +225,11 @@ const GuestDetailsPage = () => {
                 }
               }}
               onMouseLeave={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.backgroundColor = '#C8653D';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }
+                e.currentTarget.style.backgroundColor = '#C8653D';
+                e.currentTarget.style.transform = 'scale(1)';
               }}
             >
-              {loading ? 'Saving...' : t('guestDetails.continue')}
+              {t('guestDetails.continue')}
             </Button>
           </Group>
         </form>
