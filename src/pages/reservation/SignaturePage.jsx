@@ -18,7 +18,6 @@ import SignatureCanvas from 'react-signature-canvas';
 import useLanguage from '../../hooks/useLanguage';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
-import PropertyHeader from '../../components/PropertyHeader';
 import '../../styles/signature.css';
 
 const SignaturePage = () => {

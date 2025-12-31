@@ -18,7 +18,6 @@ import useLanguage from '../../hooks/useLanguage';
 import PropertyHeader from '../../components/PropertyHeader';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../../services/api/apiClient';
-import PropertyHeader from '../../components/PropertyHeader';
 import '../../styles/animations.css';
 
 const CardIssuedPage = () => {

@@ -32,7 +32,6 @@ import { getPaymentAccount } from '../../services/paymentService';
 import '../../styles/animations.css';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
-import PropertyHeader from '../../components/PropertyHeader';
 
 const PaymentCheckPage = () => {
   const navigate = useNavigate();

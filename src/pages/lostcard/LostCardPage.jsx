@@ -16,7 +16,6 @@ import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import { useForm } from '@mantine/form';
 import { validateLostCardGuest } from '../../services/lostCardService';
-import PropertyHeader from '../../components/PropertyHeader';
 import { BUTTON_STYLES } from '../../config/constants';
 
 const LostCardPage = () => {

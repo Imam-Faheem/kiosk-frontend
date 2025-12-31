@@ -21,7 +21,6 @@ import useLanguage from '../../hooks/useLanguage';
 import usePropertyStore from '../../stores/propertyStore';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
-import PropertyHeader from '../../components/PropertyHeader';
 import { getRoomDetails } from '../../services/roomService';
 import UnoLogo from '../../assets/uno.jpg';
 

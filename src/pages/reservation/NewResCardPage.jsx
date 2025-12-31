@@ -17,7 +17,6 @@ import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
-import PropertyHeader from '../../components/PropertyHeader';
 
 const NewResCardPage = () => {
   const navigate = useNavigate();
