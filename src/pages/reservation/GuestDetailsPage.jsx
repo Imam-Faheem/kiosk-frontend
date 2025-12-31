@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Container,
   Paper,
@@ -8,6 +8,8 @@ import {
   Stack,
   TextInput,
   Select,
+  Alert,
+  Loader,
 } from '@mantine/core';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from '@mantine/form';
@@ -15,10 +17,14 @@ import { guestValidationSchema, guestInitialValues } from '../../schemas/guest.s
 import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
+import { saveGuestDetails } from '../../services/guestService';
+
 const GuestDetailsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const { room, searchCriteria } = location.state || {};
 
@@ -38,15 +44,32 @@ const GuestDetailsPage = () => {
     },
   });
 
-  const handleSubmit = (values) => {
-    // Navigate directly to booking details page with form data and room details
-    navigate('/reservation/booking-details', {
-      state: {
-        room,
-        searchCriteria,
-        guestDetails: values,
-      },
-    });
+  const handleSubmit = async (values) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Save guest details to backend
+      const result = await saveGuestDetails(values);
+
+      if (result?.success ?? result?.data) {
+        navigate('/reservation/room-details', {
+          state: {
+            room,
+            searchCriteria,
+            guestDetails: values,
+            savedGuest: result?.data ?? result,
+          },
+        });
+      } else {
+        setError(result?.message ?? t('error.failedToSaveGuestDetails'));
+        setLoading(false);
+      }
+    } catch (err) {
+      const errorMessage = err?.message || err?.response?.data?.message || t('error.failedToSaveGuestDetails');
+      setError(errorMessage);
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -91,6 +114,12 @@ const GuestDetailsPage = () => {
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="lg" mb="xl">
             <Title order={3} style={{ fontSize: '24px', fontWeight: 800, color: '#222' }}>{t('guestDetails.formTitle')}</Title>
+
+            {error && (
+              <Alert color="red" title={t('error.title') || 'Error'}>
+                {error}
+              </Alert>
+            )}
 
             <TextInput
               label={t('guestDetails.firstName')}
@@ -178,7 +207,9 @@ const GuestDetailsPage = () => {
             <Button
               type="submit"
               size="lg"
-              rightSection={<span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
+              loading={loading}
+              disabled={loading}
+              rightSection={!loading && <span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
               style={{
                 backgroundColor: '#C8653D',
                 color: '#FFFFFF',
@@ -188,8 +219,10 @@ const GuestDetailsPage = () => {
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#B8552F';
-                e.currentTarget.style.transform = 'scale(1.02)';
+                if (!loading) {
+                  e.currentTarget.style.backgroundColor = '#B8552F';
+                  e.currentTarget.style.transform = 'scale(1.02)';
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = '#C8653D';
