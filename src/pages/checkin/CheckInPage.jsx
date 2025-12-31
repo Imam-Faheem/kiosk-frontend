@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Container,
   Paper,
@@ -17,8 +17,9 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useReservationMutation } from '../../hooks/useReservationMutation';
 import { checkinInitialValues } from '../../schemas/checkin.schema';
-import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES } from '../../config/constants';
+import { BUTTON_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
+import { performCheckIn } from '../../services/checkinService';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 
@@ -28,23 +29,7 @@ const CheckInPage = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
-    const now = new Date();
-    const [time, period] = targetTime.split(' ');
-    const [hours, minutes] = time.split(':').map(Number);
-    const target = new Date();
-    target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
-    if (now < target) {
-      navigate('/checkin/early-arrival');
-    }
-  }, [navigate]);
-  
-  const validateReservation = useReservationMutation('validate', {
-    onError: (err) => {
-      setError(err.message ?? t('error.reservationNotFound'));
-    },
-  });
+  const validateReservation = useReservationMutation('validate');
 
   const form = useForm({
     initialValues: checkinInitialValues,
@@ -54,32 +39,206 @@ const CheckInPage = () => {
     },
   });
 
+  const getFormValue = (values, ...keys) => {
+    return keys.map(key => values[key]).find(val => val != null);
+  };
+
+  const extractReservationId = (result, formValues) => {
+    const data = result?.data;
+    const sources = [
+      data?.bookingId,
+      data?.reservation_id,
+      data?.id,
+      data?.reservation?.id,
+      data?.reservation?.bookingId,
+      data?.folios?.[0]?.bookingId,
+      data?.folios?.[0]?.reservation?.bookingId,
+      data?.reservations?.[0]?.id,
+      formValues?.reservationId,
+      formValues?.reservation_id,
+    ];
+    return sources.find(id => id != null);
+  };
+
+  const getCheckInData = async (reservationData, reservationId) => {
+    const hasFolios = Array.isArray(reservationData.folios) && reservationData.folios.length > 0;
+    return hasFolios ? reservationData : (await performCheckIn(reservationId)).data;
+  };
+
+  const navigateToPaymentCheck = (reservationData, checkInData) => {
+    navigate('/checkin/payment-check', {
+      state: {
+        reservation: reservationData,
+        checkInData: checkInData ?? reservationData,
+        folios: checkInData?.folios ?? reservationData?.folios,
+      },
+    });
+  };
+
+  const hasValidGuestData = (data) => {
+    if (!data) return false;
+    
+    // Check for primaryGuest format
+    const primaryGuest = data?.primaryGuest;
+    if (primaryGuest) {
+      const firstName = primaryGuest.firstName ?? '';
+      const lastName = primaryGuest.lastName ?? '';
+      return firstName.trim().length > 0 && lastName.trim().length > 0;
+    }
+    
+    // Check for folios format with debitor
+    const folios = data?.folios;
+    if (Array.isArray(folios) && folios.length > 0) {
+      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
+      const debitor = mainFolio?.debitor;
+      if (debitor) {
+        const firstName = debitor.firstName ?? '';
+        const lastName = debitor.name ?? '';
+        return firstName.trim().length > 0 && lastName.trim().length > 0;
+      }
+    }
+    
+    // Legacy format: guest_name
+    const guestName = data?.guest_name;
+    if (guestName) {
+      const firstName = guestName.first_name ?? guestName.firstName ?? '';
+      const lastName = guestName.last_name ?? guestName.lastName ?? '';
+      return firstName.trim().length > 0 && lastName.trim().length > 0;
+    }
+    
+    return false;
+  };
+
+  const extractLastNameFromResponse = (data) => {
+    if (!data) return null;
+    
+    const primaryGuest = data?.primaryGuest;
+    if (primaryGuest?.lastName) {
+      return primaryGuest.lastName.trim().toLowerCase();
+    }
+    
+    const folios = data?.folios;
+    if (Array.isArray(folios) && folios.length > 0) {
+      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
+      const debitor = mainFolio?.debitor;
+      if (debitor?.name) {
+        return debitor.name.trim().toLowerCase();
+      }
+    }
+    
+    const guestName = data?.guest_name;
+    if (guestName) {
+      const lastName = guestName.last_name ?? guestName.lastName;
+      if (lastName) {
+        return lastName.trim().toLowerCase();
+      }
+    }
+    
+    return null;
+  };
+
+  const validateLastNameMatch = (submittedLastName, apiData) => {
+    const submittedLastNameLower = submittedLastName?.trim().toLowerCase();
+    if (!submittedLastNameLower) {
+      return false;
+    }
+
+    const responseLastName = extractLastNameFromResponse(apiData);
+    if (!responseLastName) {
+      return false;
+    }
+
+    return submittedLastNameLower === responseLastName;
+  };
+
+  const extractReservationIdFromResponse = (data) => {
+    if (!data) return null;
+    
+    const sources = [
+      data?.bookingId,
+      data?.reservation_id,
+      data?.id,
+      data?.reservation?.id,
+      data?.reservation?.bookingId,
+      data?.folios?.[0]?.bookingId,
+      data?.folios?.[0]?.reservation?.bookingId,
+      data?.reservations?.[0]?.id,
+    ];
+    return sources.find(id => id != null);
+  };
+
+  const validateReservationIdMatch = (submittedReservationId, apiData) => {
+    const submittedId = submittedReservationId?.trim().toUpperCase();
+    if (!submittedId) {
+      return false;
+    }
+
+    const responseId = extractReservationIdFromResponse(apiData);
+    if (!responseId) {
+      return false;
+    }
+
+    return submittedId === responseId.toString().toUpperCase();
+  };
+
   const handleSubmit = async (values) => {
     setError(null);
+    form.clearErrors();
     setIsLoading(true);
 
     try {
+      const submittedReservationId = getFormValue(values, 'reservationId', 'reservation_id');
+      const submittedLastName = getFormValue(values, 'lastName', 'last_name');
+      
       const result = await validateReservation.mutateAsync({
-        reservationId: values.reservationId ?? values.reservation_id,
-        lastName: values.lastName ?? values.last_name,
+        reservationId: submittedReservationId,
+        lastName: submittedLastName,
       });
 
-      if (result.success && result.data) {
-        const reservationId = result.data.reservation_id ?? result.data.id;
-        if (!reservationId) {
-          setError(t('error.invalidReservationData'));
-          return;
-        }
-
-        navigate('/checkin/payment-check', {
-          state: { reservation: result.data },
-        });
-      } else {
-        setError(t('error.reservationValidationFailed'));
+      const apiData = result.data;
+      
+      const apiDataChecks = [!apiData, !hasValidGuestData(apiData)];
+      if (apiDataChecks.some(check => check === true)) {
+        form.setFieldError('reservationId', t('error.reservationNotFound'));
+        throw new Error(t('error.reservationNotFound'));
       }
+
+      if (!validateLastNameMatch(submittedLastName, apiData)) {
+        form.setFieldError('lastName', t('error.lastNameMismatch'));
+        throw new Error(t('error.lastNameMismatch'));
+      }
+
+      const reservationId = extractReservationId(result, values);
+      const checkInData = await getCheckInData(apiData, reservationId);
+
+      const checkInDataChecks = [!checkInData, !hasValidGuestData(checkInData)];
+      if (checkInDataChecks.some(check => check === true)) {
+        form.setFieldError('reservationId', t('error.reservationNotFound'));
+        throw new Error(t('error.reservationNotFound'));
+      }
+
+      if (!validateLastNameMatch(submittedLastName, checkInData)) {
+        form.setFieldError('lastName', t('error.lastNameMismatch'));
+        throw new Error(t('error.lastNameMismatch'));
+      }
+
+      navigateToPaymentCheck(apiData, checkInData);
     } catch (error) {
-      setError(error.message ?? t('error.reservationNotFound'));
-    } finally {
+      const errorStatus = error?.response?.status;
+      const errorMessage = (error?.message ?? '').toLowerCase();
+      
+      const lastNameChecks = [
+        errorStatus === 403,
+        errorMessage.includes('lastname'),
+        errorMessage.includes('last name'),
+        errorMessage.includes('last_name'),
+      ];
+      const isLastNameError = lastNameChecks.some(check => check === true);
+      
+      form.setFieldError(
+        isLastNameError ? 'lastName' : 'reservationId',
+        isLastNameError ? t('error.lastNameMismatch') : t('error.reservationNotFound')
+      );
       setIsLoading(false);
     }
   };

@@ -98,6 +98,13 @@ export const saveGuestDetails = async (guestData) => {
   }
 };
 
+/**
+ * Get guest details by ID or email
+ * @param {Object} params - Search parameters
+ * @param {number} params.guestId - Guest ID (optional)
+ * @param {string} params.email - Email address (optional)
+ * @returns {Promise<Object>} Guest details response
+ */
 export const getGuestDetails = async (params) => {
   const { propertyId, organizationId } = getPropertyContext();
 

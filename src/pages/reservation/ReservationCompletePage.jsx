@@ -10,14 +10,10 @@ import {
   Box,
   Card,
   Divider,
-  Badge,
-  Loader,
-  Alert,
 } from '@mantine/core';
-import { IconHome, IconCalendar, IconUser, IconCreditCard, IconCheck, IconX, IconCircleCheck } from '@tabler/icons-react';
+import { IconHome, IconCalendar, IconUser, IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
-import { usePaymentAccount } from '../../hooks/useReservationQueries';
 import '../../styles/animations.css';
 import { BUTTON_STYLES, CONTAINER_STYLES, PAPER_STYLES } from '../../config/constants';
 import PropertyHeader from '../../components/PropertyHeader';
@@ -29,9 +25,7 @@ const ReservationCompletePage = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const checkmarkRef = useRef(null);
 
-  const { reservation, room, guestDetails } = location.state ?? {};
-  
-  const { data, isLoading } = usePaymentAccount(reservation);
+  const { reservation, room, guestDetails } = location.state || {};
 
   useEffect(() => {
     if (!reservation) {
@@ -71,6 +65,7 @@ const ReservationCompletePage = () => {
     navigate('/home');
   };
 
+  // Trigger celebration animation on mount
   useEffect(() => {
     if (reservation) {
       setShowCelebration(true);
@@ -81,7 +76,6 @@ const ReservationCompletePage = () => {
       }, 100);
     }
   }, [reservation]);
-
 
   if (!reservation) {
     return null;
@@ -99,7 +93,7 @@ const ReservationCompletePage = () => {
         radius="xl"
         style={PAPER_STYLES.medium}
       >
-        <Group gap="md" mb="xl" pb="md" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+        <Group justify="space-between" mb="xl" pb="md" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
           <PropertyHeader />
           <Title order={2} c="#0B152A" fw={700} style={{ textTransform: 'uppercase' }}>
             {t('reservationComplete.title')}
@@ -107,6 +101,7 @@ const ReservationCompletePage = () => {
         </Group>
 
         <Stack gap="lg" mb="xl" align="center">
+          {/* Animated Success Checkmark */}
           <Box
             style={{
               position: 'relative',
@@ -115,6 +110,7 @@ const ReservationCompletePage = () => {
               marginBottom: '8px',
             }}
           >
+            {/* Ripple Effects */}
             {showCelebration && (
               <>
                 <Box className="ripple-effect" style={{ top: '50%', left: '50%', marginTop: '-70px', marginLeft: '-70px', width: '140px', height: '140px' }} />
@@ -122,6 +118,7 @@ const ReservationCompletePage = () => {
               </>
             )}
             
+            {/* Success Circle with Glow */}
             <Box
               ref={checkmarkRef}
               className="glow-effect"
@@ -164,6 +161,7 @@ const ReservationCompletePage = () => {
               </svg>
             </Box>
             
+            {/* Sparkle Particles */}
             {showCelebration && Array.from({ length: 8 }).map((_, i) => (
               <Box
                 key={i}
@@ -186,88 +184,8 @@ const ReservationCompletePage = () => {
             {t('reservationComplete.reservationNumber')}: {getReservationNumber()}
           </Text>
 
-          {(() => {
-            const paymentData = reservation?.paymentData;
-            if (!paymentData && !data) return null;
-            
-            const status = (data?.status ?? paymentData?.status ?? paymentData?.data?.status ?? '').toLowerCase();
-            const isFailure = status === 'failure';
-            const successChecks = [
-              status === 'success',
-              paymentData?.success === true,
-              paymentData?.data?.success === true,
-              paymentData != null && !isFailure
-            ];
-            const isSuccess = successChecks.some(Boolean);
-            
-            if (isFailure) return null;
-            if (!isSuccess) return null;
-            
-            return (
-              <Box style={{ width: '100%', position: 'relative' }}>
-                <Card
-                  withBorder
-                  p="xl"
-                  radius="md"
-                  style={{
-                    backgroundColor: '#f0fdf4',
-                    border: '2px solid #22c55e',
-                    width: '100%',
-                  }}
-                >
-                  <Group gap="lg" align="center" justify="center">
-                    <Box
-                      style={{
-                        width: '80px',
-                        height: '80px',
-                        backgroundColor: '#22c55e',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)',
-                      }}
-                    >
-                      <svg
-                        width="50"
-                        height="50"
-                        viewBox="0 0 50 50"
-                        style={{ position: 'relative', zIndex: 2 }}
-                      >
-                        <circle
-                          cx="25"
-                          cy="25"
-                          r="22"
-                          fill="none"
-                          stroke="white"
-                          strokeWidth="2"
-                        />
-                        <path
-                          d="M 15 25 L 22 32 L 35 18"
-                          fill="none"
-                          stroke="white"
-                          strokeWidth="4"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </Box>
-                    <Stack gap={6} style={{ flex: 1 }}>
-                      <Text size="xl" fw={700} c="#16a34a">
-                        {t('reservationComplete.paymentSuccessful') ?? 'Payment Successful'}
-                      </Text>
-                      <Text size="md" fw={500} c="#15803d">
-                        {t('reservationComplete.paymentProcessedSuccessfully') ?? 'Your payment has been processed successfully'}
-                      </Text>
-                    </Stack>
-                  </Group>
-                </Card>
-              </Box>
-            );
-          })()}
-
-          {(room ?? guestDetails ?? reservation.checkIn) && (
+          {/* Reservation Details Card */}
+          {(room || guestDetails || reservation.checkIn) && (
             <Card withBorder p="lg" radius="md" style={{ width: '100%', backgroundColor: '#f8f9fa' }}>
               <Stack gap="md">
                 {guestDetails && (
@@ -282,13 +200,7 @@ const ReservationCompletePage = () => {
                   <Group gap="sm">
                     <IconCreditCard size={20} color="#C8653D" />
                     <Text size="md" fw={600}>{t('reservationComplete.room')}:</Text>
-                    <Text size="md">
-                      {room?.unitGroup?.name ?? 
-                       room?.name ?? 
-                       room?.unitGroup?.id ?? 
-                       room?.roomTypeId ?? 
-                       t('common.notAvailable')}
-                    </Text>
+                    <Text size="md">{room.name}</Text>
                   </Group>
                 )}
                 
@@ -316,92 +228,12 @@ const ReservationCompletePage = () => {
                     <Group justify="space-between">
                       <Text size="md" fw={600}>{t('reservationComplete.totalAmount')}:</Text>
                       <Text size="lg" fw={700} c="#C8653D">
-                        {reservation.currency ?? 'EUR'} {reservation.totalAmount}
+                        {reservation.currency || 'EUR'} {reservation.totalAmount}
                       </Text>
                     </Group>
                   </>
                 )}
               </Stack>
-            </Card>
-          )}
-
-          {data && (
-            <Card withBorder p="lg" radius="md" style={{ width: '100%', backgroundColor: '#f8f9fa' }}>
-              <Stack gap="md">
-                <Group gap="sm" mb="xs">
-                  <IconCreditCard size={20} color="#C8653D" />
-                  <Text size="md" fw={600}>{t('reservationComplete.paymentInformation') ?? 'Payment Information'}</Text>
-                </Group>
-                <Divider />
-                
-                <Group justify="space-between">
-                  <Text size="sm" c="#666666">{t('reservationComplete.paymentAccountId') ?? 'Payment Account ID'}:</Text>
-                  <Text size="sm" fw={600}>{data.id}</Text>
-                </Group>
-                
-                <Group justify="space-between">
-                  <Text size="sm" c="#666666">{t('reservationComplete.paymentStatus') ?? 'Status'}:</Text>
-                  <Badge
-                    color={
-                      data.status?.toLowerCase() === 'success' ? 'green'
-                        : data.status?.toLowerCase() === 'failure' ? 'red'
-                        : 'yellow'
-                    }
-                    variant="light"
-                    leftSection={
-                      data.status?.toLowerCase() === 'success' ? (
-                        <IconCheck size={14} />
-                      ) : (
-                        <IconX size={14} />
-                      )
-                    }
-                  >
-                    {data.status}
-                  </Badge>
-                </Group>
-                
-                {data.failureReason && (
-                  <Group justify="space-between">
-                    <Text size="sm" c="#666666">{t('reservationComplete.failureReason') ?? 'Failure Reason'}:</Text>
-                    <Text size="sm" c="red" fw={600}>{data.failureReason}</Text>
-                  </Group>
-                )}
-                
-                <Group justify="space-between">
-                  <Text size="sm" c="#666666">{t('reservationComplete.payerInteraction') ?? 'Payment Method'}:</Text>
-                  <Text size="sm" fw={600}>{data.payerInteraction ?? 'N/A'}</Text>
-                </Group>
-                
-                {data.target && (
-                  <Group justify="space-between">
-                    <Text size="sm" c="#666666">{t('reservationComplete.targetType') ?? 'Target Type'}:</Text>
-                    <Text size="sm" fw={600}>{data.target.type ?? 'N/A'}</Text>
-                  </Group>
-                )}
-                
-                {data.created && (
-                  <Group justify="space-between">
-                    <Text size="sm" c="#666666">{t('reservationComplete.paymentCreated') ?? 'Created'}:</Text>
-                    <Text size="sm">{new Date(data.created).toLocaleString()}</Text>
-                  </Group>
-                )}
-                
-                {data.updated && (
-                  <Group justify="space-between">
-                    <Text size="sm" c="#666666">{t('reservationComplete.paymentUpdated') ?? 'Updated'}:</Text>
-                    <Text size="sm">{new Date(data.updated).toLocaleString()}</Text>
-                  </Group>
-                )}
-              </Stack>
-            </Card>
-          )}
-
-          {isLoading && (
-            <Card withBorder p="lg" radius="md" style={{ width: '100%', backgroundColor: '#f8f9fa' }}>
-              <Group justify="center">
-                <Loader size="sm" />
-                <Text size="sm" c="#666666">{t('reservationComplete.loadingPayment') ?? 'Loading payment information...'}</Text>
-              </Group>
             </Card>
           )}
 

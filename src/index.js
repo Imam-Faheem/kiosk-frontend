@@ -8,28 +8,18 @@ import '@mantine/notifications/styles.css';
 // import '@mantine/modals/styles.css'; // This import is not needed
 import '@mantine/dates/styles.css';
 
-// Suppress WebSocket connection errors from React dev server (HMR) and Apaleo credentials errors
+// Suppress WebSocket connection errors from React dev server (HMR)
 if (process.env.NODE_ENV === 'development') {
   const originalError = console.error;
   console.error = (...args) => {
-    const firstArg = args[0];
-    const errorMessage = typeof firstArg === 'string' ? firstArg : firstArg?.message ?? '';
-    
     if (
-      typeof firstArg === 'string' &&
-      firstArg.includes('WebSocket connection to') &&
-      firstArg.includes('failed')
+      typeof args[0] === 'string' &&
+      args[0].includes('WebSocket connection to') &&
+      args[0].includes('failed')
     ) {
+      // Suppress WebSocket HMR connection errors
       return;
     }
-    
-    if (
-      errorMessage.includes('not configured with Apaleo credentials') ||
-      errorMessage.includes('Property not configured with Apaleo credentials')
-    ) {
-      return;
-    }
-    
     originalError.apply(console, args);
   };
 }

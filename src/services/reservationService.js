@@ -2,133 +2,42 @@ import { apiClient } from './api/apiClient';
 import { validateReservation as validateReservationApaleo } from './checkinService';
 import { translateError } from '../utils/translations';
 
-// Mock data helpers - optional fallback
-let simulateApiDelay, mockReservations;
-try {
-  const mockModule = require('./mockData');
-  simulateApiDelay = mockModule.simulateApiDelay;
-  mockReservations = mockModule.mockReservations || [];
-} catch (e) {
-  simulateApiDelay = () => Promise.resolve();
-  mockReservations = [];
-}
-
-// Validate reservation for check-in using Apaleo API
 export const validateReservation = async (data) => {
+  return await validateReservationApaleo(data);
+};
+
+export const createReservation = async (data) => {
+  const response = await apiClient.post('/reservations/create', data);
+  return response.data;
+};
+
+export const getReservationById = async (reservationId) => {
   try {
-    // Use Apaleo API to validate reservation
-    return await validateReservationApaleo(data);
+    const response = await apiClient.get(`/reservations/${reservationId}`);
+    return response.data;
   } catch (error) {
+    if (error?.response?.status === 404) {
+      throw new Error(translateError('reservationNotFound'));
+    }
     throw error;
   }
 };
 
-// Create new reservation
-export const createReservation = async (data) => {
-  try {
-    await simulateApiDelay();
-    
-    // Mock implementation - in real app, this would call your backend
-    const mockResponse = await apiClient.post('/reservations/create', data);
-    return mockResponse.data;
-  } catch (error) {
-    // Fallback to mock data if API fails
-    const newReservation = {
-      id: `RES-${Date.now()}`,
-      reservationId: `RES-${Date.now()}`,
-      ...data,
-      status: 'confirmed',
-      paymentStatus: 'pending',
-      createdAt: new Date().toISOString()
-    };
-    
-    return {
-      success: true,
-      data: newReservation,
-      message: 'Reservation created successfully'
-    };
-  }
-};
-
-// Get reservation by ID
-export const getReservationById = async (reservationId) => {
-  try {
-    await simulateApiDelay();
-    
-    // Mock implementation - in real app, this would call your backend
-    const mockResponse = await apiClient.get(`/reservations/${reservationId}`);
-    return mockResponse.data;
-  } catch (error) {
-    // Fallback to mock data if API fails
-    const reservation = mockReservations.find(r => r.reservationId === reservationId);
-    
-    if (!reservation) {
-      throw new Error(translateError('reservationNotFound'));
-    }
-    
-    return {
-      success: true,
-      data: reservation,
-      message: 'Reservation retrieved successfully'
-    };
-  }
-};
-
-// Update reservation
 export const updateReservation = async (reservationId, data) => {
-  try {
-    await simulateApiDelay();
-    
-    // Mock implementation - in real app, this would call your backend
-    const mockResponse = await apiClient.put(`/reservations/${reservationId}`, data);
-    return mockResponse.data;
-  } catch (error) {
-    // Fallback to mock data if API fails
-    return {
-      success: true,
-      data: { ...data, id: reservationId },
-      message: 'Reservation updated successfully'
-    };
-  }
+  const response = await apiClient.put(`/reservations/${reservationId}`, data);
+  return response.data;
 };
 
-// Cancel reservation
 export const cancelReservation = async (reservationId) => {
-  try {
-    await simulateApiDelay();
-    
-    // Mock implementation - in real app, this would call your backend
-    const mockResponse = await apiClient.delete(`/reservations/${reservationId}`);
-    return mockResponse.data;
-  } catch (error) {
-    // Fallback to mock data if API fails
-    return {
-      success: true,
-      data: { reservationId, status: 'cancelled' },
-      message: 'Reservation cancelled successfully'
-    };
-  }
+  const response = await apiClient.delete(`/reservations/${reservationId}`);
+  return response.data;
 };
 
-// Search reservations
 export const searchReservations = async (params) => {
-  try {
-    await simulateApiDelay();
-    
-    // Mock implementation - in real app, this would call your backend
-    const mockResponse = await apiClient.get('/reservations/search', { params });
-    return mockResponse.data;
-  } catch (error) {
-    // Fallback to mock data if API fails
-    return {
-      success: true,
-      data: mockReservations,
-      message: 'Reservations retrieved successfully'
-    };
-  }
+  const response = await apiClient.get('/reservations/search', { params });
+  return response.data;
 };
 
-// Legacy function for backward compatibility
 export const fetchReservations = async () => {
   return searchReservations();
 };

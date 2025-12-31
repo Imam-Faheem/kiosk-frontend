@@ -33,7 +33,7 @@ const RoomDetailPage = () => {
   const [roomData, setRoomData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const { room, searchCriteria, guestDetails } = location.state ?? {};
+  const { room, searchCriteria, guestDetails } = location.state || {};
 
   // Fetch room details with images if room images are missing
   useEffect(() => {
@@ -132,33 +132,8 @@ const RoomDetailPage = () => {
       'Safe': t('roomDetail.amenities.safe'),
       'Mini Bar': t('roomDetail.amenities.miniBar'),
     };
-    return amenityMap[amenity] ?? amenity;
+    return amenityMap[amenity] || amenity;
   };
-
-  // Calculate pricing information
-  const pricing = React.useMemo(() => {
-    if (!searchCriteria?.checkIn || !searchCriteria?.checkOut || !displayRoom) {
-      return { nights: 0, pricePerNight: 0, taxes: 0, total: 0, currency: 'EUR' };
-    }
-
-    const checkIn = new Date(searchCriteria.checkIn);
-    const checkOut = new Date(searchCriteria.checkOut);
-    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-    
-    const totalAmount = displayRoom?.totalGrossAmount?.amount ?? displayRoom?.totalPrice ?? 0;
-    const currency = displayRoom?.totalGrossAmount?.currency ?? displayRoom?.currency ?? 'EUR';
-    const pricePerNight = nights > 0 ? totalAmount / nights : 0;
-    const taxes = displayRoom?.totalTaxAmount?.amount ?? displayRoom?.taxes ?? 0;
-    const total = totalAmount;
-
-    return {
-      nights,
-      pricePerNight,
-      taxes,
-      total,
-      currency,
-    };
-  }, [searchCriteria, displayRoom]);
 
   const handleConfirm = () => {
     navigate('/reservation/signature', {
@@ -259,7 +234,7 @@ const RoomDetailPage = () => {
               ) : (
                 <Box style={{ position: 'relative' }}>
                   <Image
-                    src={roomImages[selectedImageIndex] ?? UnoLogo}
+                    src={roomImages[selectedImageIndex] || UnoLogo}
                     alt={`${displayRoom.name} - Image ${selectedImageIndex + 1}`}
                     height={300}
                     radius="md"
@@ -296,7 +271,7 @@ const RoomDetailPage = () => {
                     onClick={() => setSelectedImageIndex(index)}
                   >
                     <Image
-                      src={image ?? UnoLogo}
+                      src={image || UnoLogo}
                       alt={`${displayRoom.name} - Thumbnail ${index + 1}`}
                       height={80}
                       style={{ objectFit: 'cover', width: '100%' }}
@@ -316,12 +291,12 @@ const RoomDetailPage = () => {
               <Stack gap="sm">
                 <Text size="md" fw={600}>{t('roomDetail.amenities.title')}:</Text>
                 <Group gap="sm">
-                  {(displayRoom.amenities ?? []).map((amenity, index) => (
+                  {(displayRoom.amenities || []).map((amenity, index) => (
                     <Badge
                       key={index}
                       variant="light"
                       color="blue"
-                      leftSection={amenityIcons[amenity] ?? null}
+                      leftSection={amenityIcons[amenity] || null}
                       size="sm"
                     >
                       {getAmenityTranslation(amenity)}
@@ -334,11 +309,11 @@ const RoomDetailPage = () => {
               <Grid>
                 <Grid.Col span={6}>
                   <Text size="sm" c="#666666">{t('roomDetail.capacity')}:</Text>
-                  <Text size="md" fw={600}>{displayRoom.capacity ?? displayRoom.maxGuests ?? 1} {t('common.guests')}</Text>
+                  <Text size="md" fw={600}>{displayRoom.capacity || displayRoom.maxGuests || 1} {t('common.guests')}</Text>
                 </Grid.Col>
                 <Grid.Col span={6}>
                   <Text size="sm" c="#666666">{t('roomDetail.maxGuests')}:</Text>
-                  <Text size="md" fw={600}>{displayRoom.maxGuests ?? displayRoom.capacity ?? 1} {t('common.guests')}</Text>
+                  <Text size="md" fw={600}>{displayRoom.maxGuests || displayRoom.capacity || 1} {t('common.guests')}</Text>
                 </Grid.Col>
               </Grid>
 
@@ -368,7 +343,7 @@ const RoomDetailPage = () => {
                   <Group justify="space-between">
                     <Text size="md" c="#666666">{t('roomDetail.numberOfNights')}:</Text>
                     <Text size="md" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
-                      {pricing.nights} {t('roomDetail.nights')}
+                      {Math.ceil((new Date(searchCriteria.checkOut) - new Date(searchCriteria.checkIn)) / (1000 * 60 * 60 * 24))} {t('roomDetail.nights')}
                     </Text>
                   </Group>
                   
@@ -377,20 +352,16 @@ const RoomDetailPage = () => {
                     <Stack gap="xs">
                       <Group justify="space-between">
                         <Text size="sm" c="#666666">{t('roomDetail.pricePerNight')}:</Text>
-                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
-                          {pricing.currency} {pricing.pricePerNight.toFixed(2)}
-                        </Text>
+                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{displayRoom.currency || 'EUR'} {displayRoom.pricePerNight || 0}</Text>
                       </Group>
                       <Group justify="space-between">
                         <Text size="sm" c="#666666">{t('roomDetail.taxes')}:</Text>
-                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
-                          {pricing.currency} {pricing.taxes.toFixed(2)}
-                        </Text>
+                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{displayRoom.currency || 'EUR'} {displayRoom.taxes || 0}</Text>
                       </Group>
                       <Group justify="space-between" style={{ borderTop: '2px solid #C8653D', paddingTop: '10px' }}>
                         <Text size="lg" fw={700} c="#C8653D">{t('roomDetail.total')}:</Text>
                         <Text size="xl" fw={700} c="#C8653D" style={{ textAlign: 'right', minWidth: '180px' }}>
-                          {pricing.currency} {pricing.total.toFixed(2)}
+                          {displayRoom.currency || 'EUR'} {displayRoom.totalPrice || 0}
                         </Text>
                       </Group>
                     </Stack>

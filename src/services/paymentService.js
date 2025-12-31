@@ -1,16 +1,11 @@
 import { apiClient } from './api/apiClient';
 import { translateError } from '../utils/translations';
-import usePropertyStore from '../stores/propertyStore';
-import { API_CONFIG } from '../config/constants';
 
-const getPropertyIds = () => {
-  const state = usePropertyStore.getState();
-  const propertyId = state.selectedProperty?.property_id ?? state.propertyId;
-  const organizationId = API_CONFIG.ORGANIZATION_ID;
-  
-  return { propertyId, organizationId };
-};
-
+/**
+ * Process payment for a reservation
+ * @param {Object} data - Payment data
+ * @returns {Promise<Object>} Payment response
+ */
 export const processPayment = async (data) => {
   try {
     const response = await apiClient.post('/api/kiosk/v1/payment', data);
@@ -24,6 +19,11 @@ export const processPayment = async (data) => {
   }
 };
 
+/**
+ * Get payment status for a reservation
+ * @param {string} reservationId - Reservation ID
+ * @returns {Promise<Object>} Payment status
+ */
 export const getPaymentStatus = async (reservationId) => {
   try {
     const response = await apiClient.get(`/api/kiosk/v1/payment/status/${reservationId}`);
@@ -38,6 +38,11 @@ export const getPaymentStatus = async (reservationId) => {
   }
 };
 
+/**
+ * Get payment history for a reservation
+ * @param {Object} params - Query parameters
+ * @returns {Promise<Object>} Payment history
+ */
 export const getPaymentHistory = async (params = {}) => {
   try {
     const queryParams = {};
@@ -53,6 +58,12 @@ export const getPaymentHistory = async (params = {}) => {
   }
 };
 
+/**
+ * Process refund for a payment
+ * @param {string} transactionId - Transaction ID
+ * @param {Object} data - Refund data
+ * @returns {Promise<Object>} Refund response
+ */
 export const processRefund = async (transactionId, data) => {
   try {
     const response = await apiClient.post(`/api/kiosk/v1/payment/${transactionId}/refund`, data);
@@ -66,27 +77,6 @@ export const processRefund = async (transactionId, data) => {
   }
 };
 
-export const processPaymentByTerminal = async (reservationId) => {
-  const { propertyId, organizationId } = getPropertyIds();
-  
-  const missingIds = [propertyId, organizationId, reservationId].filter(id => !id);
-  if (missingIds.length > 0) {
-    throw new Error('Property configuration or reservation ID is missing.');
-  }
-  
-  try {
-    const url = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/reservations/${reservationId}/payments/by-terminal`;
-    const response = await apiClient.post(url);
-    return response.data;
-  } catch (err) {
-    const errorMessage = err?.response?.data?.message ?? 
-                         err?.response?.data?.error ?? 
-                         err?.message ?? 
-                         'Failed to process payment by terminal';
-    throw new Error(errorMessage);
-  }
-};
-
 /**
  * Get payment account details
  * @param {string} paymentAccountId - Payment account ID
@@ -96,12 +86,11 @@ export const getPaymentAccount = async (paymentAccountId) => {
   if (!paymentAccountId) {
     throw new Error('Payment account ID is required.');
   }
-  
   try {
     const response = await apiClient.get(`/api/kiosk/v1/payment-accounts/${paymentAccountId}`);
     return response.data;
   } catch (err) {
-    const errorMessage = err?.response?.data?.message ?? 
+    const errorMessage = err?.response?.data?.message ??
                          err?.response?.data?.error ??
                          err?.message ??
                          'Failed to fetch payment account';

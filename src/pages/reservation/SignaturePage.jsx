@@ -28,7 +28,7 @@ const SignaturePage = () => {
   const [isSigned, setIsSigned] = useState(false);
   const [signatureData, setSignatureData] = useState(null);
 
-  const { room, searchCriteria, guestDetails, savedGuest, apaleoPropertyId } = location.state || {};
+  const { room, searchCriteria, guestDetails, savedGuest } = location.state || {};
 
   const formatDate = (value) => {
     if (!value) return '';
@@ -69,7 +69,6 @@ const SignaturePage = () => {
         guestDetails,
         savedGuest, // Include saved guest data if available
         signature: signatureData,
-        apaleoPropertyId,
       },
     });
   };
@@ -174,7 +173,7 @@ const SignaturePage = () => {
               </Group>
               <Group justify="space-between">
                 <Text size="md" c="#666666">{t('signature.room')}:</Text>
-                <Text size="md" fw={600}>{room?.unitGroup?.name ?? room?.name ?? ''}</Text>
+                <Text size="md" fw={600}>{room.name}</Text>
               </Group>
               <Group justify="space-between">
                 <Text size="md" c="#666666">{t('signature.checkIn')}:</Text>
