@@ -36,14 +36,19 @@ const getPropertyContext = () => {
 };
 
 // Create axios instance with default config
+// Ensure we're hitting Kong on localhost:8000
+const baseURL = API_CONFIG.BASE_URL || 'http://localhost:8000';
 const apiClient = axios.create({
-  baseURL: API_CONFIG.BASE_URL,
+  baseURL: baseURL,
   timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
     // Explicitly do not set Authorization header here
   },
 });
+
+// Log the base URL on initialization to confirm Kong endpoint
+console.log('[apiClient] Initialized with baseURL:', baseURL);
 
 // Request interceptor to add X-Property-ID and X-Organization-ID
 apiClient.interceptors.request.use(
@@ -77,6 +82,7 @@ apiClient.interceptors.request.use(
     }
 
     // Add X-Property-ID and X-Organization-ID for kiosk-related endpoints
+    // Note: These headers must be allowed in Kong's CORS configuration
     const { propertyId, organizationId } = getPropertyContext();
 
     if (propertyId) {
@@ -84,6 +90,17 @@ apiClient.interceptors.request.use(
     }
     if (organizationId) {
       config.headers['X-Organization-ID'] = organizationId;
+    }
+    
+    // Log headers being sent for debugging CORS issues
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[apiClient] Request headers:', {
+        'X-Property-ID': config.headers['X-Property-ID'],
+        'X-Organization-ID': config.headers['X-Organization-ID'],
+        'Content-Type': config.headers['Content-Type'],
+        url: config.url,
+        method: config.method,
+      });
     }
 
     const isKioskEndpoint = url.includes('/api/kiosk/v1') ||

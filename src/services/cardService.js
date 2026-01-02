@@ -384,16 +384,69 @@ const createCardService = (contextService = propertyContextService) => {
     const context = contextService.getContext();
     validateContext(context);
 
-    const endpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/lost-card/regenerate`;
+    // Extract reservation_id from data (can be reservation_id, reservationId, or id)
+    const reservationId = data?.reservation_id ?? data?.reservationId ?? data?.id;
+    
+    if (!reservationId) {
+      throw new Error('Reservation ID is required to regenerate lost card.');
+    }
+
+    // Use the correct endpoint: /organizations/:organization_id/properties/:property_id/reservations/:reservation_id/lost-card
+    const endpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/reservations/${reservationId}/lost-card`;
 
     try {
+      const baseURL = apiClient.defaults?.baseURL ?? API_CONFIG.BASE_URL ?? 'http://localhost:8000';
+      const fullUrl = `${baseURL}${endpoint}`;
+      
+      console.log('[regenerateCard] Making request to Kong:', {
+        endpoint,
+        baseURL,
+        fullUrl,
+        propertyId: context.propertyId,
+        organizationId: context.organizationId,
+        reservationId,
+        data,
+        method: 'POST',
+      });
+
       const response = await apiClient.post(endpoint, data);
+      
+      console.log('[regenerateCard] Success:', {
+        status: response.status,
+        data: response.data,
+      });
+
       return response.data;
     } catch (error) {
+      const baseURL = apiClient.defaults?.baseURL ?? API_CONFIG.BASE_URL ?? 'http://localhost:8000';
+      const fullUrl = `${baseURL}${endpoint}`;
+      
+      console.error('[regenerateCard] Error calling Kong:', {
+        endpoint,
+        baseURL,
+        fullUrl,
+        propertyId: context.propertyId,
+        organizationId: context.organizationId,
+        reservationId,
+        error: error.message,
+        errorCode: error.code,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+        requestConfig: {
+          url: endpoint,
+          method: 'POST',
+          baseURL: baseURL,
+        },
+      });
+
       if (!error.response) {
         throw new Error(getNetworkErrorForRegenerate(error));
       }
-      throw new Error(getHttpErrorMessage(error, 'cardRegenerationFailed'));
+      
+      // Display the error message from the API response
+      const errorMessage = getHttpErrorMessage(error, 'cardRegenerationFailed');
+      throw new Error(errorMessage);
     }
   };
 

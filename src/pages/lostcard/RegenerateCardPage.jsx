@@ -31,6 +31,7 @@ const RegenerateCardPage = () => {
 
   const guestData = location.state?.guestData;
   const validationData = location.state?.validationData;
+  const cardData = location.state?.cardData; // Card data if already regenerated
 
   const {
     data: cardMutationData,
@@ -57,6 +58,38 @@ const RegenerateCardPage = () => {
       setCardStatus('error');
     },
   });
+
+  // If cardData is already provided (from LostCardPage), skip mutation and show success
+  useEffect(() => {
+    if (cardData && cardStatus === 'idle') {
+      // Simulate the steps and then show success
+      const processExistingCard = async () => {
+        setCurrentStep(0);
+        setCardStatus('deactivating');
+        await new Promise((resolve) => setTimeout(resolve, STEP_DELAY));
+        
+        setCurrentStep(1);
+        setCardStatus('generating');
+        await new Promise((resolve) => setTimeout(resolve, STEP_DELAY));
+        
+        setCurrentStep(2);
+        setCardStatus('programming');
+        await new Promise((resolve) => setTimeout(resolve, STEP_DELAY));
+        
+        setTimeout(() => {
+          setCardStatus('completed');
+          setCurrentStep(3);
+          setTimeout(() => {
+            navigate('/lost-card/issued', {
+              state: { guestData, cardData: cardData },
+            });
+          }, 2000);
+        }, STEP_DELAY);
+      };
+      processExistingCard();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardData, cardStatus]);
 
   const isLoading = isLoadingData || regenerateCardMutation.isPending;
   const isError = isDataError || regenerateCardMutation.isError;
@@ -98,6 +131,11 @@ const RegenerateCardPage = () => {
   }, [guestData, validationData, navigate]);
 
   useEffect(() => {
+    // Skip if cardData is already provided (card was already regenerated in LostCardPage)
+    if (cardData) {
+      return;
+    }
+
     if (!cardMutationData || regenerateCardMutation.isPending || regenerateCardMutation.isSuccess || cardStatus !== 'idle') {
       return;
     }
@@ -111,7 +149,7 @@ const RegenerateCardPage = () => {
 
     processCardRegeneration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardMutationData]);
+  }, [cardMutationData, cardData]);
 
   // Trigger celebration animation when card status becomes completed
   useEffect(() => {
@@ -511,7 +549,7 @@ const RegenerateCardPage = () => {
                   </Stack>
                 )}
 
-                {regenerateCardMutation.data?.data && (
+                {(regenerateCardMutation.data?.data || cardData) && (
                   <Alert
                     icon={<IconCheck size={16} />}
                     title={t('regenerateCard.newCardDetails')}
@@ -525,13 +563,13 @@ const RegenerateCardPage = () => {
                   >
                     <Stack gap={8}>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        <strong>{t('regenerateCard.newAccessCode')}:</strong> {regenerateCardMutation.data.data.accessCode ?? regenerateCardMutation.data.data.passcode ?? regenerateCardMutation.data.data.code}
+                        <strong>{t('regenerateCard.newAccessCode')}:</strong> {(regenerateCardMutation.data?.data ?? cardData)?.accessCode ?? (regenerateCardMutation.data?.data ?? cardData)?.passcode ?? (regenerateCardMutation.data?.data ?? cardData)?.code}
                       </Text>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
                         <strong>{t('regenerateCard.room')}:</strong> {guestData?.unit?.name ?? guestData?.unit?.id ?? ''}
                       </Text>
                       <Text size="sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-                        <strong>{t('regenerateCard.status')}:</strong> {regenerateCardMutation.data.data.status}
+                        <strong>{t('regenerateCard.status')}:</strong> {(regenerateCardMutation.data?.data ?? cardData)?.status}
                       </Text>
                     </Stack>
                   </Alert>
