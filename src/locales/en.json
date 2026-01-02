@@ -322,7 +322,12 @@
     "currentTime": "Current time: {{time}}",
     "cardsAvailableAfter": "Cards available after: {{time}}",
     "returningToMenu": "Returning to menu in: {{countdown}}...",
-    "returnToMenu": "Return to Menu"
+    "returnToMenu": "Return to Menu",
+    "importantInformation": "Important Information",
+    "keyCardCollection": "Your Key Card Collection",
+    "earlyCheckInMessage": "You have checked in early. To ensure your room is perfectly ready, your key card will be available for collection at the dispenser from 2:00 PM today.",
+    "smsReminder": "You will receive an SMS reminder when your card is ready.",
+    "returnToMainMenu": "Return to Main Menu"
   },
   "propertySelection": {
     "title": "Property Selection",

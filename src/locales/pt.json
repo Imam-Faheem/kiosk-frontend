@@ -425,6 +425,11 @@
     "currentTime": "Hora atual: {{time}}",
     "cardsAvailableAfter": "Cartões disponíveis após: {{time}}",
     "returningToMenu": "Retornando ao menu em: {{countdown}}...",
-    "returnToMenu": "Voltar ao Menu"
+    "returnToMenu": "Voltar ao Menu",
+    "importantInformation": "Informação Importante",
+    "keyCardCollection": "Recolha do Seu Cartão Chave",
+    "earlyCheckInMessage": "Fez check-in antecipado. Para garantir que o seu quarto esteja perfeitamente pronto, o seu cartão chave estará disponível para recolha no dispensador a partir das 14:00 hoje.",
+    "smsReminder": "Receberá um lembrete por SMS quando o seu cartão estiver pronto.",
+    "returnToMainMenu": "Voltar ao Menu Principal"
   }
 }

@@ -1,5 +1,4 @@
 import { apiClient } from './api/apiClient';
-import { API_CONFIG } from '../config/constants';
 
 const extractProperties = (response) => {
   if (Array.isArray(response)) return { data: response, pagination: null };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Container,
   Paper,
@@ -18,10 +18,9 @@ import {
 import { IconWifi, IconSnowflake, IconShield, IconCoffee, IconDeviceTv } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
-import usePropertyStore from '../../stores/propertyStore';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
-import { getRoomDetails } from '../../services/roomService';
+import { useRoomQuery } from '../../hooks/useRoomQuery';
 import UnoLogo from '../../assets/uno.jpg';
 
 const RoomDetailPage = () => {
@@ -30,66 +29,38 @@ const RoomDetailPage = () => {
   const { t } = useLanguage();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [roomData, setRoomData] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   const { room, searchCriteria, guestDetails } = location.state ?? {};
 
-  // Fetch room details with images if room images are missing
-  useEffect(() => {
-    const fetchRoomImages = async () => {
-      if (room && room.roomTypeId) {
-        // Check if room has images
-        const hasImages = room.images && Array.isArray(room.images) && room.images.length > 0;
-        
-        if (!hasImages) {
-          setLoading(true);
-          try {
-            const propertyId = usePropertyStore.getState().propertyId;
-            if (!propertyId) {
-              throw new Error('Property ID is required');
-            }
-            const result = await getRoomDetails(room.roomTypeId, propertyId);
-            
-            if (result.success && result.data && result.data.images) {
-              // Merge room data with fetched images
-              setRoomData({
-                ...room,
-                images: result.data.images.length > 0 ? result.data.images : [UnoLogo],
-              });
-            } else {
-              // Use default logo if no images found
-              setRoomData({
-                ...room,
-                images: [UnoLogo],
-              });
-            }
-          } catch (err) {
-            // Use default logo on error
-            setRoomData({
-              ...room,
-              images: [UnoLogo],
-            });
-          } finally {
-            setLoading(false);
-          }
-        } else {
-          // Room already has images, use it as is
-          setRoomData(room);
-        }
-      } else if (room) {
-        // Room exists but no roomTypeId, use it with default image
-        setRoomData({
-          ...room,
-          images: room.images && Array.isArray(room.images) && room.images.length > 0 
-            ? room.images 
-            : [UnoLogo],
-        });
-      }
-    };
+  const hasImages = room?.images && Array.isArray(room.images) && room.images.length > 0;
+  const shouldFetchDetails = room?.roomTypeId && !hasImages;
 
-    fetchRoomImages();
-  }, [room]);
+  const { data: roomDetailsResult, isLoading: isLoadingRoomDetails } = useRoomQuery(
+    room?.roomTypeId,
+    { enabled: shouldFetchDetails }
+  );
+
+  const roomData = useMemo(() => {
+    if (!room) return null;
+
+    if (hasImages) {
+      return room;
+    }
+
+    if (roomDetailsResult?.data?.images && roomDetailsResult.data.images.length > 0) {
+      return {
+        ...room,
+        images: roomDetailsResult.data.images,
+      };
+    }
+
+    return {
+      ...room,
+      images: room.images && Array.isArray(room.images) && room.images.length > 0
+        ? room.images
+        : [UnoLogo],
+    };
+  }, [room, hasImages, roomDetailsResult]);
 
   // Use roomData if available, otherwise fallback to room
   const displayRoom = roomData || room;
@@ -161,7 +132,10 @@ const RoomDetailPage = () => {
   }, [searchCriteria, displayRoom]);
 
   const handleConfirm = () => {
-    navigate('/reservation/signature', {
+    // Skip card dispenser for new reservations since cards can only be issued
+    // after reservation is created (during payment/booking)
+    // Cards will be issued during check-in process
+    navigate('/reservation/payment', {
       state: {
         room: displayRoom,
         searchCriteria,
@@ -252,7 +226,7 @@ const RoomDetailPage = () => {
             <Text size="xl" fw={600}>{displayRoom.name}</Text>
               
               {/* Main Image */}
-              {loading ? (
+              {isLoadingRoomDetails ? (
                 <Box style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
                   <Text c="#666666">{t('common.loading')}</Text>
                 </Box>
@@ -281,7 +255,7 @@ const RoomDetailPage = () => {
               )}
 
               {/* Thumbnail Images */}
-              {!loading && roomImages.length > 1 && (
+              {!isLoadingRoomDetails && roomImages.length > 1 && (
                 <SimpleGrid cols={3} spacing="sm">
                   {roomImages.map((image, index) => (
                   <Box

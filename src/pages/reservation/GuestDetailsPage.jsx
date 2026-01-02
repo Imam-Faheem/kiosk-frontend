@@ -19,7 +19,7 @@ import { guestInitialValues } from '../../schemas/guest.schema';
 import { createGuestFormValidator } from '../../utils/formValidation';
 import useLanguage from '../../hooks/useLanguage';
 import usePropertyStore from '../../stores/propertyStore';
-import { saveGuestDetails } from '../../services/guestService';
+import { useGuestMutation } from '../../hooks/useGuestMutation';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import { GUEST_DETAILS_OPTIONS } from '../../config/constants';
@@ -28,7 +28,6 @@ const GuestDetailsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isAvailabilityError, setIsAvailabilityError] = useState(false);
   const { selectedProperty } = usePropertyStore();
@@ -40,38 +39,44 @@ const GuestDetailsPage = () => {
     validate: createGuestFormValidator(),
   });
 
+  const saveGuestMutation = useGuestMutation({
+    onError: (err) => {
+      console.warn('[GuestDetailsPage] Failed to save guest details to backend:', err);
+      setError(t('error.failedToSaveGuestDetails'));
+    },
+  });
+
   const handleSubmit = async (values) => {
-    setLoading(true);
     setError(null);
 
-    try {
-      // Prepare guest data with propertyId if available
-      const guestData = {
-        ...values,
-        propertyId: usePropertyStore.getState().propertyId,
-        // reservationId can be added later when reservation is created
-      };
+    const guestData = {
+      ...values,
+      propertyId: usePropertyStore.getState().propertyId,
+    };
 
-      // Save guest details to backend
-      const result = await saveGuestDetails(guestData);
-
-      if (result?.success ?? result?.data) {
+    saveGuestMutation.mutate(guestData, {
+      onSuccess: (result) => {
+        const savedGuest = result?.data ?? result;
         navigate('/reservation/room-details', {
           state: {
             room,
             searchCriteria,
             guestDetails: values,
-            savedGuest: result?.data ?? result,
+            savedGuest,
           },
         });
-      } else {
-        setError(result?.message ?? t('error.failedToSaveGuestDetails'));
-        setLoading(false);
-      }
-    } catch (err) {
-      setError(t('error.failedToSaveGuestDetails'));
-      setLoading(false);
-    }
+      },
+      onError: () => {
+        navigate('/reservation/room-details', {
+          state: {
+            room,
+            searchCriteria,
+            guestDetails: values,
+            savedGuest: null,
+          },
+        });
+      },
+    });
   };
 
   const handleBack = () => {
@@ -358,9 +363,9 @@ const GuestDetailsPage = () => {
             <Button
               type="submit"
               size="lg"
-              loading={loading}
-              rightSection={!loading && <span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
-              disabled={loading}
+              loading={saveGuestMutation.isPending}
+              rightSection={!saveGuestMutation.isPending && <span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
+              disabled={saveGuestMutation.isPending}
               style={{
                 backgroundColor: '#C8653D',
                 color: '#FFFFFF',
@@ -370,19 +375,19 @@ const GuestDetailsPage = () => {
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
-                if (!loading) {
+                if (!saveGuestMutation.isPending) {
                   e.currentTarget.style.backgroundColor = '#B8552F';
                   e.currentTarget.style.transform = 'scale(1.02)';
                 }
               }}
               onMouseLeave={(e) => {
-                if (!loading) {
+                if (!saveGuestMutation.isPending) {
                   e.currentTarget.style.backgroundColor = '#C8653D';
                   e.currentTarget.style.transform = 'scale(1)';
                 }
               }}
             >
-              {loading ? t('common.saving') : t('guestDetails.continue')}
+              {saveGuestMutation.isPending ? t('common.saving') : t('guestDetails.continue')}
             </Button>
           </Group>
         </form>

@@ -10,7 +10,7 @@ import {
   Box,
   Alert,
 } from '@mantine/core';
-import { IconAlertCircle, IconHome, IconClock } from '@tabler/icons-react';
+import { IconAlertCircle, IconHome, IconClock, IconArrowLeft } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { buttonStyles } from '../../constants/style.constants';
 import { EARLY_ARRIVAL_CONFIG, EARLY_ARRIVAL_STYLES } from '../../config/constants';
@@ -107,6 +107,10 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
   }, [navigate, clearAllIntervals, returnPath]);
 
   useEffect(() => {
+    if (detectedFlowType === 'reservation') {
+      return;
+    }
+
     timeIntervalRef.current = setInterval(updateTime, EARLY_ARRIVAL_CONFIG.TIME_UPDATE_INTERVAL);
 
     countdownIntervalRef.current = setInterval(() => {
@@ -120,7 +124,7 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
     }, EARLY_ARRIVAL_CONFIG.COUNTDOWN_INTERVAL);
 
     return clearAllIntervals;
-  }, [updateTime, handleCountdownComplete, clearAllIntervals]);
+  }, [updateTime, handleCountdownComplete, clearAllIntervals, detectedFlowType]);
 
   const handleReturnToMenu = useCallback(() => {
     clearAllIntervals();
@@ -161,6 +165,89 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
     textTransform: 'uppercase',
     fontSize: '32px',
   }), []);
+
+  if (detectedFlowType === 'reservation' || detectedFlowType === 'checkin') {
+    return (
+      <Container
+        size="sm"
+        bg="white"
+        p={{ base: 20, sm: 40 }}
+        style={{ minHeight: '100vh' }}
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Stack gap="xl" align="center" w="100%" maw={600}>
+          <Box
+            w={80}
+            h={80}
+            bg="#C8653D"
+            style={{ borderRadius: '50%' }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            mb="md"
+          >
+            <IconClock size={40} color="white" />
+          </Box>
+
+          <Stack gap="md" align="center" ta="center">
+            <Title order={1} fw={700} c="#222222" size="h2" mb="xs">
+              {t('earlyArrival.importantInformation')}
+            </Title>
+            <Title order={2} fw={700} c="#222222" size="h3" mb="xl">
+              {t('earlyArrival.keyCardCollection')}
+            </Title>
+
+            <Text
+              size="md"
+              c="#666666"
+              lh={1.6}
+              mb="md"
+            >
+              {t('earlyArrival.earlyCheckInMessage')}
+            </Text>
+
+            <Text
+              size="sm"
+              c="#999999"
+              lh={1.5}
+              fs="italic"
+            >
+              {t('earlyArrival.smsReminder')}
+            </Text>
+          </Stack>
+
+          <Button
+            size="lg"
+            leftSection={<IconArrowLeft size={20} />}
+            onClick={handleReturnToMenu}
+            fullWidth
+            bg="#C8653D"
+            c="white"
+            radius="md"
+            fw={700}
+            mt="xl"
+            style={{ minHeight: '60px' }}
+            sx={{
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                backgroundColor: '#B8552F',
+                transform: 'scale(1.02)',
+              },
+            }}
+          >
+            {t('earlyArrival.returnToMainMenu')}
+          </Button>
+        </Stack>
+      </Container>
+    );
+  }
 
   return (
     <Container size="lg" style={EARLY_ARRIVAL_STYLES.CONTAINER}>

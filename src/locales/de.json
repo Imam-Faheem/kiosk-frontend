@@ -484,6 +484,11 @@
     "currentTime": "Aktuelle Zeit: {{time}}",
     "cardsAvailableAfter": "Karten verfügbar nach: {{time}}",
     "returningToMenu": "Zurück zum Menü in: {{countdown}}...",
-    "returnToMenu": "Zurück zum Menü"
+    "returnToMenu": "Zurück zum Menü",
+    "importantInformation": "Wichtige Information",
+    "keyCardCollection": "Ihre Schlüsselkarten-Abholung",
+    "earlyCheckInMessage": "Sie haben sich früh eingecheckt. Um sicherzustellen, dass Ihr Zimmer perfekt vorbereitet ist, steht Ihre Schlüsselkarte ab 14:00 Uhr heute am Automaten zur Abholung bereit.",
+    "smsReminder": "Sie erhalten eine SMS-Erinnerung, wenn Ihre Karte bereit ist.",
+    "returnToMainMenu": "Zurück zum Hauptmenü"
   }
 }
