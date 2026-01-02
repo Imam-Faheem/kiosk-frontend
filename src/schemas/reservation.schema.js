@@ -4,7 +4,14 @@ export const roomSearchValidationSchema = yup.object({
   checkIn: yup
     .date()
     .required('Check-in date is required')
-    .min(new Date(), 'Check-in date cannot be in the past'),
+    .test('not-past', 'Check-in date cannot be in the past', function(value) {
+      if (!value) return true;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const checkInDate = new Date(value);
+      checkInDate.setHours(0, 0, 0, 0);
+      return checkInDate >= today;
+    }),
   
   checkOut: yup
     .date()

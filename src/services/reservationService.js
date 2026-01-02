@@ -2,16 +2,9 @@ import { apiClient } from './api/apiClient';
 import { validateReservation as validateReservationApaleo } from './checkinService';
 import { translateError } from '../utils/translations';
 
-// Mock data helpers - optional fallback
-let simulateApiDelay, mockReservations;
-try {
-  const mockModule = require('./mockData');
-  simulateApiDelay = mockModule.simulateApiDelay;
-  mockReservations = mockModule.mockReservations || [];
-} catch (e) {
-  simulateApiDelay = () => Promise.resolve();
-  mockReservations = [];
-}
+// Mock data helpers - optional fallback (mockData file doesn't exist, using defaults)
+const simulateApiDelay = () => Promise.resolve();
+const mockReservations = [];
 
 // Validate reservation for check-in using Apaleo API
 export const validateReservation = async (data) => {

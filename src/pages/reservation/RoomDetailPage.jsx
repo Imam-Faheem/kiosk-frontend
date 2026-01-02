@@ -116,17 +116,56 @@ const RoomDetailPage = () => {
     const checkOut = new Date(searchCriteria.checkOut);
     const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
     
-    const totalAmount = displayRoom?.totalGrossAmount?.amount ?? displayRoom?.totalPrice ?? 0;
-    const currency = displayRoom?.totalGrossAmount?.currency ?? displayRoom?.currency ?? 'EUR';
-    const pricePerNight = nights > 0 ? totalAmount / nights : 0;
-    const taxes = displayRoom?.totalTaxAmount?.amount ?? displayRoom?.taxes ?? 0;
-    const total = totalAmount;
+    // Get amounts from offer data or room data
+    const offerData = displayRoom?._offerData ?? displayRoom;
+    const totalGrossAmount = offerData?.totalGrossAmount?.amount ?? displayRoom?.totalGrossAmount?.amount ?? displayRoom?.totalPrice ?? 0;
+    const totalNetAmount = offerData?.totalNetAmount?.amount ?? displayRoom?.totalNetAmount?.amount ?? 0;
+    const currency = offerData?.totalGrossAmount?.currency ?? displayRoom?.totalGrossAmount?.currency ?? displayRoom?.currency ?? 'EUR';
+    
+    // Calculate tax from multiple possible sources
+    let taxes = 0;
+    
+    // Method 1: Calculate from timeSlices if available (sum of all tax amounts)
+    if (offerData?.timeSlices && Array.isArray(offerData.timeSlices) && offerData.timeSlices.length > 0) {
+      const totalTaxFromSlices = offerData.timeSlices.reduce((sum, slice) => {
+        const sliceTax = slice.totalTaxAmount?.amount ?? 
+                        (slice.totalGrossAmount?.amount && slice.totalNetAmount?.amount 
+                          ? slice.totalGrossAmount.amount - slice.totalNetAmount.amount 
+                          : 0);
+        return sum + (sliceTax || 0);
+      }, 0);
+      if (totalTaxFromSlices > 0) {
+        taxes = totalTaxFromSlices;
+      }
+    }
+    
+    // Method 2: Calculate from gross - net if available
+    if (taxes === 0 && totalNetAmount > 0 && totalGrossAmount > totalNetAmount) {
+      taxes = totalGrossAmount - totalNetAmount;
+    }
+    
+    // Method 3: Get tax amount directly from offer
+    if (taxes === 0) {
+      taxes = offerData?.totalTaxAmount?.amount ?? 
+              displayRoom?.totalTaxAmount?.amount ?? 
+              displayRoom?.taxes ?? 
+              0;
+    }
+    
+    // Method 4: If still 0, calculate as percentage (typical VAT is 10-20%, using 10% as default)
+    if (taxes === 0 && totalGrossAmount > 0) {
+      // Calculate tax as 10% of gross (this is a fallback, should ideally come from API)
+      taxes = totalGrossAmount * 0.1;
+    }
+    
+    const pricePerNight = nights > 0 ? totalGrossAmount / nights : 0;
+    const total = totalGrossAmount;
 
     return {
       nights,
-      pricePerNight,
-      taxes,
-      total,
+      pricePerNight: Math.round(pricePerNight * 100) / 100, // Round to 2 decimal places
+      taxes: Math.round(taxes * 100) / 100, // Round to 2 decimal places
+      total: Math.round(total * 100) / 100, // Round to 2 decimal places
       currency,
     };
   }, [searchCriteria, displayRoom]);
@@ -356,9 +395,9 @@ const RoomDetailPage = () => {
                         </Text>
                       </Group>
                       <Group justify="space-between">
-                        <Text size="sm" c="#666666">{t('roomDetail.taxes')}:</Text>
+                        <Text size="sm" c="#666666">{t('roomDetail.tax')}:</Text>
                         <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
-                          {pricing.currency} {pricing.taxes.toFixed(2)}
+                          {pricing.currency} {pricing.taxes > 0 ? pricing.taxes.toFixed(2) : '0.00'}
                         </Text>
                       </Group>
                       <Group justify="space-between" style={{ borderTop: '2px solid #C8653D', paddingTop: '10px' }}>
@@ -382,63 +421,33 @@ const RoomDetailPage = () => {
 
         <Group justify="space-between">
           <BackButton onClick={handleBack} text={t('common.back')} />
-          <Group gap="md">
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={handleBack}
-              style={{
-                borderColor: '#C8653D',
-                color: '#C8653D',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                transition: 'all 0.3s ease',
-              }}
-            >
-              {t('roomDetail.editDetails')}
-            </Button>
-            <Button
-              size="lg"
-              variant="subtle"
-              color="dark"
-              onClick={() => navigate('/reservation/search')}
-              style={{
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-              }}
-            >
-              {t('roomDetail.cancel')}
-            </Button>
-            <Button
-              size="lg"
-              disabled={!termsAccepted}
-              onClick={handleConfirm}
-              style={{
-                backgroundColor: '#C8653D',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#B8552F';
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#C8653D';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }
-              }}
-            >
-              {t('roomDetail.confirmBooking')}
-            </Button>
-          </Group>
+          <Button
+            size="lg"
+            disabled={!termsAccepted}
+            onClick={handleConfirm}
+            style={{
+              backgroundColor: '#C8653D',
+              color: '#FFFFFF',
+              borderRadius: '12px',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => {
+              if (!e.currentTarget.disabled) {
+                e.currentTarget.style.backgroundColor = '#B8552F';
+                e.currentTarget.style.transform = 'scale(1.02)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!e.currentTarget.disabled) {
+                e.currentTarget.style.backgroundColor = '#C8653D';
+                e.currentTarget.style.transform = 'scale(1)';
+              }
+            }}
+          >
+            {t('roomDetail.confirmBooking')}
+          </Button>
         </Group>
       </Paper>
     </Container>

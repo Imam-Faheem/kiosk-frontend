@@ -39,12 +39,34 @@ const NewResPaymentPage = () => {
         const propertyId = usePropertyStore.getState().propertyId ?? process.env.REACT_APP_PROPERTY_ID ?? 'BER';
         const hotelId = propertyId; // Use propertyId as hotelId for the endpoint
         
-        // Prepare booking data for API
-        const unitGroupId = room.unitGroupId ?? room.roomTypeId ?? room._offerData?.unitGroupId;
-        const ratePlanId = room.ratePlanId ?? room._offerData?.ratePlanId;
+        // Prepare booking data for API - check all possible locations
+        // The room object can be either:
+        // 1. A transformed room object with unitGroupId/ratePlanId at top level
+        // 2. A raw offer object with unitGroup/ratePlan nested objects
+        // 3. A room object with _offerData containing the original offer
+        const unitGroupId = room?.unitGroupId 
+          ?? room?.roomTypeId 
+          ?? room?.unitGroup?.id 
+          ?? room?.unitGroup?.code
+          ?? room?._offerData?.unitGroupId 
+          ?? room?._offerData?.unitGroup?.id 
+          ?? room?._offerData?.unitGroup?.code;
+        
+        const ratePlanId = room?.ratePlanId 
+          ?? room?.ratePlan?.id 
+          ?? room?.ratePlan?.code
+          ?? room?._offerData?.ratePlanId 
+          ?? room?._offerData?.ratePlan?.id 
+          ?? room?._offerData?.ratePlan?.code;
         
         if (!unitGroupId || !ratePlanId) {
-          console.error('[NewResPaymentPage] Missing room information:', { room, unitGroupId, ratePlanId });
+          console.error('[NewResPaymentPage] Missing room information:', { 
+            room, 
+            unitGroupId, 
+            ratePlanId,
+            roomKeys: Object.keys(room || {}),
+            offerDataKeys: Object.keys(room?._offerData || {})
+          });
           throw new Error(t('error.missingRoomInformation') ?? 'Missing room information. Please select a room again.');
         }
         
@@ -297,6 +319,10 @@ const NewResPaymentPage = () => {
 
   useEffect(() => {
     if (!room || !guestDetails) {
+      console.warn('[NewResPaymentPage] Missing required data, redirecting to search:', { 
+        hasRoom: !!room, 
+        hasGuestDetails: !!guestDetails 
+      });
       navigate('/reservation/search');
       return;
     }
@@ -308,6 +334,35 @@ const NewResPaymentPage = () => {
 
     // Only auto-process if we have all required data
     if (room && guestDetails && searchCriteria && !hasProcessed.current) {
+      // Verify room has required fields before processing
+      const unitGroupId = room?.unitGroupId 
+        ?? room?.roomTypeId 
+        ?? room?.unitGroup?.id 
+        ?? room?.unitGroup?.code
+        ?? room?._offerData?.unitGroupId 
+        ?? room?._offerData?.unitGroup?.id 
+        ?? room?._offerData?.unitGroup?.code;
+      
+      const ratePlanId = room?.ratePlanId 
+        ?? room?.ratePlan?.id 
+        ?? room?.ratePlan?.code
+        ?? room?._offerData?.ratePlanId 
+        ?? room?._offerData?.ratePlan?.id 
+        ?? room?._offerData?.ratePlan?.code;
+      
+      if (!unitGroupId || !ratePlanId) {
+        console.error('[NewResPaymentPage] Room missing required fields, redirecting to search:', {
+          room,
+          unitGroupId,
+          ratePlanId
+        });
+        setError(t('error.missingRoomInformation') ?? 'Missing room information. Please select a room again.');
+        setTimeout(() => {
+          navigate('/reservation/search', { replace: true });
+        }, 3000);
+        return;
+      }
+      
       processPayment();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

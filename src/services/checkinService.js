@@ -3,16 +3,13 @@ import { translateError } from '../utils/translations';
 import { STORAGE_KEYS } from '../config/constants';
 import { API_CONFIG } from '../config/constants';
 
-// Mock data helpers - optional fallback
-let mockData, shouldUseMock;
-try {
-  const mockModule = require('./mockData');
-  mockData = mockModule.mockData;
-  shouldUseMock = mockModule.shouldUseMock;
-} catch (e) {
-  shouldUseMock = () => false;
-  mockData = { checkIn: () => ({}), checkInStatus: () => ({}), reservation: () => ({ success: false }) };
-}
+// Mock data helpers - optional fallback (mockData file doesn't exist, using defaults)
+const shouldUseMock = () => false;
+const mockData = { 
+  checkIn: () => ({}), 
+  checkInStatus: () => ({}), 
+  reservation: () => ({ success: false }) 
+};
 
 const getPropertyContext = () => {
   try {
