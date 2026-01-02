@@ -1,0 +1,9 @@
+# DLL files are binary and may be large
+# Uncomment if you want to exclude them from git
+# *.dll
+# *.lib
+
+# But keep header files for reference
+!*.h
+!*.md
+

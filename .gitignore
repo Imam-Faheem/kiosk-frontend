@@ -21,3 +21,9 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Hardware Service
+hardware-service/node_modules/
+hardware-service/.env
+hardware-service/*.log
+hardware-service/logs/

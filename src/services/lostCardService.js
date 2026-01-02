@@ -2,6 +2,7 @@ import { apiClient } from './api/apiClient';
 import { translateError } from '../utils/translations';
 import { STORAGE_KEYS } from '../config/constants';
 import { API_CONFIG } from '../config/constants';
+import { issueCard as issueHardwareCard } from './hardware/hardwareService';
 
 const getPropertyContext = () => {
   try {
@@ -174,18 +175,69 @@ export const regenerateLostCard = async (data) => {
       propertyId: context.propertyId,
       organizationId: context.organizationId,
       reservationId,
-      data,
-      method: 'POST',
+      method: 'GET',
     });
 
-    const response = await apiClient.post(endpoint, data);
+    // Use GET method for lost-card endpoint
+    const response = await apiClient.post(endpoint);
     
     console.log('[regenerateLostCard] Success:', {
       status: response.status,
       data: response.data,
     });
 
-    return response.data;
+    const apiResult = response.data;
+
+    // If API call was successful and we have lock data, trigger hardware card issuance
+    if (apiResult?.success === true && apiResult?.data) {
+      const lockData = apiResult.data?.ekey?.encrypt_payload || apiResult.data?.encrypt_payload;
+      
+      if (lockData) {
+        console.log('[regenerateLostCard] Triggering hardware card issuance', {
+          has_lock_data: !!lockData,
+          lock_data_length: lockData.length
+        });
+
+        try {
+          // Issue card via hardware service
+          const hardwareResult = await issueHardwareCard(lockData);
+          
+          console.log('[regenerateLostCard] Hardware card issued successfully', {
+            card_id: hardwareResult?.data?.cardId,
+            card_type: hardwareResult?.data?.cardType
+          });
+
+          // Merge hardware result with API result
+          return {
+            ...apiResult,
+            hardware: {
+              success: true,
+              cardId: hardwareResult?.data?.cardId,
+              cardType: hardwareResult?.data?.cardType,
+              encodedAt: hardwareResult?.data?.encodedAt
+            }
+          };
+        } catch (hardwareError) {
+          console.error('[regenerateLostCard] Hardware card issuance failed', {
+            error: hardwareError.message
+          });
+
+          // Return API result but include hardware error
+          return {
+            ...apiResult,
+            hardware: {
+              success: false,
+              error: hardwareError.message,
+              message: 'Card data retrieved but physical card issuance failed'
+            }
+          };
+        }
+      } else {
+        console.warn('[regenerateLostCard] No lock data in response, skipping hardware issuance');
+      }
+    }
+
+    return apiResult;
   } catch (error) {
     const baseURL = apiClient.defaults?.baseURL ?? API_CONFIG.BASE_URL ?? 'http://localhost:8000';
     const fullUrl = `${baseURL}${endpoint}`;
