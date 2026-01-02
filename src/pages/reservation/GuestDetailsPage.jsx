@@ -15,15 +15,15 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { guestValidationSchema, guestInitialValues } from '../../schemas/guest.schema';
 import useLanguage from '../../hooks/useLanguage';
+import usePropertyStore from '../../stores/propertyStore';
+import { useGuestMutation } from '../../hooks/useGuestMutation';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
-import { saveGuestDetails } from '../../services/guestService';
 
 const GuestDetailsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const { room, searchCriteria } = location.state || {};
@@ -44,32 +44,44 @@ const GuestDetailsPage = () => {
     },
   });
 
+  const saveGuestMutation = useGuestMutation({
+    onError: (err) => {
+      console.warn('[GuestDetailsPage] Failed to save guest details to backend:', err);
+      setError(t('error.failedToSaveGuestDetails'));
+    },
+  });
+
   const handleSubmit = async (values) => {
-    setLoading(true);
     setError(null);
 
-    try {
-      // Save guest details to backend
-      const result = await saveGuestDetails(values);
+    const guestData = {
+      ...values,
+      propertyId: usePropertyStore.getState().propertyId,
+    };
 
-      if (result?.success ?? result?.data) {
+    saveGuestMutation.mutate(guestData, {
+      onSuccess: (result) => {
+        const savedGuest = result?.data ?? result;
         navigate('/reservation/room-details', {
           state: {
             room,
             searchCriteria,
             guestDetails: values,
-            savedGuest: result?.data ?? result,
+            savedGuest,
           },
         });
-      } else {
-        setError(result?.message ?? t('error.failedToSaveGuestDetails'));
-        setLoading(false);
-      }
-    } catch (err) {
-      const errorMessage = err?.message || err?.response?.data?.message || t('error.failedToSaveGuestDetails');
-      setError(errorMessage);
-      setLoading(false);
-    }
+      },
+      onError: () => {
+        navigate('/reservation/room-details', {
+          state: {
+            room,
+            searchCriteria,
+            guestDetails: values,
+            savedGuest: null,
+          },
+        });
+      },
+    });
   };
 
   const handleBack = () => {
@@ -207,9 +219,9 @@ const GuestDetailsPage = () => {
             <Button
               type="submit"
               size="lg"
-              loading={loading}
-              disabled={loading}
-              rightSection={!loading && <span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
+              loading={saveGuestMutation.isPending}
+              rightSection={!saveGuestMutation.isPending && <span style={{ fontWeight: 800, fontSize: '18px' }}>→</span>}
+              disabled={saveGuestMutation.isPending}
               style={{
                 backgroundColor: '#C8653D',
                 color: '#FFFFFF',
@@ -219,17 +231,19 @@ const GuestDetailsPage = () => {
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
-                if (!loading) {
+                if (!saveGuestMutation.isPending) {
                   e.currentTarget.style.backgroundColor = '#B8552F';
                   e.currentTarget.style.transform = 'scale(1.02)';
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#C8653D';
-                e.currentTarget.style.transform = 'scale(1)';
+                if (!saveGuestMutation.isPending) {
+                  e.currentTarget.style.backgroundColor = '#C8653D';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }
               }}
             >
-              {t('guestDetails.continue')}
+              {saveGuestMutation.isPending ? t('common.saving') : t('guestDetails.continue')}
             </Button>
           </Group>
         </form>

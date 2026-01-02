@@ -4,15 +4,9 @@ import { IconAlertCircle } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import usePropertyStore from "../stores/propertyStore";
 import { getPrimaryButtonStyles, getInputStyles } from "../constants/style.constants";
-import { REVERSE_CAPABILITY_MAP } from "../config/constants";
 import PropertyHeader from "../components/PropertyHeader";
 import useLanguage from "../hooks/useLanguage";
 import { usePropertyQuery } from "../hooks/usePropertyQuery";
-
-const convertCapabilitiesToArray = (capabilitiesObj) =>
-  Object.entries(capabilitiesObj ?? {})
-    .filter(([_, enabled]) => enabled)
-    .map(([key]) => REVERSE_CAPABILITY_MAP[key] ?? key);
 
 const SelectItem = React.forwardRef(({ label, image, ...others }, ref) => {
   // Extract itemComponent prop if it exists to prevent it from being passed to DOM

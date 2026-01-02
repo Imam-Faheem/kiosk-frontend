@@ -28,6 +28,13 @@ import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
 
+// Get today's date at midnight for date inputs
+const getTodayDate = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+};
+
 const SearchRoomsPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -191,7 +198,7 @@ const SearchRoomsPage = () => {
                   size="lg"
                   valueFormat="YYYY-MM-DD"
                   {...form.getInputProps('checkIn')}
-                  minDate={new Date()}
+                  minDate={getTodayDate()}
                   popoverProps={{ withinPortal: true, position: 'bottom-start', shadow: 'md', zIndex: 300 }}
                   styles={FORM_INPUT_STYLES.dateInput}
                 />
@@ -204,7 +211,7 @@ const SearchRoomsPage = () => {
                   size="lg"
                   valueFormat="YYYY-MM-DD"
                   {...form.getInputProps('checkOut')}
-                  minDate={form.values.checkIn ? new Date(form.values.checkIn) : new Date()}
+                  minDate={form.values.checkIn ? new Date(form.values.checkIn) : getTodayDate()}
                   popoverProps={{ withinPortal: true, position: 'bottom-start', shadow: 'md', zIndex: 300 }}
                   styles={FORM_INPUT_STYLES.dateInput}
                 />
@@ -226,7 +233,8 @@ const SearchRoomsPage = () => {
               type="submit"
               size="lg"
               leftSection={<IconSearch size={20} />}
-              disabled={!!searchResults || isSearching}
+              disabled={isSearching}
+              loading={isSearching}
               styles={BUTTON_STYLES.primary}
               radius="md"
             >

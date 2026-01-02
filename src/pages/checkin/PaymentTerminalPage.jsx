@@ -17,6 +17,7 @@ import { IconCreditCard, IconX, IconCheck } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { usePaymentMutation } from '../../hooks/usePaymentMutation';
+import { EARLY_ARRIVAL_CONFIG } from '../../config/constants';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
@@ -56,9 +57,23 @@ const PaymentTerminalPage = () => {
         setPaymentStatus('completed');
         clearInterval(pollInterval);
         clearTimeout(timeoutId);
-        navigate('/checkin/card-dispensing', {
-          state: { reservation, paymentData: result.data }
-        });
+        
+        const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
+        const now = new Date();
+        const [time, period] = targetTime.split(' ');
+        const [hours, minutes] = time.split(':').map(Number);
+        const target = new Date();
+        target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
+        
+        if (now < target) {
+          navigate('/checkin/early-arrival', {
+            state: { reservation, paymentData: result.data }
+          });
+        } else {
+          navigate('/checkin/card-dispensing', {
+            state: { reservation, paymentData: result.data }
+          });
+        }
       }
     },
     onError: (err) => {

@@ -2,6 +2,7 @@ import { apiClient } from './api/apiClient';
 import { validateReservation as validateReservationApaleo } from './checkinService';
 import { translateError } from '../utils/translations';
 
+// Validate reservation for check-in using Apaleo API
 export const validateReservation = async (data) => {
   return await validateReservationApaleo(data);
 };

@@ -2,7 +2,7 @@ import { apiClient } from './api/apiClient';
 import { STORAGE_KEYS } from '../config/constants';
 
 /**
- * Get property and organization IDs from localStorage
+ * Get property and organization IDs from localStorage and property store
  * @returns {Object} Property context with propertyId and organizationId
  */
 const getPropertyContext = () => {
@@ -11,18 +11,50 @@ const getPropertyContext = () => {
       return { propertyId: null, organizationId: null };
     }
     
+    // First try to get from localStorage
     const propertyData = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
-    if (!propertyData) {
-      return { propertyId: null, organizationId: null };
+    if (propertyData) {
+      const parsed = JSON.parse(propertyData);
+      if (parsed.propertyId && parsed.organizationId) {
+        return {
+          propertyId: parsed.propertyId,
+          organizationId: parsed.organizationId,
+        };
+      }
     }
 
-    const parsed = JSON.parse(propertyData);
+    // Fallback: Try to get from property store (Zustand)
+    try {
+      const propertyStoreData = localStorage.getItem('property-storage');
+      if (propertyStoreData) {
+        const storeParsed = JSON.parse(propertyStoreData);
+        const selectedProperty = storeParsed?.state?.selectedProperty;
+        const propertyId = storeParsed?.state?.propertyId;
+        
+        if (selectedProperty && propertyId) {
+          const organizationId = selectedProperty.organization_id || selectedProperty.organizationId;
+          if (organizationId) {
+            return {
+              propertyId: propertyId,
+              organizationId: organizationId,
+            };
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore errors when reading property store
+    }
+
+    // Default organization ID if still not found
     return {
-      propertyId: parsed.propertyId ?? null,
-      organizationId: parsed.organizationId ?? null,
+      propertyId: null,
+      organizationId: process.env.REACT_APP_ORGANIZATION_ID || '0ujsszwN8NRY24YaXiTIE2VWDTS',
     };
   } catch {
-    return { propertyId: null, organizationId: null };
+    return { 
+      propertyId: null, 
+      organizationId: process.env.REACT_APP_ORGANIZATION_ID || '0ujsszwN8NRY24YaXiTIE2VWDTS',
+    };
   }
 };
 
@@ -43,33 +75,60 @@ const getPropertyContext = () => {
  * @returns {Promise<Object>} Saved guest details response
  */
 export const saveGuestDetails = async (guestData) => {
-  const { propertyId: contextPropertyId, organizationId } = getPropertyContext();
+  let { propertyId: contextPropertyId, organizationId } = getPropertyContext();
   const propertyId = guestData.propertyId || contextPropertyId;
 
   if (!propertyId) {
     throw new Error('Property ID is required. Please select a property first.');
   }
 
+  // If organizationId is not found, try to get it from property store
   if (!organizationId) {
-    throw new Error('Organization ID is required. Please check your configuration.');
+    try {
+      const propertyStoreData = localStorage.getItem('property-storage');
+      if (propertyStoreData) {
+        const storeParsed = JSON.parse(propertyStoreData);
+        const selectedProperty = storeParsed?.state?.selectedProperty;
+        if (selectedProperty) {
+          organizationId = selectedProperty.organization_id || selectedProperty.organizationId;
+        }
+      }
+    } catch (e) {
+      // Ignore errors
+    }
+  }
+
+  // Fallback to default organization ID if still not found
+  if (!organizationId) {
+    organizationId = process.env.REACT_APP_ORGANIZATION_ID || '0ujsszwN8NRY24YaXiTIE2VWDTS';
   }
 
   // Use kiosk API endpoint with organization and property IDs in path
   const endpoint = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/guests/details`;
 
   try {
+    console.log('[saveGuestDetails] Making request:', {
+      endpoint,
+      propertyId,
+      organizationId,
+      baseURL: apiClient.defaults.baseURL,
+    });
+    
     const response = await apiClient.post(endpoint, guestData);
     return response.data;
   } catch (error) {
     console.error('[saveGuestDetails] Error:', {
       endpoint,
+      fullUrl: `${apiClient.defaults.baseURL}${endpoint}`,
       guestData: { ...guestData, propertyId: undefined }, // Don't log full data
       propertyId,
       organizationId,
       error: error.message,
+      errorCode: error.code,
       status: error?.response?.status,
       statusText: error?.response?.statusText,
       data: error?.response?.data,
+      responseHeaders: error?.response?.headers,
     });
 
     // Handle network errors

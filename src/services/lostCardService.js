@@ -1,66 +1,107 @@
 import { apiClient } from './api/apiClient';
 import { translateError } from '../utils/translations';
-import usePropertyStore from '../stores/propertyStore';
-import { STORAGE_KEYS, API_CONFIG } from '../config/constants';
+import { STORAGE_KEYS } from '../config/constants';
+import { API_CONFIG } from '../config/constants';
 
-const extractPropertyIdFromStore = (state) => {
-  return state.propertyId ?? state.selectedProperty?.property_id ?? state.selectedProperty?.id;
-};
-
-const extractOrganizationIdFromStore = (state) => {
-  return state.selectedProperty?.organizationId ?? 
-         state.selectedProperty?.organization?.id ??
-         state.selectedProperty?.organization_id;
-};
-
-const getStoredPropertyData = () => {
+const getPropertyContext = () => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
-    return stored ? JSON.parse(stored) : null;
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return { propertyId: null, organizationId: API_CONFIG.ORGANIZATION_ID ?? null };
+    }
+    
+    const propertyData = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
+    if (propertyData) {
+      const parsed = JSON.parse(propertyData);
+      if (parsed.propertyId && parsed.organizationId) {
+        return {
+          propertyId: parsed.propertyId,
+          organizationId: parsed.organizationId,
+        };
+      }
+    }
+
+    try {
+      const propertyStoreData = localStorage.getItem('property-storage');
+      if (propertyStoreData) {
+        const storeParsed = JSON.parse(propertyStoreData);
+        const selectedProperty = storeParsed?.state?.selectedProperty;
+        const propertyId = storeParsed?.state?.propertyId;
+        
+        if (selectedProperty && propertyId) {
+          const organizationId = selectedProperty.organization_id ?? selectedProperty.organizationId;
+          if (organizationId) {
+            return {
+              propertyId: propertyId,
+              organizationId: organizationId,
+            };
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore errors when reading property store
+    }
+
+    return {
+      propertyId: null,
+      organizationId: API_CONFIG.ORGANIZATION_ID ?? null,
+    };
   } catch {
-    return null;
+    return { 
+      propertyId: null, 
+      organizationId: API_CONFIG.ORGANIZATION_ID ?? null,
+    };
   }
 };
 
-const getPropertyIds = () => {
-  const state = usePropertyStore.getState();
-  
-  const storePropertyId = extractPropertyIdFromStore(state);
-  const storeOrgId = extractOrganizationIdFromStore(state);
-  
-  if (storePropertyId && storeOrgId) {
-    return { propertyId: storePropertyId, organizationId: storeOrgId };
+export const getLostCardRequest = async (reservationId, propertyId = null, organizationId = null) => {
+  if (!reservationId) {
+    throw new Error('Reservation ID is required.');
   }
   
-  const storedData = getStoredPropertyData();
-  const storedPropertyId = storedData?.propertyId ?? storedData?.property_id;
-  const storedOrgId = storedData?.organizationId ?? storedData?.organization_id;
+  const context = getPropertyContext();
+  const finalPropertyId = propertyId ?? context.propertyId;
+  const finalOrganizationId = organizationId ?? context.organizationId;
   
-  return {
-    propertyId: storePropertyId ?? storedPropertyId ?? API_CONFIG.DEFAULT_PROPERTY_ID,
-    organizationId: storeOrgId ?? storedOrgId ?? API_CONFIG.ORGANIZATION_ID,
-  };
+  if (!finalPropertyId || !finalOrganizationId) {
+    throw new Error('Property ID and Organization ID are required to get lost card request.');
+  }
+  
+  try {
+    const endpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/lost-card`;
+    const response = await apiClient.get(endpoint);
+    return response.data;
+  } catch (error) {
+    if (error?.response?.status === 404) {
+      throw new Error(translateError('reservationNotFoundByNumber'));
+    }
+    
+    const message = error?.response?.data?.message ??
+                   error?.response?.data?.error ??
+                   error?.message ??
+                   'Failed to get lost card request';
+    throw new Error(message);
+  }
 };
-
-const isPresent = (value) => value != null && value !== '';
 
 export const validateLostCardGuest = async (data) => {
-  const { reservationNumber } = data;
+  const { reservationNumber, lastName } = data;
 
-  if (!isPresent(reservationNumber)) {
+  if (!reservationNumber) {
     throw new Error(translateError('reservationIdRequired'));
   }
 
-  const { propertyId, organizationId } = getPropertyIds();
-  const missingIds = [propertyId, organizationId].filter(id => !isPresent(id));
-  if (missingIds.length > 0) {
-    throw new Error('Property configuration is missing.');
+  const context = getPropertyContext();
+  
+  if (!context.propertyId || !context.organizationId) {
+    throw new Error('Property ID and Organization ID are required to validate lost card guest.');
   }
 
-  const url = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/reservations/${reservationNumber}/check-in`;
+  const endpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/reservations/${reservationNumber}/details`;
 
   try {
-    const response = await apiClient.get(url);
+    const response = await apiClient.get(endpoint, {
+      params: lastName ? { lastName } : {},
+    });
     
     const apiData = response.data?.success === true && response.data?.data 
       ? response.data.data 
@@ -68,6 +109,16 @@ export const validateLostCardGuest = async (data) => {
 
     if (!apiData) {
       throw new Error(translateError('reservationNotFoundByNumber'));
+    }
+
+    // Validate lastName if provided
+    if (lastName) {
+      const lastNameLower = lastName.trim().toLowerCase();
+      const reservationLastName = apiData?.primaryGuest?.lastName?.trim().toLowerCase();
+
+      if (!reservationLastName || lastNameLower !== reservationLastName) {
+        throw new Error(translateError('lastNameMismatch'));
+      }
     }
 
     const hasPrimaryGuest = !!apiData.primaryGuest;
@@ -96,8 +147,16 @@ export const validateLostCardGuest = async (data) => {
 };
 
 export const regenerateLostCard = async (data) => {
+  const context = getPropertyContext();
+  
+  if (!context.propertyId || !context.organizationId) {
+    throw new Error('Property ID and Organization ID are required to regenerate lost card.');
+  }
+  
+  const endpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/lost-card/regenerate`;
+
   try {
-    const response = await apiClient.post('/api/kiosk/v1/lost-card/regenerate', data);
+    const response = await apiClient.post(endpoint, data);
     return response.data;
   } catch (error) {
     const message = error?.response?.data?.message ??

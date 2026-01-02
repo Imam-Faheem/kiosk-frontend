@@ -108,6 +108,7 @@
     "checkInDate": "Data di Check-In",
     "checkOutDate": "Data di Check-Out",
     "pricePerNight": "Prezzo per notte",
+    "tax": "Tassa",
     "taxes": "Tasse",
     "total": "Totale",
     "terms": "Accetto i termini e le condizioni",
@@ -425,6 +426,11 @@
     "currentTime": "Ora attuale: {{time}}",
     "cardsAvailableAfter": "Carte disponibili dopo: {{time}}",
     "returningToMenu": "Ritorno al menu tra: {{countdown}}...",
-    "returnToMenu": "Torna al Menu"
+    "returnToMenu": "Torna al Menu",
+    "importantInformation": "Informazioni Importanti",
+    "keyCardCollection": "Ritiro della Tua Carta Chiave",
+    "earlyCheckInMessage": "Hai fatto il check-in in anticipo. Per assicurarti che la tua camera sia perfettamente pronta, la tua carta chiave sarà disponibile per il ritiro al distributore dalle 14:00 di oggi.",
+    "smsReminder": "Riceverai un promemoria SMS quando la tua carta sarà pronta.",
+    "returnToMainMenu": "Torna al Menu Principale"
   }
 }

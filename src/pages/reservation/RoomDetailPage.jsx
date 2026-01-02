@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Container,
   Paper,
@@ -18,10 +18,9 @@ import {
 import { IconWifi, IconSnowflake, IconShield, IconCoffee, IconDeviceTv } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
-import usePropertyStore from '../../stores/propertyStore';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
-import { getRoomDetails } from '../../services/roomService';
+import { useRoomQuery } from '../../hooks/useRoomQuery';
 import UnoLogo from '../../assets/uno.jpg';
 
 const RoomDetailPage = () => {
@@ -30,66 +29,38 @@ const RoomDetailPage = () => {
   const { t } = useLanguage();
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [roomData, setRoomData] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   const { room, searchCriteria, guestDetails } = location.state || {};
 
-  // Fetch room details with images if room images are missing
-  useEffect(() => {
-    const fetchRoomImages = async () => {
-      if (room && room.roomTypeId) {
-        // Check if room has images
-        const hasImages = room.images && Array.isArray(room.images) && room.images.length > 0;
-        
-        if (!hasImages) {
-          setLoading(true);
-          try {
-            const propertyId = usePropertyStore.getState().propertyId;
-            if (!propertyId) {
-              throw new Error('Property ID is required');
-            }
-            const result = await getRoomDetails(room.roomTypeId, propertyId);
-            
-            if (result.success && result.data && result.data.images) {
-              // Merge room data with fetched images
-              setRoomData({
-                ...room,
-                images: result.data.images.length > 0 ? result.data.images : [UnoLogo],
-              });
-            } else {
-              // Use default logo if no images found
-              setRoomData({
-                ...room,
-                images: [UnoLogo],
-              });
-            }
-          } catch (err) {
-            // Use default logo on error
-            setRoomData({
-              ...room,
-              images: [UnoLogo],
-            });
-          } finally {
-            setLoading(false);
-          }
-        } else {
-          // Room already has images, use it as is
-          setRoomData(room);
-        }
-      } else if (room) {
-        // Room exists but no roomTypeId, use it with default image
-        setRoomData({
-          ...room,
-          images: room.images && Array.isArray(room.images) && room.images.length > 0 
-            ? room.images 
-            : [UnoLogo],
-        });
-      }
-    };
+  const hasImages = room?.images && Array.isArray(room.images) && room.images.length > 0;
+  const shouldFetchDetails = room?.roomTypeId && !hasImages;
 
-    fetchRoomImages();
-  }, [room]);
+  const { data: roomDetailsResult, isLoading: isLoadingRoomDetails } = useRoomQuery(
+    room?.roomTypeId,
+    { enabled: shouldFetchDetails }
+  );
+
+  const roomData = useMemo(() => {
+    if (!room) return null;
+
+    if (hasImages) {
+      return room;
+    }
+
+    if (roomDetailsResult?.data?.images && roomDetailsResult.data.images.length > 0) {
+      return {
+        ...room,
+        images: roomDetailsResult.data.images,
+      };
+    }
+
+    return {
+      ...room,
+      images: room.images && Array.isArray(room.images) && room.images.length > 0
+        ? room.images
+        : [UnoLogo],
+    };
+  }, [room, hasImages, roomDetailsResult]);
 
   // Use roomData if available, otherwise fallback to room
   const displayRoom = roomData || room;
@@ -135,8 +106,75 @@ const RoomDetailPage = () => {
     return amenityMap[amenity] || amenity;
   };
 
+  // Calculate pricing information
+  const pricing = React.useMemo(() => {
+    if (!searchCriteria?.checkIn || !searchCriteria?.checkOut || !displayRoom) {
+      return { nights: 0, pricePerNight: 0, taxes: 0, total: 0, currency: 'EUR' };
+    }
+
+    const checkIn = new Date(searchCriteria.checkIn);
+    const checkOut = new Date(searchCriteria.checkOut);
+    const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+    
+    // Get amounts from offer data or room data
+    const offerData = displayRoom?._offerData ?? displayRoom;
+    const totalGrossAmount = offerData?.totalGrossAmount?.amount ?? displayRoom?.totalGrossAmount?.amount ?? displayRoom?.totalPrice ?? 0;
+    const totalNetAmount = offerData?.totalNetAmount?.amount ?? displayRoom?.totalNetAmount?.amount ?? 0;
+    const currency = offerData?.totalGrossAmount?.currency ?? displayRoom?.totalGrossAmount?.currency ?? displayRoom?.currency ?? 'EUR';
+    
+    // Calculate tax from multiple possible sources
+    let taxes = 0;
+    
+    // Method 1: Calculate from timeSlices if available (sum of all tax amounts)
+    if (offerData?.timeSlices && Array.isArray(offerData.timeSlices) && offerData.timeSlices.length > 0) {
+      const totalTaxFromSlices = offerData.timeSlices.reduce((sum, slice) => {
+        const sliceTax = slice.totalTaxAmount?.amount ?? 
+                        (slice.totalGrossAmount?.amount && slice.totalNetAmount?.amount 
+                          ? slice.totalGrossAmount.amount - slice.totalNetAmount.amount 
+                          : 0);
+        return sum + (sliceTax || 0);
+      }, 0);
+      if (totalTaxFromSlices > 0) {
+        taxes = totalTaxFromSlices;
+      }
+    }
+    
+    // Method 2: Calculate from gross - net if available
+    if (taxes === 0 && totalNetAmount > 0 && totalGrossAmount > totalNetAmount) {
+      taxes = totalGrossAmount - totalNetAmount;
+    }
+    
+    // Method 3: Get tax amount directly from offer
+    if (taxes === 0) {
+      taxes = offerData?.totalTaxAmount?.amount ?? 
+              displayRoom?.totalTaxAmount?.amount ?? 
+              displayRoom?.taxes ?? 
+              0;
+    }
+    
+    // Method 4: If still 0, calculate as percentage (typical VAT is 10-20%, using 10% as default)
+    if (taxes === 0 && totalGrossAmount > 0) {
+      // Calculate tax as 10% of gross (this is a fallback, should ideally come from API)
+      taxes = totalGrossAmount * 0.1;
+    }
+    
+    const pricePerNight = nights > 0 ? totalGrossAmount / nights : 0;
+    const total = totalGrossAmount;
+
+    return {
+      nights,
+      pricePerNight: Math.round(pricePerNight * 100) / 100, // Round to 2 decimal places
+      taxes: Math.round(taxes * 100) / 100, // Round to 2 decimal places
+      total: Math.round(total * 100) / 100, // Round to 2 decimal places
+      currency,
+    };
+  }, [searchCriteria, displayRoom]);
+
   const handleConfirm = () => {
-    navigate('/reservation/signature', {
+    // Skip card dispenser for new reservations since cards can only be issued
+    // after reservation is created (during payment/booking)
+    // Cards will be issued during check-in process
+    navigate('/reservation/payment', {
       state: {
         room: displayRoom,
         searchCriteria,
@@ -226,7 +264,8 @@ const RoomDetailPage = () => {
           <Stack gap="md">
             <Text size="xl" fw={600}>{displayRoom.name}</Text>
               
-              {loading ? (
+            {/* Main Image */}
+            {isLoadingRoomDetails ? (
                 <Box style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f0f0', borderRadius: '8px' }}>
                   <Text c="#666666">{t('common.loading')}</Text>
                 </Box>
@@ -254,7 +293,8 @@ const RoomDetailPage = () => {
                 </Box>
               )}
 
-              {!loading && roomImages.length > 1 && (
+            {/* Thumbnail Images */}
+            {!isLoadingRoomDetails && roomImages.length > 1 && (
                 <SimpleGrid cols={3} spacing="sm">
                   {roomImages.map((image, index) => (
                   <Box
@@ -345,8 +385,10 @@ const RoomDetailPage = () => {
                         <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{displayRoom.currency || 'EUR'} {displayRoom.pricePerNight || 0}</Text>
                       </Group>
                       <Group justify="space-between">
-                        <Text size="sm" c="#666666">{t('roomDetail.taxes')}:</Text>
-                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{displayRoom.currency || 'EUR'} {displayRoom.taxes || 0}</Text>
+                        <Text size="sm" c="#666666">{t('roomDetail.tax')}:</Text>
+                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
+                          {pricing.currency} {pricing.taxes > 0 ? pricing.taxes.toFixed(2) : '0.00'}
+                        </Text>
                       </Group>
                       <Group justify="space-between" style={{ borderTop: '2px solid #C8653D', paddingTop: '10px' }}>
                         <Text size="lg" fw={700} c="#C8653D">{t('roomDetail.total')}:</Text>
@@ -369,63 +411,33 @@ const RoomDetailPage = () => {
 
         <Group justify="space-between">
           <BackButton onClick={handleBack} text={t('common.back')} />
-          <Group gap="md">
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={handleBack}
-              style={{
-                borderColor: '#C8653D',
-                color: '#C8653D',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                transition: 'all 0.3s ease',
-              }}
-            >
-              {t('roomDetail.editDetails')}
-            </Button>
-            <Button
-              size="lg"
-              variant="subtle"
-              color="dark"
-              onClick={() => navigate('/reservation/search')}
-              style={{
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-              }}
-            >
-              {t('roomDetail.cancel')}
-            </Button>
-            <Button
-              size="lg"
-              disabled={!termsAccepted}
-              onClick={handleConfirm}
-              style={{
-                backgroundColor: '#C8653D',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                fontWeight: 'bold',
-                fontSize: '16px',
-                transition: 'all 0.3s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#B8552F';
-                  e.currentTarget.style.transform = 'scale(1.02)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = '#C8653D';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }
-              }}
-            >
-              {t('roomDetail.confirmBooking')}
-            </Button>
-          </Group>
+          <Button
+            size="lg"
+            disabled={!termsAccepted}
+            onClick={handleConfirm}
+            style={{
+              backgroundColor: '#C8653D',
+              color: '#FFFFFF',
+              borderRadius: '12px',
+              fontWeight: 'bold',
+              fontSize: '16px',
+              transition: 'all 0.3s ease',
+            }}
+            onMouseEnter={(e) => {
+              if (!e.currentTarget.disabled) {
+                e.currentTarget.style.backgroundColor = '#B8552F';
+                e.currentTarget.style.transform = 'scale(1.02)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!e.currentTarget.disabled) {
+                e.currentTarget.style.backgroundColor = '#C8653D';
+                e.currentTarget.style.transform = 'scale(1)';
+              }
+            }}
+          >
+            {t('roomDetail.confirmBooking')}
+          </Button>
         </Group>
       </Paper>
     </Container>

@@ -1,48 +1,7 @@
 import { apiClient } from './api/apiClient';
 import { translateError } from '../utils/translations';
-import usePropertyStore from '../stores/propertyStore';
-import { STORAGE_KEYS, API_CONFIG } from '../config/constants';
-
-const extractPropertyIdFromStore = (state) => {
-  return state.propertyId ?? state.selectedProperty?.property_id ?? state.selectedProperty?.id;
-};
-
-const extractOrganizationIdFromStore = (state) => {
-  return state.selectedProperty?.organizationId ?? 
-         state.selectedProperty?.organization?.id ??
-         state.selectedProperty?.organization_id;
-};
-
-const getStoredPropertyData = () => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
-    return stored ? JSON.parse(stored) : null;
-  } catch {
-    return null;
-  }
-};
-
-const getPropertyIds = () => {
-  const state = usePropertyStore.getState();
-  
-  // Try store first
-  const storePropertyId = extractPropertyIdFromStore(state);
-  const storeOrgId = extractOrganizationIdFromStore(state);
-  
-  if (storePropertyId && storeOrgId) {
-    return { propertyId: storePropertyId, organizationId: storeOrgId };
-  }
-  
-  // Fallback to localStorage
-  const storedData = getStoredPropertyData();
-  const storedPropertyId = storedData?.propertyId ?? storedData?.property_id;
-  const storedOrgId = storedData?.organizationId ?? storedData?.organization_id;
-  
-  return {
-    propertyId: storePropertyId ?? storedPropertyId ?? API_CONFIG.DEFAULT_PROPERTY_ID,
-    organizationId: storeOrgId ?? storedOrgId ?? API_CONFIG.ORGANIZATION_ID,
-  };
-};
+import { STORAGE_KEYS } from '../config/constants';
+import { API_CONFIG } from '../config/constants';
 
 const getErrorMessage = (error) => {
   const sources = [
@@ -53,9 +12,74 @@ const getErrorMessage = (error) => {
   return sources.find(msg => msg != null);
 };
 
-export const processCheckIn = async (data) => {
+const getPropertyContext = () => {
   try {
-    const response = await apiClient.post('/api/kiosk/v1/check-in', data);
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return { propertyId: null, organizationId: API_CONFIG.ORGANIZATION_ID ?? null };
+    }
+    
+    const propertyData = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
+    if (propertyData) {
+      const parsed = JSON.parse(propertyData);
+      if (parsed.propertyId && parsed.organizationId) {
+        return {
+          propertyId: parsed.propertyId,
+          organizationId: parsed.organizationId,
+        };
+      }
+    }
+
+    try {
+      const propertyStoreData = localStorage.getItem('property-storage');
+      if (propertyStoreData) {
+        const storeParsed = JSON.parse(propertyStoreData);
+        const selectedProperty = storeParsed?.state?.selectedProperty;
+        const propertyId = storeParsed?.state?.propertyId;
+        
+        if (selectedProperty && propertyId) {
+          const organizationId = selectedProperty.organization_id ?? selectedProperty.organizationId;
+          if (organizationId) {
+            return {
+              propertyId: propertyId,
+              organizationId: organizationId,
+            };
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore errors when reading property store
+    }
+
+    return {
+      propertyId: null,
+      organizationId: API_CONFIG.ORGANIZATION_ID ?? null,
+    };
+  } catch {
+    return { 
+      propertyId: null, 
+      organizationId: API_CONFIG.ORGANIZATION_ID ?? null,
+    };
+  }
+};
+
+export const processCheckIn = async (data, propertyId = null, organizationId = null) => {
+  const reservationId = data.reservation_id ?? data.reservationId ?? data.id;
+  
+  if (!reservationId) {
+    throw new Error('Reservation ID is required to process check-in.');
+  }
+  
+  const context = getPropertyContext();
+  const finalPropertyId = propertyId ?? context.propertyId;
+  const finalOrganizationId = organizationId ?? context.organizationId;
+  
+  if (!finalPropertyId || !finalOrganizationId) {
+    throw new Error('Property ID and Organization ID are required to process check-in.');
+  }
+  
+  try {
+    const endpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/check-in`;
+    const response = await apiClient.put(endpoint, data);
     return response.data;
   } catch (error) {
     const message = getErrorMessage(error) ?? 'Failed to process check-in';
@@ -84,56 +108,33 @@ export const getCheckInStatus = async (reservationId) => {
 };
 
 const isPresent = (value) => value != null && value !== '';
-const isObject = (value) => typeof value === 'object' && value !== null;
-const isNonEmptyString = (value) => typeof value === 'string' && value.trim().length > 0;
-const isValidHttpStatus = (status) => status >= 200 && status < 300;
-const isNonEmpty = (value) => {
-  if (Array.isArray(value)) return value.length > 0;
-  if (isObject(value)) return Object.keys(value).length > 0;
-  return isNonEmptyString(value);
-};
-const isValidDate = (value) => !isNaN(new Date(value).getTime());
 
-const getResponseStatus = (response) => response.status ?? response.response?.status;
-
-const hasValidGuestName = (data) => {
-  const guestName = data?.guest_name;
-  if (!guestName) return false;
-  const firstName = guestName.first_name ?? '';
-  const lastName = guestName.last_name ?? '';
-  return isNonEmptyString(firstName) && isNonEmptyString(lastName);
-};
-
-const validate = (predicate, value, message) => {
-  if (!predicate(value)) throw new Error(message);
-};
-
-const assertValidInput = (reservationId, lastName) => {
-  validate(isPresent, reservationId, translateError('reservationIdRequired'));
-  validate(isPresent, lastName, translateError('lastNameRequired'));
-};
-
-const assertPropertyConfiguration = (propertyId, organizationId) => {
-  const missingIds = [propertyId, organizationId].filter(id => !isPresent(id));
-  if (missingIds.length > 0) throw new Error('Property configuration is missing.');
-};
-
-export const validateReservation = async (data) => {
+export const validateReservation = async (data, propertyId = null, organizationId = null) => {
   const { reservationId, lastName } = data;
   
-  assertValidInput(reservationId, lastName);
+  if (!isPresent(reservationId)) {
+    throw new Error(translateError('reservationIdRequired'));
+  }
+  if (!isPresent(lastName)) {
+    throw new Error(translateError('lastNameRequired'));
+  }
   
-  const { propertyId, organizationId } = getPropertyIds();
-  assertPropertyConfiguration(propertyId, organizationId);
+  const context = getPropertyContext();
+  const finalPropertyId = propertyId ?? context.propertyId;
+  const finalOrganizationId = organizationId ?? context.organizationId;
   
-  const url = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/reservations/${reservationId}/check-in`;
+  if (!finalPropertyId || !finalOrganizationId) {
+    throw new Error('Property ID and Organization ID are required to validate reservation.');
+  }
+  
+  const url = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/check-in`;
   
   console.log('[validateReservation] Making API call:', {
     url,
     method: 'GET',
     params: { lastName },
-    propertyId,
-    organizationId,
+    propertyId: finalPropertyId,
+    organizationId: finalOrganizationId,
     reservationId,
   });
   
@@ -171,19 +172,20 @@ export const validateReservation = async (data) => {
   }
 };
 
-const assertReservationId = (reservationId) => {
+export const performCheckIn = async (reservationId, propertyId = null, organizationId = null) => {
   if (!isPresent(reservationId)) {
     throw new Error('Reservation ID is required.');
   }
-};
-
-export const performCheckIn = async (reservationId) => {
-  assertReservationId(reservationId);
   
-  const { propertyId, organizationId } = getPropertyIds();
-  assertPropertyConfiguration(propertyId, organizationId);
+  const context = getPropertyContext();
+  const finalPropertyId = propertyId ?? context.propertyId;
+  const finalOrganizationId = organizationId ?? context.organizationId;
   
-  const url = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/reservations/${reservationId}/check-in`;
+  if (!finalPropertyId || !finalOrganizationId) {
+    throw new Error('Property ID and Organization ID are required to perform check-in.');
+  }
+  
+  const url = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/check-in`;
   const response = await apiClient.get(url);
   
   // Handle API response wrapper: { success: true, data: {...} }
