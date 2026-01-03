@@ -75,6 +75,7 @@ export const UI_CONFIG = {
 export const EARLY_ARRIVAL_CONFIG = {
   COUNTDOWN_DURATION: 15,
   TARGET_TIME: "2:00 PM",
+  TARGET_HOUR_24: 14,
   TIME_UPDATE_INTERVAL: 1000,
   COUNTDOWN_INTERVAL: 1000,
 };
@@ -436,4 +437,34 @@ export const REVERSE_CAPABILITY_MAP = {
   cardIssuance: 'card-issuance',
   lostCard: 'lost-card',
   roomService: 'room-service',
+};
+
+// Guest Details Form Options
+export const GUEST_DETAILS_OPTIONS = {
+  TITLES: [
+    { value: 'Mr', label: 'Mr' },
+    { value: 'Mrs', label: 'Mrs' },
+    { value: 'Ms', label: 'Ms' },
+    { value: 'Miss', label: 'Miss' },
+    { value: 'Dr', label: 'Dr' },
+  ],
+  GENDERS: [
+    { value: 'Male', label: 'Male' },
+    { value: 'Female', label: 'Female' },
+    { value: 'Other', label: 'Other' },
+  ],
+  COUNTRIES: [
+    { value: 'US', label: 'United States (+1)' },
+    { value: 'GB', label: 'United Kingdom (+44)' },
+    { value: 'DE', label: 'Germany (+49)' },
+    { value: 'FR', label: 'France (+33)' },
+    { value: 'IT', label: 'Italy (+39)' },
+    { value: 'ES', label: 'Spain (+34)' },
+    { value: 'PT', label: 'Portugal (+351)' },
+  ],
+  DOCUMENT_TYPES: [
+    { value: 'Passport', label: 'Passport' },
+    { value: 'IdCard', label: 'National ID' },
+    { value: 'DriverLicense', label: 'Driving License' },
+  ],
 };

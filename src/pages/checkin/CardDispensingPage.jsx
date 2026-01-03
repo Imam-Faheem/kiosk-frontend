@@ -152,7 +152,7 @@ const CardDispensingPage = () => {
 
         setCardStatus('completed');
         setTimeout(() => {
-          navigate('/checkin/complete', {
+          navigate('/checkin/early-arrival', {
             state: { reservation, paymentStatus, cardData: result.data, checkInResult }
           });
         }, 5000);

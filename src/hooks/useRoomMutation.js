@@ -13,8 +13,45 @@ import {
  * @returns {Object} - React Query mutation object or function
  */
 export const useRoomMutation = (action, { onSuccess, onError } = {}) => {
+  // Transform searchAvailability response to offers format
+  const searchOffers = async (data) => {
+    const result = await searchRoomAvailability(data);
+    // Transform availableRooms to offers format expected by SearchRoomsPage
+    const offers = (result.availableRooms ?? []).map(room => {
+      // Reconstruct offer format from transformed room data
+      return {
+        unitGroup: {
+          id: room.unitGroupId ?? room.roomTypeId,
+          code: room.unitGroupId ?? room.roomTypeId,
+          name: room.name,
+          description: room.description,
+          maxPersons: room.capacity ?? room.maxGuests,
+        },
+        ratePlan: {
+          id: room.ratePlanId,
+          code: room.ratePlanId,
+          name: room.name,
+          description: room.description,
+        },
+        totalGrossAmount: {
+          amount: room.totalPrice,
+          currency: room.currency ?? 'EUR',
+        },
+        availableUnits: room.availableUnits ?? 0,
+        // Preserve original offer data if available
+        ...(room._offerData ?? {}),
+      };
+    });
+    
+    return {
+      offers,
+      property: result.property ?? {},
+    };
+  };
+
   const actionMap = {
     searchAvailability: searchRoomAvailability,
+    searchOffers: searchOffers,
     getDetails: getRoomDetails,
     getAll: getAllRoomTypes,
   };
@@ -23,7 +60,7 @@ export const useRoomMutation = (action, { onSuccess, onError } = {}) => {
 
   // Always call useMutation hook, but handle special cases
   const mutation = useMutation(
-    mutationFn || (() => {
+    mutationFn ?? (() => {
       throw new Error(`Invalid room action: ${action}`);
     }),
     {
