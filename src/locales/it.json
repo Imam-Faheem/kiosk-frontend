@@ -60,6 +60,23 @@
   "guestDetails": {
     "title": "Dettagli Ospite",
     "formTitle": "Informazioni di Contatto dell'Ospite",
+    "pleaseFillYourDetails": "Si prega di compilare i propri dettagli",
+    "titleField": "Titolo",
+    "titlePlaceholder": "Seleziona titolo",
+    "titleOptions": {
+      "mr": "Sig.",
+      "mrs": "Sig.ra",
+      "ms": "Sig.na",
+      "miss": "Sig.na",
+      "dr": "Dott."
+    },
+    "gender": "Genere",
+    "genderPlaceholder": "Seleziona genere",
+    "genderOptions": {
+      "male": "Maschio",
+      "female": "Femmina",
+      "other": "Altro"
+    },
     "firstName": "Nome",
     "lastName": "Cognome",
     "email": "Email",
@@ -67,6 +84,29 @@
     "phonePlaceholder": "+39 333 123 4567",
     "country": "Paese",
     "countryPlaceholder": "Seleziona il tuo paese",
+    "birthDate": "Data di Nascita",
+    "birthPlace": "Luogo di Nascita",
+    "birthPlacePlaceholder": "Inserisci il tuo luogo di nascita",
+    "nationality": "Nazionalità",
+    "nationalityPlaceholder": "Seleziona la tua nazionalità",
+    "documentNumber": "Numero di Documento",
+    "documentNumberPlaceholder": "Inserisci il tuo numero di documento",
+    "documentType": "Tipo di Documento",
+    "documentTypePlaceholder": "Seleziona tipo di documento",
+    "documentTypes": {
+      "passport": "Passaporto",
+      "id": "Carta d'Identità",
+      "driverlicense": "Patente di Guida"
+    },
+    "travelPurpose": "Scopo del Viaggio",
+    "travelPurposePlaceholder": "Seleziona scopo del viaggio",
+    "travelPurposes": {
+      "business": "Lavoro",
+      "leisure": "Svago",
+      "other": "Altro"
+    },
+    "guestComment": "Commenti",
+    "guestCommentPlaceholder": "Eventuali commenti aggiuntivi o richieste speciali",
     "address": "Indirizzo",
     "addressSection": "Indirizzo",
     "addressStreet": "Via e numero civico",

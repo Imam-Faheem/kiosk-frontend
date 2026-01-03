@@ -46,6 +46,23 @@
   "guestDetails": {
     "title": "Guest Details",
     "formTitle": "Guest Contact Information",
+    "pleaseFillYourDetails": "Please fill your details",
+    "titleField": "Title",
+    "titlePlaceholder": "Select title",
+    "titleOptions": {
+      "mr": "Mr",
+      "mrs": "Mrs",
+      "ms": "Ms",
+      "miss": "Miss",
+      "dr": "Dr"
+    },
+    "gender": "Gender",
+    "genderPlaceholder": "Select gender",
+    "genderOptions": {
+      "male": "Male",
+      "female": "Female",
+      "other": "Other"
+    },
     "firstName": "First Name",
     "lastName": "Last Name",
     "email": "Email",
@@ -53,6 +70,29 @@
     "phonePlaceholder": "Include country code, e.g., +1 555-123-4567",
     "country": "Country",
     "countryPlaceholder": "Select your country",
+    "birthDate": "Birth Date",
+    "birthPlace": "Birth Place",
+    "birthPlacePlaceholder": "Enter your birth place",
+    "nationality": "Nationality",
+    "nationalityPlaceholder": "Select your nationality",
+    "documentNumber": "Document Number",
+    "documentNumberPlaceholder": "Enter your document number",
+    "documentType": "Document Type",
+    "documentTypePlaceholder": "Select document type",
+    "documentTypes": {
+      "passport": "Passport",
+      "id": "National ID",
+      "driverlicense": "Driving License"
+    },
+    "travelPurpose": "Travel Purpose",
+    "travelPurposePlaceholder": "Select travel purpose",
+    "travelPurposes": {
+      "business": "Business",
+      "leisure": "Leisure",
+      "other": "Other"
+    },
+    "guestComment": "Comments",
+    "guestCommentPlaceholder": "Any additional comments or special requests",
     "address": "Address",
     "addressSection": "Address",
     "addressStreet": "Street Address",

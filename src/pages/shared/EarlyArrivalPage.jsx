@@ -16,6 +16,7 @@ import { buttonStyles } from '../../constants/style.constants';
 import { EARLY_ARRIVAL_CONFIG, EARLY_ARRIVAL_STYLES } from '../../config/constants';
 import { EARLY_ARRIVAL_FLOW_CONFIGS } from '../../config/routes';
 import BackButton from '../../components/BackButton';
+import PropertyHeader from '../../components/PropertyHeader';
 import UnoLogo from '../../assets/uno.jpg';
 import useLanguage from '../../hooks/useLanguage';
 
@@ -85,6 +86,13 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
   const [countdown, setCountdown] = useState(EARLY_ARRIVAL_CONFIG.COUNTDOWN_DURATION);
   const countdownIntervalRef = useRef(null);
   const timeIntervalRef = useRef(null);
+  
+  const isBeforeTargetTime = useMemo(() => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const targetHour = EARLY_ARRIVAL_CONFIG.TARGET_HOUR_24;
+    return currentHour < targetHour;
+  }, [currentTime]);
 
   const updateTime = useCallback(() => {
     setCurrentTime(formatTime());
@@ -169,82 +177,127 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
   if (detectedFlowType === 'reservation' || detectedFlowType === 'checkin') {
     return (
       <Container
-        size="sm"
-        bg="white"
-        p={{ base: 20, sm: 40 }}
-        style={{ minHeight: '100vh' }}
-        sx={{
+        size="lg"
+        style={{
+          minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
         }}
+        p={20}
+        bg="#FFFFFF"
       >
-        <Stack gap="xl" align="center" w="100%" maw={600}>
-          <Box
-            w={80}
-            h={80}
-            bg="#C8653D"
-            style={{ borderRadius: '50%' }}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            mb="md"
-          >
-            <IconClock size={40} color="white" />
-          </Box>
+        <Paper
+          withBorder
+          shadow="md"
+          p={40}
+          radius="xl"
+          w="100%"
+          maw={600}
+          bg="#ffffff"
+          style={{
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          }}
+        >
+          <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+            <PropertyHeader />
+          </Group>
 
-          <Stack gap="md" align="center" ta="center">
-            <Title order={1} fw={700} c="#222222" size="h2" mb="xs">
-              {t('earlyArrival.importantInformation')}
-            </Title>
-            <Title order={2} fw={700} c="#222222" size="h3" mb="xl">
-              {t('earlyArrival.keyCardCollection')}
-            </Title>
-
-            <Text
-              size="md"
-              c="#666666"
-              lh={1.6}
-              mb="md"
+          <Stack gap={32} align="center">
+            <Box
+              w={80}
+              h={80}
+              bg="#C8653D"
+              style={{ 
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              {t('earlyArrival.earlyCheckInMessage')}
-            </Text>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="40" 
+                height="40" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="white" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                preserveAspectRatio="xMidYMid meet"
+                style={{
+                  display: 'block',
+                  margin: 0,
+                  padding: 0,
+                }}
+              >
+                <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+                <path d="M12 7v5l3 3"></path>
+              </svg>
+            </Box>
 
-            <Text
-              size="sm"
-              c="#999999"
-              lh={1.5}
-              fs="italic"
+            <Stack gap="md" align="center" ta="center">
+              <Title order={1} fw={700} c="#222222" size="h2" mb="xs">
+                {t('earlyArrival.importantInformation')}
+              </Title>
+              <Title order={2} fw={700} c="#222222" size="h3" mb="xl">
+                {t('earlyArrival.keyCardCollection')}
+              </Title>
+
+              <Text
+                size="md"
+                c="#666666"
+                lh={1.6}
+                mb="md"
+              >
+                {t('earlyArrival.earlyCheckInMessage')}
+              </Text>
+            </Stack>
+
+            <Button
+              size="lg"
+              onClick={() => {
+                if (isBeforeTargetTime) {
+                  handleReturnToMenu();
+                  return;
+                }
+                
+                const state = location.state ?? {};
+                if (detectedFlowType === 'reservation') {
+                  navigate('/reservation/card', { state });
+                } else if (detectedFlowType === 'checkin') {
+                  navigate('/checkin/card-dispensing', { state });
+                } else {
+                  handleReturnToMenu();
+                }
+              }}
+              fullWidth
+              bg="#C8653D"
+              c="white"
+              radius="md"
+              fw={700}
+              mt="xl"
+              style={{ minHeight: '60px' }}
+              sx={{
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  backgroundColor: '#B8552F',
+                  transform: 'scale(1.02)',
+                },
+              }}
             >
-              {t('earlyArrival.smsReminder')}
-            </Text>
+              {isBeforeTargetTime 
+                ? t('earlyArrival.returnToMainMenu')
+                : detectedFlowType === 'reservation' 
+                  ? t('common.continue') 
+                  : detectedFlowType === 'checkin' 
+                    ? t('common.continue') 
+                    : t('earlyArrival.returnToMainMenu')}
+            </Button>
           </Stack>
-
-          <Button
-            size="lg"
-            leftSection={<IconArrowLeft size={20} />}
-            onClick={handleReturnToMenu}
-            fullWidth
-            bg="#C8653D"
-            c="white"
-            radius="md"
-            fw={700}
-            mt="xl"
-            style={{ minHeight: '60px' }}
-            sx={{
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                backgroundColor: '#B8552F',
-                transform: 'scale(1.02)',
-              },
-            }}
-          >
-            {t('earlyArrival.returnToMainMenu')}
-          </Button>
-        </Stack>
+        </Paper>
       </Container>
     );
   }

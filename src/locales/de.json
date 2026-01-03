@@ -153,6 +153,23 @@
   "guestDetails": {
     "title": "Gastdetails",
     "formTitle": "Kontaktinformationen des Gastes",
+    "pleaseFillYourDetails": "Bitte füllen Sie Ihre Angaben aus",
+    "titleField": "Titel",
+    "titlePlaceholder": "Titel auswählen",
+    "titleOptions": {
+      "mr": "Herr",
+      "mrs": "Frau",
+      "ms": "Frau",
+      "miss": "Fräulein",
+      "dr": "Dr."
+    },
+    "gender": "Geschlecht",
+    "genderPlaceholder": "Geschlecht auswählen",
+    "genderOptions": {
+      "male": "Männlich",
+      "female": "Weiblich",
+      "other": "Andere"
+    },
     "firstName": "Vorname",
     "lastName": "Nachname",
     "email": "E-Mail",
@@ -160,6 +177,29 @@
     "phonePlaceholder": "+49 1512 3456789",
     "country": "Land",
     "countryPlaceholder": "Wählen Sie Ihr Land",
+    "birthDate": "Geburtsdatum",
+    "birthPlace": "Geburtsort",
+    "birthPlacePlaceholder": "Geben Sie Ihren Geburtsort ein",
+    "nationality": "Nationalität",
+    "nationalityPlaceholder": "Wählen Sie Ihre Nationalität",
+    "documentNumber": "Dokumentennummer",
+    "documentNumberPlaceholder": "Geben Sie Ihre Dokumentennummer ein",
+    "documentType": "Dokumententyp",
+    "documentTypePlaceholder": "Dokumententyp auswählen",
+    "documentTypes": {
+      "passport": "Reisepass",
+      "id": "Personalausweis",
+      "driverlicense": "Führerschein"
+    },
+    "travelPurpose": "Reisezweck",
+    "travelPurposePlaceholder": "Reisezweck auswählen",
+    "travelPurposes": {
+      "business": "Geschäftlich",
+      "leisure": "Freizeit",
+      "other": "Andere"
+    },
+    "guestComment": "Kommentare",
+    "guestCommentPlaceholder": "Zusätzliche Kommentare oder besondere Wünsche",
     "address": "Adresse",
     "addressSection": "Adresse",
     "addressStreet": "Straße und Hausnummer",

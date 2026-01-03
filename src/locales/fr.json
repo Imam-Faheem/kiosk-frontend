@@ -145,6 +145,23 @@
   "guestDetails": {
     "title": "Détails du Client",
     "formTitle": "Informations de contact du client",
+    "pleaseFillYourDetails": "Veuillez remplir vos informations",
+    "titleField": "Titre",
+    "titlePlaceholder": "Sélectionnez un titre",
+    "titleOptions": {
+      "mr": "M.",
+      "mrs": "Mme",
+      "ms": "Mlle",
+      "miss": "Mlle",
+      "dr": "Dr"
+    },
+    "gender": "Genre",
+    "genderPlaceholder": "Sélectionnez le genre",
+    "genderOptions": {
+      "male": "Homme",
+      "female": "Femme",
+      "other": "Autre"
+    },
     "firstName": "Prénom",
     "lastName": "Nom de Famille",
     "email": "Email",
@@ -152,6 +169,29 @@
     "phonePlaceholder": "+33 6 12 34 56 78",
     "country": "Pays",
     "countryPlaceholder": "Sélectionnez votre pays",
+    "birthDate": "Date de Naissance",
+    "birthPlace": "Lieu de Naissance",
+    "birthPlacePlaceholder": "Entrez votre lieu de naissance",
+    "nationality": "Nationalité",
+    "nationalityPlaceholder": "Sélectionnez votre nationalité",
+    "documentNumber": "Numéro de Document",
+    "documentNumberPlaceholder": "Entrez votre numéro de document",
+    "documentType": "Type de Document",
+    "documentTypePlaceholder": "Sélectionnez le type de document",
+    "documentTypes": {
+      "passport": "Passeport",
+      "id": "Carte d'Identité",
+      "driverlicense": "Permis de Conduire"
+    },
+    "travelPurpose": "Objet du Voyage",
+    "travelPurposePlaceholder": "Sélectionnez l'objet du voyage",
+    "travelPurposes": {
+      "business": "Affaires",
+      "leisure": "Loisirs",
+      "other": "Autre"
+    },
+    "guestComment": "Commentaires",
+    "guestCommentPlaceholder": "Tout commentaire supplémentaire ou demande spéciale",
     "address": "Adresse",
     "addressSection": "Adresse",
     "addressStreet": "Adresse (rue et numéro)",
