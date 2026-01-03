@@ -245,8 +245,10 @@ const getNetworkErrorMessage = (error) => {
 };
 
 const getHttpErrorMessage = (error, defaultKey) => {
-  return error.response?.data?.message
+  return error.response?.data?.data?.message
+    ?? error.response?.data?.message
     ?? error.response?.data?.error
+    ?? error.response?.data?.data?.error
     ?? error.response?.statusText
     ?? error.message
     ?? translateError(defaultKey);
@@ -384,11 +386,38 @@ const createCardService = (contextService = propertyContextService) => {
     const context = contextService.getContext();
     validateContext(context);
 
-    const endpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/lost-card/regenerate`;
+    const reservationId = data?.reservation_id ?? data?.reservationId;
+    if (!reservationId) {
+      throw new Error('Reservation ID is required to regenerate card.');
+    }
+
+    const endpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/reservations/${reservationId}/lost-card`;
 
     try {
-      const response = await apiClient.post(endpoint, data);
-      return response.data;
+      const response = await apiClient.post(endpoint);
+      
+      // Check if response indicates an error even with 200 status
+      if (response.data?.success === false) {
+        const errorMsg = response.data?.message 
+          ?? response.data?.error 
+          ?? response.data?.data?.message
+          ?? 'Failed to regenerate card';
+        throw new Error(errorMsg);
+      }
+      
+      const apiData = response.data?.success === true && response.data?.data 
+        ? response.data.data 
+        : response.data;
+        
+      // Check if data contains error information
+      if (apiData && typeof apiData === 'object' && apiData.error) {
+        throw new Error(apiData.error);
+      }
+      
+      return {
+        success: true,
+        data: apiData,
+      };
     } catch (error) {
       if (!error.response) {
         throw new Error(getNetworkErrorForRegenerate(error));

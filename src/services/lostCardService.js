@@ -156,11 +156,22 @@ export const regenerateLostCard = async (data) => {
     throw new Error('Property ID and Organization ID are required to regenerate lost card.');
   }
   
-  const endpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/lost-card/regenerate`;
+  const reservationId = data?.reservation_id ?? data?.reservationId;
+  if (!reservationId) {
+    throw new Error('Reservation ID is required to regenerate lost card.');
+  }
+  
+  const endpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/reservations/${reservationId}/lost-card`;
 
   try {
-    const response = await apiClient.post(endpoint, data);
-    return response.data;
+    const response = await apiClient.post(endpoint);
+    const apiData = response.data?.success === true && response.data?.data 
+      ? response.data.data 
+      : response.data;
+    return {
+      success: true,
+      data: apiData,
+    };
   } catch (error) {
     const message = error?.response?.data?.message ??
                    error?.response?.data?.error ??

@@ -131,8 +131,38 @@ const RegenerateCardPage = () => {
 
   if (!hasRequiredData) {
     return (
-      <Container size="lg" style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }} p={20}>
-        <Loader size="lg" />
+      <Container
+        size="lg"
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        p={20}
+        bg="#FFFFFF"
+      >
+        <Paper
+          withBorder
+          shadow="md"
+          p={40}
+          radius="xl"
+          w="100%"
+          maw={600}
+          bg="#ffffff"
+          style={{
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          }}
+        >
+          <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+            <PropertyHeader />
+          </Group>
+          <Stack align="center" gap="md">
+            <Loader size="lg" />
+            <Text size="md" c="dimmed">{t('regenerateCard.pleaseWaitMessage')}</Text>
+          </Stack>
+        </Paper>
       </Container>
     );
   }
@@ -146,11 +176,38 @@ const RegenerateCardPage = () => {
 
   if (isLoading) {
     return (
-      <Container size="lg" style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }} p={20}>
-        <Stack align="center" gap="md">
-          <Loader size="lg" />
-          <Text size="md" c="dimmed">{t('regenerateCard.pleaseWaitMessage')}</Text>
-        </Stack>
+      <Container
+        size="lg"
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        p={20}
+        bg="#FFFFFF"
+      >
+        <Paper
+          withBorder
+          shadow="md"
+          p={40}
+          radius="xl"
+          w="100%"
+          maw={600}
+          bg="#ffffff"
+          style={{
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          }}
+        >
+          <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+            <PropertyHeader />
+          </Group>
+          <Stack align="center" gap="md">
+            <Loader size="lg" />
+            <Text size="md" c="dimmed">{t('regenerateCard.pleaseWaitMessage')}</Text>
+          </Stack>
+        </Paper>
       </Container>
     );
   }
@@ -177,31 +234,39 @@ const RegenerateCardPage = () => {
           w="100%"
           maw={600}
           bg="#ffffff"
+          style={{
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          }}
         >
-          <Alert
-            icon={<IconX size={18} />}
-            title={t('error.title')}
-            color="red"
-            variant="light"
-            radius="md"
-          >
-            <Text size="md" fw={500} ff="Inter, sans-serif">
-              {t('error.reservationNotFound')}
-            </Text>
-          </Alert>
-          <Group justify="center" mt="xl">
-            <Button
-              size="lg"
-              leftSection={<IconHome size={20} stroke={2} />}
-              onClick={() => navigate('/lost-card')}
-              bg="#C8653D"
-              c="white"
-              fw={600}
+          <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+            <PropertyHeader />
+          </Group>
+          <Stack gap="lg">
+            <Alert
+              icon={<IconX size={18} />}
+              title={t('error.title')}
+              color="red"
+              variant="light"
               radius="md"
             >
-              {t('common.returnToHome')}
-            </Button>
-          </Group>
+              <Text size="md" fw={500}>
+                {t('error.reservationNotFound')}
+              </Text>
+            </Alert>
+            <Group justify="center" mt="xl">
+              <Button
+                size="lg"
+                leftSection={<IconHome size={20} stroke={2} />}
+                onClick={() => navigate('/lost-card')}
+                bg="#C8653D"
+                c="white"
+                fw={600}
+                radius="md"
+              >
+                {t('common.returnToHome')}
+              </Button>
+            </Group>
+          </Stack>
         </Paper>
       </Container>
     );

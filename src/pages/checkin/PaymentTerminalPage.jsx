@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Paper,
@@ -26,23 +26,28 @@ const PaymentTerminalPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+  const timeoutIdRef = useRef(null);
+  const pollIntervalRef = useRef(null);
+  const countdownIntervalRef = useRef(null);
+
   const initiatePayment = usePaymentMutation('initiate', {
     onSuccess: (result) => {
       if (result.success) {
         setTransactionId(result.data.transactionId);
         setPaymentStatus('processing');
         // Start polling for payment status
-        const interval = setInterval(() => {
+        pollIntervalRef.current = setInterval(() => {
           pollPaymentStatus.mutate(result.data.transactionId);
         }, 2000);
-        setPollInterval(interval);
         
         // Set timeout for payment
-        const timeout = setTimeout(() => {
+        timeoutIdRef.current = setTimeout(() => {
           setPaymentStatus('timeout');
-          clearInterval(interval);
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
         }, 30000);
-        setTimeoutId(timeout);
       }
     },
     onError: (err) => {
@@ -55,8 +60,14 @@ const PaymentTerminalPage = () => {
     onSuccess: (result) => {
       if (result.success && result.data.status === 'completed') {
         setPaymentStatus('completed');
-        clearInterval(pollInterval);
-        clearTimeout(timeoutId);
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+          timeoutIdRef.current = null;
+        }
         
         const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
         const now = new Date();
@@ -79,14 +90,18 @@ const PaymentTerminalPage = () => {
     onError: (err) => {
       console.error('Payment polling error:', err);
       setPaymentStatus('error');
-      clearInterval(pollInterval);
-      clearTimeout(timeoutId);
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
     }
   });
   const [paymentStatus, setPaymentStatus] = useState('idle');
   const [transactionId, setTransactionId] = useState(null);
-  const [timeoutId, setTimeoutId] = useState(null);
-  const [pollInterval, setPollInterval] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(180); // 3 minutes
   const [error, setError] = useState(null);
 
@@ -109,32 +124,29 @@ const PaymentTerminalPage = () => {
     setTransactionId(transactionId);
     setPaymentStatus('processing');
 
-    let interval = null;
-    let timeout = null;
-    let countdownInterval = null;
-
     const startPaymentPolling = () => {
-      interval = setInterval(() => {
+      pollIntervalRef.current = setInterval(() => {
         pollPaymentStatus.mutate(transactionId);
       }, 2000);
-      setPollInterval(interval);
     };
 
     startPaymentPolling();
 
-    timeout = setTimeout(() => {
+    timeoutIdRef.current = setTimeout(() => {
       setPaymentStatus('timeout');
-      if (interval) {
-        clearInterval(interval);
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
       }
     }, 180000);
 
-    setTimeoutId(timeout);
-
-    countdownInterval = setInterval(() => {
+    countdownIntervalRef.current = setInterval(() => {
       setTimeRemaining(prev => {
         if (prev <= 1) {
-          clearInterval(countdownInterval);
+          if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
+          }
           return 0;
         }
         return prev - 1;
@@ -142,36 +154,49 @@ const PaymentTerminalPage = () => {
     }, 1000);
 
     return () => {
-      if (timeout) {
-        clearTimeout(timeout);
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
       }
-      if (interval) {
-        clearInterval(interval);
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
       }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
       }
     };
   }, [reservation, existingPaymentStatus, navigate, pollPaymentStatus, t]);
 
   const handleCancel = () => {
-    if (pollInterval) {
-      clearInterval(pollInterval);
-      setPollInterval(null);
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
     }
-    if (timeoutId) {
-      clearTimeout(timeoutId);
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
     }
     navigate('/checkin');
   };
 
   const handleBack = () => {
-    if (pollInterval) {
-      clearInterval(pollInterval);
-      setPollInterval(null);
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
     }
-    if (timeoutId) {
-      clearTimeout(timeoutId);
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
     }
     navigate('/checkin');
   };
