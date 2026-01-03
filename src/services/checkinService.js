@@ -112,11 +112,8 @@ const isPresent = (value) => value != null && value !== '';
 export const validateReservation = async (data, propertyId = null, organizationId = null) => {
   const { reservationId, lastName } = data;
   
-  if (!isPresent(reservationId)) {
+  if (!reservationId) {
     throw new Error(translateError('reservationIdRequired'));
-  }
-  if (!isPresent(lastName)) {
-    throw new Error(translateError('lastNameRequired'));
   }
   
   const context = getPropertyContext();
@@ -127,48 +124,53 @@ export const validateReservation = async (data, propertyId = null, organizationI
     throw new Error('Property ID and Organization ID are required to validate reservation.');
   }
   
-  const url = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/check-in`;
-  
-  console.log('[validateReservation] Making API call:', {
-    url,
-    method: 'GET',
-    params: { lastName },
-    propertyId: finalPropertyId,
-    organizationId: finalOrganizationId,
-    reservationId,
-  });
-  
+  const endpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/details`;
+
   try {
-    const response = await apiClient.get(url, { params: { lastName } });
-    
-    console.log('[validateReservation] API response received:', {
-      status: response.status,
-      hasData: !!response.data,
-      dataKeys: response.data ? Object.keys(response.data) : [],
-      hasSuccess: response.data?.success,
-      hasDataWrapper: !!response.data?.data,
+    const response = await apiClient.get(endpoint, {
+      params: lastName ? { lastName } : {},
     });
     
-    // Handle API response wrapper: { success: true, data: {...} }
     const apiData = response.data?.success === true && response.data?.data 
       ? response.data.data 
       : response.data;
-    
+
+    if (!apiData) {
+      throw new Error(translateError('reservationNotFound'));
+    }
+
+    // Validate lastName if provided
+    if (lastName) {
+      const lastNameLower = lastName.trim().toLowerCase();
+      const reservationLastName = apiData?.primaryGuest?.lastName?.trim().toLowerCase();
+
+      if (!reservationLastName || lastNameLower !== reservationLastName) {
+        throw new Error(translateError('lastNameMismatch'));
+      }
+    }
+
+    const hasPrimaryGuest = !!apiData.primaryGuest;
+    const hasFolios = Array.isArray(apiData.folios) && apiData.folios.length > 0;
+    const hasGuestName = !!apiData.guest_name;
+
+    if (!hasPrimaryGuest && !hasFolios && !hasGuestName) {
+      throw new Error(translateError('reservationNotFound'));
+    }
+
     return {
       success: true,
       data: apiData,
     };
   } catch (error) {
-    console.error('[validateReservation] Validation failed:', {
-      message: error.message,
-      status: getErrorStatus(error),
-      data: error?.response?.data,
-    });
-    
-    handleStatusError(error, 404, translateError('reservationNotFound'));
-    handleStatusError(error, 403, translateError('invalidLastName'));
-    
-    throw error;
+    if (error?.response?.status === 404) {
+      throw new Error(translateError('reservationNotFound'));
+    }
+
+    const message = error?.response?.data?.message ??
+                   error?.response?.data?.error ??
+                   error?.message ??
+                   translateError('guestValidationFailed');
+    throw new Error(message);
   }
 };
 

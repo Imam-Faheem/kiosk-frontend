@@ -31,13 +31,14 @@ const RegenerateCardPage = () => {
 
   const guestData = location.state?.guestData;
   const validationData = location.state?.validationData;
+  const hasRequiredData = !!guestData && !!validationData;
 
   const {
     data: cardMutationData,
     isLoading: isLoadingData,
     error: dataError,
     isError: isDataError,
-  } = useCardRegenerationData(guestData, validationData);
+  } = useCardRegenerationData(guestData, validationData, hasRequiredData);
 
   const regenerateCardMutation = useCardRegenerationMutation({
     onSuccess: (result) => {
@@ -91,11 +92,10 @@ const RegenerateCardPage = () => {
   };
 
   useEffect(() => {
-    if (!guestData || !validationData) {
-      navigate('/lost-card');
-      return;
+    if (!hasRequiredData) {
+      navigate('/lost-card', { replace: true });
     }
-  }, [guestData, validationData, navigate]);
+  }, [hasRequiredData, navigate]);
 
   useEffect(() => {
     if (!cardMutationData || regenerateCardMutation.isPending || regenerateCardMutation.isSuccess || cardStatus !== 'idle') {
@@ -129,12 +129,16 @@ const RegenerateCardPage = () => {
     navigate('/home');
   };
 
-  if (!guestData || !validationData) {
-    return null;
+  if (!hasRequiredData) {
+    return (
+      <Container size="lg" style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }} p={20}>
+        <Loader size="lg" />
+      </Container>
+    );
   }
 
-  const errorMessage = dataError?.message ?? 
-                      regenerateCardMutation.error?.message ?? 
+  const errorMessage = dataError?.message ??
+                      regenerateCardMutation.error?.message ??
                       null;
   const isReservationNotFound = errorMessage?.toLowerCase().includes('reservation not found') ||
                                errorMessage?.toLowerCase().includes('reservationnotfound') ||

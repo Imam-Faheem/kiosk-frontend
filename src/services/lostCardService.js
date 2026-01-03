@@ -68,8 +68,11 @@ export const getLostCardRequest = async (reservationId, propertyId = null, organ
   
   try {
     const endpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/lost-card`;
-    const response = await apiClient.get(endpoint);
-    return response.data;
+    const response = await apiClient.post(endpoint);
+    const apiData = response.data?.success === true && response.data?.data 
+      ? response.data.data 
+      : response.data;
+    return apiData;
   } catch (error) {
     if (error?.response?.status === 404) {
       throw new Error(translateError('reservationNotFoundByNumber'));
