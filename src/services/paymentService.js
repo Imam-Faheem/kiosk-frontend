@@ -74,24 +74,6 @@ export const getPaymentAccount = async (paymentAccountId) => {
 };
 
 
-const buildPaymentRequestBody = (paymentData) => {
-  const body = {};
-  if (paymentData.amount !== undefined) {
-    body.amount = paymentData.amount;
-  }
-  if (paymentData.currency) {
-    body.currency = paymentData.currency;
-  }
-  return Object.keys(body).length > 0 ? body : {};
-};
-
-const extractPaymentError = (error) => {
-  return error?.response?.data?.message 
-    ?? error?.response?.data?.error 
-    ?? error?.message 
-    ?? 'Failed to process payment by terminal';
-};
-
 export const processPaymentByTerminal = async (reservationId, paymentData = {}) => {
   if (!reservationId) {
     throw new Error('Reservation ID is required for terminal payment.');
@@ -106,13 +88,23 @@ export const processPaymentByTerminal = async (reservationId, paymentData = {}) 
   }
 
   const endpoint = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/reservations/${reservationId}/payments/by-terminal`;
-  const requestBody = buildPaymentRequestBody(paymentData);
+  const body = {};
+  if (paymentData.amount !== undefined) {
+    body.amount = paymentData.amount;
+  }
+  if (paymentData.currency) {
+    body.currency = paymentData.currency;
+  }
 
   try {
-    const response = await apiClient.post(endpoint, requestBody);
+    const response = await apiClient.post(endpoint, body);
     return response.data;
   } catch (error) {
-    throw new Error(extractPaymentError(error));
+    const errorMessage = error?.response?.data?.message 
+      ?? error?.response?.data?.error 
+      ?? error?.message 
+      ?? 'Failed to process payment by terminal';
+    throw new Error(errorMessage);
   }
 };
 

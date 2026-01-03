@@ -41,7 +41,7 @@ const TimeInfoCard = React.memo(({ currentTime, t }) => (
         {t('earlyArrival.currentTime', { time: currentTime })}
       </Text>
       <Text size="lg" fw={600} c="#0B152A">
-        {t('earlyArrival.cardsAvailableAfter', { time: EARLY_ARRIVAL_CONFIG.TARGET_TIME })}
+        {t('earlyArrival.cardsAvailableAfter', { time: EARLY_ARRIVAL_CONFIG.CHECKIN_TIME })}
       </Text>
     </Stack>
   </Paper>
@@ -90,7 +90,7 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
   const isBeforeTargetTime = useMemo(() => {
     const now = new Date();
     const currentHour = now.getHours();
-    const targetHour = EARLY_ARRIVAL_CONFIG.TARGET_HOUR_24;
+    const targetHour = parseInt(EARLY_ARRIVAL_CONFIG.CHECKIN_TIME.split(':')[0], 10);
     return currentHour < targetHour;
   }, [currentTime]);
 

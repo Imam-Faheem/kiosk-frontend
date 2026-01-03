@@ -74,8 +74,7 @@ export const UI_CONFIG = {
 // Early Arrival Page Constants
 export const EARLY_ARRIVAL_CONFIG = {
   COUNTDOWN_DURATION: 15,
-  TARGET_TIME: "2:00 PM",
-  TARGET_HOUR_24: 14,
+  CHECKIN_TIME: "14:00",
   TIME_UPDATE_INTERVAL: 1000,
   COUNTDOWN_INTERVAL: 1000,
 };

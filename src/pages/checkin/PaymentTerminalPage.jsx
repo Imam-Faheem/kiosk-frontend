@@ -69,12 +69,11 @@ const PaymentTerminalPage = () => {
           timeoutIdRef.current = null;
         }
         
-        const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
+        const targetTime = EARLY_ARRIVAL_CONFIG.CHECKIN_TIME;
         const now = new Date();
-        const [time, period] = targetTime.split(' ');
-        const [hours, minutes] = time.split(':').map(Number);
+        const [hours, minutes] = targetTime.split(':').map(Number);
         const target = new Date();
-        target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
+        target.setHours(hours, minutes, 0, 0);
         
         if (now < target) {
           navigate('/checkin/early-arrival', {

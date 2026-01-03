@@ -15,7 +15,7 @@ import {
 import { IconArrowLeft, IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
-import { useBookingMutation, extractErrorMessage } from '../../hooks/useBookingMutation';
+import { useBookingMutation } from '../../hooks/useBookingMutation';
 import usePropertyStore from '../../stores/propertyStore';
 
 const NewResPaymentPage = () => {
@@ -52,20 +52,8 @@ const NewResPaymentPage = () => {
   const roomIds = useMemo(() => {
     if (!room) return { unitGroupId: null, ratePlanId: null };
     
-    const unitGroupId = room?.unitGroupId 
-      ?? room?.roomTypeId 
-      ?? room?.unitGroup?.id 
-      ?? room?.unitGroup?.code
-      ?? room?._offerData?.unitGroupId 
-      ?? room?._offerData?.unitGroup?.id 
-      ?? room?._offerData?.unitGroup?.code;
-    
-    const ratePlanId = room?.ratePlanId 
-      ?? room?.ratePlan?.id 
-      ?? room?.ratePlan?.code
-      ?? room?._offerData?.ratePlanId 
-      ?? room?._offerData?.ratePlan?.id 
-      ?? room?._offerData?.ratePlan?.code;
+    const unitGroupId = room.unitGroupId || room.unitGroup?.id;
+    const ratePlanId = room.ratePlanId || room.ratePlan?.id;
     
     return { unitGroupId, ratePlanId };
   }, [room]);
@@ -144,44 +132,25 @@ const NewResPaymentPage = () => {
     };
 
     bookingMutation.mutate(
-      { bookingPayload, propertyId, guestDetails, totalAmount },
+      { bookingPayload, propertyId },
       {
-        onSuccess: (data) => {
-          if (data.isPending) {
-            const reservation = {
-              reservationId: 'PENDING',
-              id: 'PENDING',
-              guestDetails,
-              roomTypeId: room?.unitGroup?.id ?? room?.roomTypeId,
-              checkIn: searchCriteria?.checkIn ?? '',
-              checkOut: searchCriteria?.checkOut ?? '',
-              guests: searchCriteria?.guests,
-              totalAmount: room?.totalGrossAmount?.amount ?? room?.totalPrice,
-              currency: room?.totalGrossAmount?.currency ?? room?.currency,
-              status: 'pending',
-              room_assigned: data.bookingResult?.data?.assignedRoom?.room_assigned ?? false,
-              bookingData: data.bookingResult,
-              paymentData: { success: true, message: 'Payment will be processed separately' },
-            };
-            setTimeout(() => navigateToCompletion(reservation), 1500);
-            return;
-          }
+        onSuccess: (bookingResult) => {
+          const reservationId = bookingResult?.data?.reservations?.[0]?.id 
+            ?? bookingResult?.reservations?.[0]?.id
+            ?? bookingResult?.data?.id
+            ?? bookingResult?.id;
 
           const reservation = {
-            bookingId: data.reservationId,
-            reservationId: data.reservationId,
-            id: data.reservationId,
+            reservationId,
             guestDetails,
-            roomTypeId: room?.roomTypeId ?? room?.unitGroup?.id,
+            roomTypeId: room.unitGroupId || room.unitGroup?.id,
             checkIn: searchCriteria.checkIn,
             checkOut: searchCriteria.checkOut,
             guests: searchCriteria.guests,
-            totalAmount: data.reservationDetails?.totalGrossAmount?.amount ?? totalAmount.amount,
-            currency: data.reservationDetails?.totalGrossAmount?.currency ?? totalAmount.currency,
-            status: data.reservationDetails?.status ?? 'confirmed',
-            bookingData: data.bookingResult,
-            reservationDetails: data.reservationDetails,
-            paymentData: data.paymentResult,
+            totalAmount: totalAmount.amount,
+            currency: totalAmount.currency,
+            status: 'confirmed',
+            bookingData: bookingResult,
           };
 
           setTimeout(() => navigateToCompletion(reservation), 1500);
@@ -322,7 +291,11 @@ const NewResPaymentPage = () => {
           {bookingMutation.isError && (
             <Alert color="red" variant="light" style={{ width: '100%' }}>
               <Text size="md" c="red" ta="center">
-                {extractErrorMessage(bookingMutation.error) ?? t('error.failedToCreateBooking') ?? 'Failed to create booking. Please try again.'}
+                {bookingMutation.error?.response?.data?.message 
+                  ?? bookingMutation.error?.response?.data?.error 
+                  ?? bookingMutation.error?.message 
+                  ?? t('error.failedToCreateBooking') 
+                  ?? 'Failed to create booking. Please try again.'}
               </Text>
             </Alert>
           )}

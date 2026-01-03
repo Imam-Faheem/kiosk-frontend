@@ -28,7 +28,6 @@ import usePropertyStore from '../../stores/propertyStore';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
-import { createApiError, createNetworkError, handleCredentialError } from '../../utils/errorHandlers';
 
 const SearchRoomsPage = () => {
   const navigate = useNavigate();
@@ -40,24 +39,17 @@ const SearchRoomsPage = () => {
 
   const { selectedProperty } = usePropertyStore();
   
-  const searchOffers = useRoomMutation('searchOffers', {
+  const searchOffers = useRoomMutation('searchAvailability', {
     onSuccess: (result) => {
-      // The service returns the transformed data directly
       setSearchResults(result ?? null);
       setErrorMessage(null);
     },
     onError: (err) => {
-      const apiError = err?.response ? createApiError(err) : createNetworkError(err);
-      const credentialResponse = handleCredentialError(apiError);
-      
-      const handleError = credentialResponse
-        ? () => {
-            setSearchResults(credentialResponse);
-            setErrorMessage(null);
-          }
-        : () => setErrorMessage(apiError.message);
-      
-      handleError();
+      const errorMessage = err?.response?.data?.message 
+        ?? err?.response?.data?.error 
+        ?? err?.message 
+        ?? t('error.requestFailed');
+      setErrorMessage(errorMessage);
     }
   });
 
@@ -180,6 +172,7 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <DateInput
                   label={t('searchRooms.checkIn')}
+                  placeholder={t('searchRooms.selectCheckInDate')}
                   required
                   size="lg"
                   valueFormat="YYYY-MM-DD"
@@ -192,7 +185,7 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <DateInput
                   label={t('searchRooms.checkOut')}
-                  placeholder="Select date"
+                  placeholder={t('searchRooms.selectCheckOutDate')}
                   required
                   size="lg"
                   valueFormat="YYYY-MM-DD"

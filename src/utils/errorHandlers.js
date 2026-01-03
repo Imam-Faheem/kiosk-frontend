@@ -19,19 +19,4 @@ export const createNetworkError = (error) => {
   };
 };
 
-export const handleCredentialError = (error) => {
-  const message = error?.message?.toLowerCase() ?? '';
-  
-  // Check if it's a credential configuration error
-  if (message.includes('not configured with apaleo credentials') || 
-      message.includes('property not configured')) {
-    // Return empty results to allow UI to continue
-    return {
-      offers: [],
-      availableRooms: [],
-    };
-  }
-  
-  return null;
-};
 
