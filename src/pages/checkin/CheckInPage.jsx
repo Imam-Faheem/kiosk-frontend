@@ -108,6 +108,7 @@ const CheckInPage = () => {
     } catch (err) {
       form.setFieldError('reservationId', t('error.reservationNotFound'));
       setError(t('error.reservationNotFound'));
+      // Error is displayed via the error state variable
     } finally {
       setIsLoading(false);
     }

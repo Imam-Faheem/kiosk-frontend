@@ -67,7 +67,6 @@ const LostCardPage = () => {
     } catch (err) {
       console.error('[LostCardPage] Error:', err);
       
-      const errorStatus = err?.response?.status;
       const errorMessage = err?.message ?? t('error.cardRegenerationFailed') ?? 'Failed to regenerate card';
       
       // Display the actual error message from the API

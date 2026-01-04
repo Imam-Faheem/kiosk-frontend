@@ -40,11 +40,11 @@ const SearchRoomsPage = () => {
       setErrorMessage(null);
     },
     onError: (err) => {
-      const errorMessage = err?.response?.data?.message 
+      const errorMsg = err?.response?.data?.message 
         ?? err?.response?.data?.error 
         ?? err?.message 
         ?? t('error.requestFailed');
-      setErrorMessage(errorMessage);
+      setErrorMessage(errorMsg);
     }
   });
 

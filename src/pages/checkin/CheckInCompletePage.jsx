@@ -175,7 +175,8 @@ const CheckInCompletePage = () => {
     return () => {
       // Cleanup handled in countdown effect
     };
-  }, [reservation, navigate, displayData, paymentStatus, cardData, logCompletionMutation, t, getGuestName, checkInData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reservation?.reservation_id ?? reservation?.reservationId ?? reservation?.id, displayData, paymentStatus, cardData, logCompletionMutation, t, getGuestName, checkInData]);
 
   // Separate effect for countdown timer - runs once on mount
   useEffect(() => {

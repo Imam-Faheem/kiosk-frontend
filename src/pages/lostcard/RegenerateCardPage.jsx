@@ -33,6 +33,8 @@ const RegenerateCardPage = () => {
   const validationData = location.state?.validationData;
   const cardData = location.state?.cardData; // Card data if already regenerated
 
+  const hasRequiredData = !!(guestData || validationData || cardData);
+
   const {
     data: cardMutationData,
     isLoading: isLoadingData,
@@ -101,23 +103,7 @@ const RegenerateCardPage = () => {
     { label: t('regenerateCard.steps.programming'), status: 'programming' },
   ], [t]);
 
-  // Guest name is computed but not used in this component
-  // eslint-disable-next-line no-unused-vars
-  const guestName = useMemo(() => {
-    if (guestData?.guestName) return guestData.guestName;
-    
-    if (guestData?.primaryGuest) {
-      const firstName = guestData.primaryGuest.firstName ?? '';
-      const lastName = guestData.primaryGuest.lastName ?? '';
-      const fullName = `${firstName} ${lastName}`.trim();
-      if (fullName) return fullName;
-    }
-    
-    const firstName = guestData?.firstName ?? '';
-    const lastName = guestData?.lastName ?? '';
-    const fullName = `${firstName} ${lastName}`.trim();
-    return fullName ? fullName : '';
-  }, [guestData]);
+  // Guest name computation removed as it's not used in this component
 
   const processStep = async (stepIndex, status) => {
     setCurrentStep(stepIndex);
@@ -129,7 +115,8 @@ const RegenerateCardPage = () => {
     if (!hasRequiredData) {
       navigate('/lost-card', { replace: true });
     }
-  }, [hasRequiredData, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   useEffect(() => {
     // Skip if cardData is already provided (card was already regenerated in LostCardPage)

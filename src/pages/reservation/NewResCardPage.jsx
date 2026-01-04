@@ -17,7 +17,6 @@ import {
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
-import { useCardMutation } from '../../hooks/useCardMutation';
 import { CARD_DISPENSING_STEPS, STEP_ICONS } from '../../config/constants';
 import PropertyHeader from '../../components/PropertyHeader';
 import '../../styles/animations.css';
@@ -26,13 +25,6 @@ const NewResCardPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  // eslint-disable-next-line no-unused-vars
-  const issueCard = useCardMutation('issue', {
-    onError: (err) => {
-      setError(err.message ?? t('error.cardIssuanceFailed'));
-      setCardStatus('error');
-    }
-  });
   const [currentStep, setCurrentStep] = useState(0);
   const [cardStatus, setCardStatus] = useState('preparing');
   const [error, setError] = useState(null);
@@ -98,6 +90,12 @@ const NewResCardPage = () => {
 
         setCardStatus('completed');
         setTimeout(() => {
+          console.log('[NewResCardPage] Navigating to payment with state:', {
+            hasRoom: !!room,
+            hasGuestDetails: !!guestDetails,
+            hasSearchCriteria: !!searchCriteria,
+            roomKeys: room ? Object.keys(room) : null,
+          });
           navigate('/reservation/payment', {
             state: {
               room,
@@ -112,15 +110,9 @@ const NewResCardPage = () => {
     };
 
     processCard();
-  }, [room, guestDetails, navigate, t, searchCriteria]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room, guestDetails, navigate, t]);
 
-  // handleBack is defined but not used in this component
-  // eslint-disable-next-line no-unused-vars
-  const handleBack = () => {
-    navigate('/reservation/room-details', {
-      state: { room, searchCriteria, guestDetails },
-    });
-  };
 
   if (!room || !guestDetails) {
     return null;
