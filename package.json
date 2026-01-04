@@ -1,6 +1,8 @@
 {
   "name": "hotel-frontend",
   "version": "0.1.0",
+  "description": "Hotel Kiosk Application - Self-service kiosk for hotel check-in, reservations, and card management",
+  "author": "Hotel Kiosk Team",
   "private": true,
   "main": "electron/main.js",
   "homepage": "./",
