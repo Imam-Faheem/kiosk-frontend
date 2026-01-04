@@ -107,13 +107,6 @@ export const saveGuestDetails = async (guestData) => {
   const endpoint = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/guests/details`;
 
   try {
-    console.log('[saveGuestDetails] Making request:', {
-      endpoint,
-      propertyId,
-      organizationId,
-      baseURL: apiClient.defaults.baseURL,
-    });
-    
     const response = await apiClient.post(endpoint, guestData);
     return response.data;
   } catch (error) {
