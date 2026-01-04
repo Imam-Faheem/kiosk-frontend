@@ -75,7 +75,6 @@ const SearchRoomsPage = () => {
     setErrorMessage(null);
     setSearchResults(null);
 
-    // Check if property is configured
     const propertyId = usePropertyStore.getState().propertyId;
     if (!propertyId) {
       setErrorMessage(t('error.propertyNotSelected') ?? 'Please select a property first. Go to property selection page.');
@@ -97,7 +96,6 @@ const SearchRoomsPage = () => {
     try {
       await searchOffers.mutateAsync(searchData);
     } catch (err) {
-      // Error is already handled by onError callback, but ensure loading is stopped
       console.error('Search error:', err);
     } finally {
       setLoading(false);

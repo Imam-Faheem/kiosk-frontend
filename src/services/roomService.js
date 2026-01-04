@@ -95,17 +95,14 @@ export const searchRoomAvailability = async (data) => {
   try {
     const response = await apiClient.get(endpoint, { params });
     
-    // Transform the API response to match the component's expected format
     const apiData = response.data?.data || response.data;
     const offers = apiData?.offers || [];
     
-    // Transform offers to room format expected by the UI
     const availableRooms = offers.map((offer) => {
       const unitGroup = offer.unitGroup || {};
       const totalAmount = offer.totalGrossAmount || {};
       const ratePlan = offer.ratePlan || {};
       
-      // Calculate price per night from timeSlices
       const timeSlices = offer.timeSlices || [];
       const pricePerNight = timeSlices.length > 0
         ? timeSlices.reduce((sum, slice) => {
@@ -123,19 +120,17 @@ export const searchRoomAvailability = async (data) => {
         capacity: unitGroup.maxPersons || 2,
         maxGuests: unitGroup.maxPersons || 2,
         currency: totalAmount.currency || 'EUR',
-        pricePerNight: Math.round(pricePerNight * 100) / 100, // Round to 2 decimal places
+        pricePerNight: Math.round(pricePerNight * 100) / 100,
         totalPrice: totalAmount.amount || 0,
         availableUnits: offer.availableUnits || 0,
-        amenities: [], // Can be populated if available in the response
-        images: [], // Can be populated if available in the response
-        // Store original offer data for later use
+        amenities: [],
+        images: [],
         _offerData: offer,
       };
     });
     
-    // Return in the format expected by the component
-    // The component expects: { availableRooms: [...], totalAvailable: number }
     return {
+      offers: offers,
       availableRooms,
       totalAvailable: availableRooms.length,
       property: apiData?.property || {},
