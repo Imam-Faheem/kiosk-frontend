@@ -99,7 +99,7 @@ const PaymentTerminalPage = () => {
   });
   const [paymentStatus, setPaymentStatus] = useState('idle');
   const [, setTransactionId] = useState(null);
-  const [timeRemaining, setTimeRemaining] = useState(180); // 3 minutes
+  const [timeRemaining, setTimeRemaining] = useState(120); // 2 minutes
   const [error, setError] = useState(null);
 
   const reservation = location.state?.reservation;
@@ -135,7 +135,7 @@ const PaymentTerminalPage = () => {
         clearInterval(pollIntervalRef.current);
         pollIntervalRef.current = null;
       }
-    }, 180000);
+    }, 120000);
 
     countdownIntervalRef.current = setInterval(() => {
       setTimeRemaining(prev => {
@@ -289,7 +289,7 @@ const PaymentTerminalPage = () => {
               {/* Progress bar */}
               <Box style={{ width: '100%' }}>
                 <Progress
-                  value={(180 - timeRemaining) / 180 * 100}
+                  value={(120 - timeRemaining) / 120 * 100}
                   color="#C8653D"
                   size="lg"
                   radius="md"
