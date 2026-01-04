@@ -14,7 +14,7 @@ import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import { useForm } from '@mantine/form';
-import { validateLostCardGuest } from '../../services/lostCardService';
+import { regenerateLostCard } from '../../services/lostCardService';
 import { BUTTON_STYLES } from '../../config/constants';
 
 const LostCardPage = () => {
@@ -32,72 +32,47 @@ const LostCardPage = () => {
     },
   });
 
-  const hasValidGuestData = (data) => {
-    if (!data) return false;
-    
-    const lastNameSources = [
-      data?.primaryGuest?.lastName,
-      Array.isArray(data?.folios) && data.folios.length > 0
-        ? (data.folios.find(f => f.isMainFolio) ?? data.folios[0])?.debitor?.name
-        : null,
-      data?.guest_name?.last_name,
-      data?.guest_name?.lastName,
-    ];
-    
-    return lastNameSources.some(name => name?.trim()?.length > 0);
-  };
-
-
   const handleSubmit = async (values) => {
     setError(null);
     form.clearErrors();
     setIsLoading(true);
     
     try {
-      const result = await validateLostCardGuest({
-        reservationNumber: values.reservationNumber,
-      });
+      const reservationNumber = values.reservationNumber?.trim();
       
-      if (!result.success) {
-        throw new Error(result.message ?? t('error.validationFailed'));
+      if (!reservationNumber) {
+        throw new Error(t('error.reservationNumberRequired'));
       }
 
-      if (!result.data) {
-        throw new Error(t('error.reservationNotFound'));
-      }
+      // Directly call the POST endpoint to regenerate the lost card
+      // This hits: /organizations/:organization_id/properties/:property_id/reservations/:reservation_id/lost-card
+      const regenerateData = {
+        reservation_id: reservationNumber,
+        reservationId: reservationNumber,
+        id: reservationNumber,
+      };
 
-      const guestData = result.data;
-      
-      if (!hasValidGuestData(guestData)) {
-        throw new Error(t('error.reservationNotFound'));
-      }
-      
+      console.log('[LostCardPage] Directly calling regenerate lost card endpoint with:', regenerateData);
+
+      const regenerateResult = await regenerateLostCard(regenerateData);
+
+      // Navigate to regenerate page with the result
       navigate('/lost-card/regenerate', {
         state: {
-          guestData: guestData,
+          guestData: null,
           validationData: values,
+          cardData: regenerateResult?.data ?? regenerateResult,
         },
       });
     } catch (err) {
+      console.error('[LostCardPage] Error:', err);
+      
       const errorStatus = err?.response?.status;
-      const errorMessage = err?.message ?? t('error.guestValidationFailed');
+      const errorMessage = err?.message ?? t('error.cardRegenerationFailed') ?? 'Failed to regenerate card';
       
-      const reservationErrorChecks = [
-        errorStatus === 404,
-        errorStatus === 500,
-        errorMessage.toLowerCase().includes('not found'),
-        errorMessage.includes('status code 500'),
-        errorMessage.includes('Request failed'),
-      ];
-      const isReservationError = reservationErrorChecks.some(check => check === true);
-      
-      if (isReservationError) {
-        form.setFieldError('reservationNumber', t('error.reservationNotFound'));
-        setError(t('error.reservationNotFound'));
-      } else {
-        form.setFieldError('reservationNumber', t('error.reservationNotFound'));
-        setError(t('error.reservationNotFound'));
-      }
+      // Display the actual error message from the API
+      form.setFieldError('reservationNumber', errorMessage);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
