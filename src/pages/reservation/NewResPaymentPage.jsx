@@ -29,6 +29,9 @@ const NewResPaymentPage = () => {
 
   const { room, searchCriteria, guestDetails } = location.state ?? {};
 
+  // Show loading state while checking for required data
+  const [isCheckingData, setIsCheckingData] = useState(true);
+
   const totalAmount = useMemo(() => {
     if (!searchCriteria?.checkIn || !searchCriteria?.checkOut || !room) {
       return { amount: 0, currency: 'EUR' };
@@ -53,9 +56,13 @@ const NewResPaymentPage = () => {
   const roomIds = useMemo(() => {
     if (!room) return { unitGroupId: null, ratePlanId: null };
     
+    // Room structure from search: { unitGroup: { id: ... }, ratePlan: { id: ... } }
+    const unitGroupId = room.unitGroup?.id ?? room.unitGroupId ?? null;
+    const ratePlanId = room.ratePlan?.id ?? room.ratePlanId ?? null;
+    
     return {
-      unitGroupId: room.unitGroupId,
-      ratePlanId: room.ratePlanId,
+      unitGroupId,
+      ratePlanId,
     };
   }, [room]);
 
@@ -94,15 +101,18 @@ const NewResPaymentPage = () => {
       { bookingPayload, propertyId },
       {
         onSuccess: (bookingResult) => {
-          const reservationId = bookingResult?.data?.reservations?.[0]?.id;
+          // Extract reservation ID from API response structure: { success: true, data: { reservations: [...] } }
+          const reservationId = bookingResult?.data?.reservations?.[0]?.id ?? null;
 
           const reservation = {
             reservationId,
+            id: reservationId,
+            bookingId: reservationId,
             guestDetails,
-            roomTypeId: room.unitGroupId || room.unitGroup?.id,
-            checkIn: searchCriteria.checkIn,
-            checkOut: searchCriteria.checkOut,
-            guests: searchCriteria.guests,
+            roomTypeId: room?.unitGroupId || room?.unitGroup?.id || room?._offerData?.unitGroup?.id,
+            checkIn: searchCriteria?.checkIn,
+            checkOut: searchCriteria?.checkOut,
+            guests: searchCriteria?.guests,
             totalAmount: totalAmount.amount,
             currency: totalAmount.currency,
             status: 'confirmed',
@@ -119,29 +129,63 @@ const NewResPaymentPage = () => {
   }, [hasProcessed, roomIds, formatDateForAPI, navigateToCompletion, totalAmount, guestDetails, searchCriteria, room, bookingMutation]);
 
   useEffect(() => {
-    if (hasInitialized.current) return;
-    
-    if (!room || !guestDetails) {
-      navigate('/reservation/search');
+    if (hasInitialized.current) {
+      setIsCheckingData(false);
       return;
     }
-
-    if (!roomIds.unitGroupId || !roomIds.ratePlanId) {
-      setTimeout(() => {
+    
+    // Small delay to allow state to be set
+    const checkData = setTimeout(() => {
+      setIsCheckingData(false);
+      
+      if (!room || !guestDetails) {
         navigate('/reservation/search', { replace: true });
-      }, 3000);
-      return;
-    }
-    
-    hasInitialized.current = true;
-    processPayment();
-  }, [room, guestDetails, roomIds.unitGroupId, roomIds.ratePlanId, navigate, processPayment]);
+        return;
+      }
+
+      const { unitGroupId, ratePlanId } = roomIds;
+      if (!unitGroupId || !ratePlanId) {
+        setTimeout(() => {
+          navigate('/reservation/search', { replace: true });
+        }, 2000);
+        return;
+      }
+      
+      hasInitialized.current = true;
+      processPayment();
+    }, 200);
+
+    return () => clearTimeout(checkData);
+  }, [room, guestDetails, roomIds, navigate, processPayment, searchCriteria]);
 
   const handleBack = () => {
     navigate('/reservation/room-details', {
       state: { room, searchCriteria, guestDetails },
     });
   };
+
+  // Show loading while checking data
+  if (isCheckingData) {
+    return (
+      <Container
+        size="lg"
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '20px',
+          backgroundColor: '#FFFFFF',
+        }}
+      >
+        <Loader size="lg" color="#C8653D" />
+        <Text size="md" c="dimmed" mt="md">
+          {t('common.loading')}
+        </Text>
+      </Container>
+    );
+  }
 
   return (
     <Container

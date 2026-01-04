@@ -31,9 +31,12 @@ const MainMenuPage = () => {
   };
 
   const handleCheckIn = () => {
-    const targetTime = EARLY_ARRIVAL_CONFIG.CHECKIN_TIME;
+    const targetHour = typeof EARLY_ARRIVAL_CONFIG.CHECKIN_TIME === 'number' 
+      ? EARLY_ARRIVAL_CONFIG.CHECKIN_TIME 
+      : parseInt(EARLY_ARRIVAL_CONFIG.CHECKIN_TIME.split(':')[0], 10);
     const now = new Date();
-    const [hours, minutes] = targetTime.split(':').map(Number);
+    const hours = targetHour;
+    const minutes = 0;
     const target = new Date();
     target.setHours(hours, minutes, 0, 0);
     if (now < target) {

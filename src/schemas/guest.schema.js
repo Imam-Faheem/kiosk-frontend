@@ -28,7 +28,7 @@ export const guestValidationSchema = yup.object({
   phone: yup
     .string()
     .required('Phone number is required')
-    .matches(/^[+]?[\d\s\-()]+$/, 'Please enter a valid phone number')
+    .matches(/^[+]?[\d\s\-()+()]+$/, 'Please enter a valid phone number')
     .min(10, 'Phone number must be at least 10 digits')
     .max(20, 'Phone number must be less than 20 characters')
     .trim(),

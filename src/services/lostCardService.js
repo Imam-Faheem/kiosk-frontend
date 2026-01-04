@@ -156,25 +156,82 @@ export const regenerateLostCard = async (data) => {
     throw new Error('Property ID and Organization ID are required to regenerate lost card.');
   }
   
-  const reservationId = data?.reservation_id ?? data?.reservationId;
+  // Extract reservation_id from data (can be reservation_id, reservationId, or id)
+  const reservationId = data?.reservation_id ?? data?.reservationId ?? data?.id;
+  
   if (!reservationId) {
     throw new Error('Reservation ID is required to regenerate lost card.');
   }
-  
+
+  // Use the correct endpoint: /organizations/:organization_id/properties/:property_id/reservations/:reservation_id/lost-card
   const endpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/reservations/${reservationId}/lost-card`;
 
   try {
-    const response = await apiClient.post(endpoint);
-    const apiData = response.data?.success === true && response.data?.data 
-      ? response.data.data 
-      : response.data;
-    return {
-      success: true,
-      data: apiData,
-    };
+    const baseURL = apiClient.defaults?.baseURL ?? API_CONFIG.BASE_URL ?? 'http://localhost:8000';
+    const fullUrl = `${baseURL}${endpoint}`;
+    
+    console.log('[regenerateLostCard] Making request to Kong:', {
+      endpoint,
+      baseURL,
+      fullUrl,
+      propertyId: context.propertyId,
+      organizationId: context.organizationId,
+      reservationId,
+      data,
+      method: 'POST',
+    });
+
+    const response = await apiClient.post(endpoint, data);
+    
+    console.log('[regenerateLostCard] Success:', {
+      status: response.status,
+      data: response.data,
+    });
+
+    return response.data;
   } catch (error) {
+    const baseURL = apiClient.defaults?.baseURL ?? API_CONFIG.BASE_URL ?? 'http://localhost:8000';
+    const fullUrl = `${baseURL}${endpoint}`;
+    
+    // Check if this is a CORS error
+    const isCorsError = !error.response && (
+      error.message?.includes('CORS') ||
+      error.message?.includes('Access-Control') ||
+      error.code === 'ERR_NETWORK' ||
+      error.message?.includes('blocked by CORS policy')
+    );
+    
+    console.error('[regenerateLostCard] Error calling Kong:', {
+      endpoint,
+      baseURL,
+      fullUrl,
+      propertyId: context.propertyId,
+      organizationId: context.organizationId,
+      reservationId,
+      error: error.message,
+      errorCode: error.code,
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      data: error?.response?.data,
+      isCorsError,
+      requestConfig: {
+        url: endpoint,
+        method: 'POST',
+        baseURL: baseURL,
+      },
+    });
+
+    // Handle CORS errors with a more helpful message
+    if (isCorsError) {
+      const corsMessage = `CORS error: The request to ${fullUrl} was blocked. Please ensure Kong is configured to allow the X-Organization-ID and X-Property-ID headers in CORS preflight responses.`;
+      console.error('[regenerateLostCard] CORS Error Details:', corsMessage);
+      throw new Error('Connection error: Unable to reach the server. Please check that Kong is running and CORS is properly configured.');
+    }
+
+    // Display the error message from the API response
     const message = error?.response?.data?.message ??
                    error?.response?.data?.error ??
+                   error?.response?.statusText ??
                    error?.message ??
                    'Failed to regenerate card';
     throw new Error(message);
