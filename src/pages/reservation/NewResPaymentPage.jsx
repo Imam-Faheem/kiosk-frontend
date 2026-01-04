@@ -16,6 +16,7 @@ import { IconArrowLeft, IconCreditCard } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useBookingMutation } from '../../hooks/useBookingMutation';
+import { buildBookingPayload, getBookingErrorMessage } from '../../utils/booking.utils';
 import usePropertyStore from '../../stores/propertyStore';
 
 const NewResPaymentPage = () => {
@@ -52,10 +53,10 @@ const NewResPaymentPage = () => {
   const roomIds = useMemo(() => {
     if (!room) return { unitGroupId: null, ratePlanId: null };
     
-    const unitGroupId = room.unitGroupId || room.unitGroup?.id;
-    const ratePlanId = room.ratePlanId || room.ratePlan?.id;
-    
-    return { unitGroupId, ratePlanId };
+    return {
+      unitGroupId: room.unitGroupId,
+      ratePlanId: room.ratePlanId,
+    };
   }, [room]);
 
   const formatDateForAPI = useCallback((dateStr) => {
@@ -87,58 +88,13 @@ const NewResPaymentPage = () => {
       return;
     }
 
-    const bookingPayload = {
-      reservations: [
-        {
-          arrival: formatDateForAPI(searchCriteria.checkIn),
-          departure: formatDateForAPI(searchCriteria.checkOut),
-          adults: Number(searchCriteria.guests) ?? 1,
-          guestComment: guestDetails?.guestComment ?? '',
-          channelCode: 'Direct',
-          primaryGuest: {
-            title: guestDetails?.title ?? 'Mr',
-            gender: guestDetails?.gender ?? 'Male',
-            firstName: guestDetails.firstName,
-            lastName: guestDetails.lastName,
-            email: guestDetails.email,
-            phone: guestDetails.phone,
-            address: {
-              addressLine1: guestDetails.addressStreet,
-              postalCode: guestDetails.addressPostal,
-              city: guestDetails.addressCity,
-              countryCode: guestDetails.country ?? 'GB',
-            },
-            ...(guestDetails.documentType && guestDetails.documentNumber ? {
-              identificationDocument: {
-                type: guestDetails.documentType,
-                number: guestDetails.documentNumber,
-              },
-            } : {}),
-            ...(guestDetails.nationalityCountryCode ? {
-              nationalityCountryCode: guestDetails.nationalityCountryCode,
-            } : {}),
-            ...(guestDetails.birthDate ? {
-              birthDate: formatDateForAPI(guestDetails.birthDate),
-            } : {}),
-            ...(guestDetails.birthPlace ? {
-              birthPlace: guestDetails.birthPlace,
-            } : {}),
-          },
-          guaranteeType: guestDetails?.guaranteeType ?? 'CreditCard',
-          travelPurpose: guestDetails?.travelPurpose ?? 'Business',
-          timeSlices: [{ ratePlanId }],
-        },
-      ],
-    };
+    const bookingPayload = buildBookingPayload(searchCriteria, guestDetails, ratePlanId, formatDateForAPI);
 
     bookingMutation.mutate(
       { bookingPayload, propertyId },
       {
         onSuccess: (bookingResult) => {
-          const reservationId = bookingResult?.data?.reservations?.[0]?.id 
-            ?? bookingResult?.reservations?.[0]?.id
-            ?? bookingResult?.data?.id
-            ?? bookingResult?.id;
+          const reservationId = bookingResult?.data?.reservations?.[0]?.id;
 
           const reservation = {
             reservationId,
@@ -291,11 +247,7 @@ const NewResPaymentPage = () => {
           {bookingMutation.isError && (
             <Alert color="red" variant="light" style={{ width: '100%' }}>
               <Text size="md" c="red" ta="center">
-                {bookingMutation.error?.response?.data?.message 
-                  ?? bookingMutation.error?.response?.data?.error 
-                  ?? bookingMutation.error?.message 
-                  ?? t('error.failedToCreateBooking') 
-                  ?? 'Failed to create booking. Please try again.'}
+                {getBookingErrorMessage(bookingMutation.error)}
               </Text>
             </Alert>
           )}

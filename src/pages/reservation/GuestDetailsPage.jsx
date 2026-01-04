@@ -15,8 +15,7 @@ import {
 import { DateInput } from '@mantine/dates';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from '@mantine/form';
-import { guestInitialValues } from '../../schemas/guest.schema';
-import { createGuestFormValidator } from '../../utils/formValidation';
+import { guestInitialValues, guestValidationSchema } from '../../schemas/guest.schema';
 import useLanguage from '../../hooks/useLanguage';
 import usePropertyStore from '../../stores/propertyStore';
 import { useGuestMutation } from '../../hooks/useGuestMutation';
@@ -35,7 +34,20 @@ const GuestDetailsPage = () => {
 
   const form = useForm({
     initialValues: guestInitialValues,
-    validate: createGuestFormValidator(),
+    validate: (values) => {
+      try {
+        guestValidationSchema.validateSync(values, { abortEarly: false });
+        return {};
+      } catch (err) {
+        const errors = {};
+        if (err.inner) {
+          err.inner.forEach((error) => {
+            errors[error.path] = error.message;
+          });
+        }
+        return errors;
+      }
+    },
   });
 
   const saveGuestMutation = useGuestMutation({

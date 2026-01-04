@@ -88,13 +88,9 @@ export const processPaymentByTerminal = async (reservationId, paymentData = {}) 
   }
 
   const endpoint = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/reservations/${reservationId}/payments/by-terminal`;
-  const body = {};
-  if (paymentData.amount !== undefined) {
-    body.amount = paymentData.amount;
-  }
-  if (paymentData.currency) {
-    body.currency = paymentData.currency;
-  }
+  const body = paymentData.amount !== undefined || paymentData.currency 
+    ? { ...(paymentData.amount !== undefined && { amount: paymentData.amount }), ...(paymentData.currency && { currency: paymentData.currency }) }
+    : {};
 
   try {
     const response = await apiClient.post(endpoint, body);

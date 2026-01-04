@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createBooking } from '../services/bookingService';
+import { getBookingErrorMessage } from '../utils/booking.utils';
 
 export const useBookingMutation = ({ onSuccess, onError } = {}) => {
   const queryClient = useQueryClient();
@@ -13,7 +14,8 @@ export const useBookingMutation = ({ onSuccess, onError } = {}) => {
       onSuccess?.(data, variables);
     },
     onError: (error) => {
-      onError?.(error);
+      const errorMessage = getBookingErrorMessage(error);
+      onError?.(error, errorMessage);
     },
   });
 };

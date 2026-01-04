@@ -71,6 +71,9 @@ export const UI_CONFIG = {
   },
 };
 
+// Check-in Time Configuration
+export const CHECKIN_TIME = "14:00";
+
 // Early Arrival Page Constants
 export const EARLY_ARRIVAL_CONFIG = {
   COUNTDOWN_DURATION: 15,
