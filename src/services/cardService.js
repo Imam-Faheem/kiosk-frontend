@@ -306,17 +306,7 @@ const createCardService = (contextService = propertyContextService) => {
     });
 
     try {
-      console.log('[issueCard] Making request:', {
-        endpoint,
-        fullUrl: `${apiClient.defaults?.baseURL ?? ''}${endpoint}`,
-        propertyId,
-        organizationId,
-        payload,
-        baseURL: apiClient.defaults?.baseURL,
-      });
-
       const response = await apiClient.post(endpoint, payload);
-      console.log('[issueCard] Success:', { status: response.status, data: response.data });
       return response.data;
     } catch (error) {
       console.error('[issueCard] Error:', {

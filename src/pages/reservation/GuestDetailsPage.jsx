@@ -396,7 +396,6 @@ const GuestDetailsPage = () => {
                 if (!validation.hasErrors) {
                   handleSubmit(form.values);
                 } else {
-                  console.log('Form validation errors:', validation.errors);
                   // Still navigate even if there are validation errors
                   handleSubmit(form.values);
                 }

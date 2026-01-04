@@ -107,15 +107,6 @@ const PaymentCheckPage = () => {
       return;
     }
 
-    console.log('Payment check data:', {
-      paymentAccountId,
-      hasPaymentAccount: !!paymentAccount,
-      balanceData,
-      hasFoliosData,
-      hasCheckInData: !!checkInData,
-      folios: folios?.length ?? 0,
-    });
-
     if (paymentAccountId && paymentAccount) {
       const status = paymentAccount.status ?? 'Pending';
       const balance = balanceData?.amount ?? paymentAccount.balance?.amount ?? 0;

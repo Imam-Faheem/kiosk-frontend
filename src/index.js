@@ -5,10 +5,9 @@ import App from './App';
 // Import Mantine styles
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
-// import '@mantine/modals/styles.css'; // This import is not needed
 import '@mantine/dates/styles.css';
 
-// Suppress WebSocket connection errors from React dev server (HMR)
+// Suppress WebSocket connection errors from React dev server (HMR) in development
 if (process.env.NODE_ENV === 'development') {
   const originalError = console.error;
   console.error = (...args) => {
@@ -17,8 +16,7 @@ if (process.env.NODE_ENV === 'development') {
       args[0].includes('WebSocket connection to') &&
       args[0].includes('failed')
     ) {
-      // Suppress WebSocket HMR connection errors
-      return;
+      return; // Suppress HMR WebSocket errors
     }
     originalError.apply(console, args);
   };
@@ -30,5 +28,3 @@ root.render(
     <App />
   </React.StrictMode>
 );
-
-// Performance monitoring can be added here if needed
