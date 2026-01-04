@@ -44,8 +44,10 @@
     "eject": "react-scripts eject",
     "electron": "electron .",
     "electron-dev": "concurrently \"cross-env BROWSER=none PORT=3002 npm start\" \"wait-on http://localhost:3002 && electron .\"",
+    "clean:dist": "rimraf dist",
     "dist": "npm run build && electron-builder",
     "dist:win": "npm run build && electron-builder --win",
+    "dist:win:clean": "npm run clean:dist && npm run dist:win",
     "dist:mac": "npm run build && electron-builder --mac",
     "dist:linux": "npm run build && electron-builder --linux"
   },
@@ -79,7 +81,6 @@
     "productName": "Hotel Kiosk",
     "copyright": "Copyright © 2024",
     "directories": {
-      "buildResources": "build",
       "output": "dist"
     },
     "files": [
@@ -88,6 +89,7 @@
       "electron/**/*",
       "package.json"
     ],
+    "asar": true,
     "win": {
       "target": [
         "nsis",
