@@ -30,7 +30,6 @@ const GuestDetailsPage = () => {
   const { t } = useLanguage();
   const [error, setError] = useState(null);
   const [isAvailabilityError, setIsAvailabilityError] = useState(false);
-  const { selectedProperty } = usePropertyStore();
 
   const { room, searchCriteria } = location.state ?? {};
 

@@ -5,7 +5,6 @@ import {
   Group,
   Button,
   Text,
-  Title,
   Stack,
   Box,
   Card,
@@ -18,7 +17,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { usePaymentMutation } from '../../hooks/usePaymentMutation';
 import { EARLY_ARRIVAL_CONFIG } from '../../config/constants';
-import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 
@@ -30,7 +28,7 @@ const PaymentTerminalPage = () => {
   const pollIntervalRef = useRef(null);
   const countdownIntervalRef = useRef(null);
 
-  const initiatePayment = usePaymentMutation('initiate', {
+  usePaymentMutation('initiate', {
     onSuccess: (result) => {
       if (result.success) {
         setTransactionId(result.data.transactionId);
@@ -100,7 +98,7 @@ const PaymentTerminalPage = () => {
     }
   });
   const [paymentStatus, setPaymentStatus] = useState('idle');
-  const [transactionId, setTransactionId] = useState(null);
+  const [, setTransactionId] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(180); // 3 minutes
   const [error, setError] = useState(null);
 

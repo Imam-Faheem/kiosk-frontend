@@ -4,7 +4,6 @@ import usePropertyStore from '../stores/propertyStore';
 import { STORAGE_KEYS, API_CONFIG } from '../config/constants';
 
 const DEFAULT_ORGANIZATION_ID = '0ujsszwN8NRY24YaXiTIE2VWDTS';
-const isPresent = (value) => value != null && value !== '';
 const INVALID_BOOKING_PATTERNS = ['BOOKING-CREATED', 'MOCK', 'mock', 'test'];
 
 const createNullStorage = () => ({

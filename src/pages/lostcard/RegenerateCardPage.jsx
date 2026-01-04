@@ -69,6 +69,8 @@ const RegenerateCardPage = () => {
     { label: t('regenerateCard.steps.programming'), status: 'programming' },
   ], [t]);
 
+  // Guest name is computed but not used in this component
+  // eslint-disable-next-line no-unused-vars
   const guestName = useMemo(() => {
     if (guestData?.guestName) return guestData.guestName;
     
@@ -354,7 +356,6 @@ const RegenerateCardPage = () => {
                     {steps.map((step, index) => {
                       const isCompleted = index < currentStep;
                       const isActive = index === currentStep;
-                      const isPending = index > currentStep;
                       
                       const getStepIcon = () => {
                         if (isCompleted) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import {
   Container,
   Paper,
@@ -41,7 +41,7 @@ const CheckInCompletePage = () => {
   const cardData = location.state?.cardData;
   const checkInResult = location.state?.checkInResult;
 
-  const formatCheckOut = (dateStr) => {
+  const formatCheckOut = useCallback((dateStr) => {
     if (!dateStr || dateStr === 'N/A') return t('common.notAvailable');
     try {
       if (typeof dateStr === 'string' && dateStr.includes('T')) {
@@ -55,9 +55,9 @@ const CheckInCompletePage = () => {
     } catch {
       return dateStr;
     }
-  };
+  }, [t]);
 
-  const getGuestName = (reservation, checkInInfo = null) => {
+  const getGuestName = useCallback((reservation, checkInInfo = null) => {
     if (!reservation) return t('common.guest');
     if (typeof reservation.guest_name === 'string') {
       return reservation.guest_name;
@@ -70,7 +70,7 @@ const CheckInCompletePage = () => {
     }
     if (checkInInfo?.guest_name) return checkInInfo.guest_name;
     return reservation.guestName ?? t('common.guest');
-  };
+  }, [t]);
 
   const checkInStatusMutation = useCheckInMutation('getStatus', {
     onSuccess: (result) => {
@@ -100,7 +100,7 @@ const CheckInCompletePage = () => {
       checkInTime: checkInInfo.checked_in_at ?? new Date().toISOString(),
       status: checkInInfo.status ?? checkInResult?.data?.status ?? 'checked_in',
     };
-  }, [reservation, checkInData, checkInResult, t]);
+  }, [reservation, checkInData, checkInResult, t, formatCheckOut, getGuestName]);
 
   // Log completion event
   const logCompletionMutation = useMutation({
@@ -175,7 +175,7 @@ const CheckInCompletePage = () => {
     return () => {
       // Cleanup handled in countdown effect
     };
-  }, [reservation?.reservation_id ?? reservation?.reservationId ?? reservation?.id, navigate, displayData, paymentStatus, cardData, logCompletionMutation, t, getGuestName, checkInData]);
+  }, [reservation, navigate, displayData, paymentStatus, cardData, logCompletionMutation, t, getGuestName, checkInData]);
 
   // Separate effect for countdown timer - runs once on mount
   useEffect(() => {

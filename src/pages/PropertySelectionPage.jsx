@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Container, Paper, Text, Stack, Box, Loader, Alert, Title, Group, Select, Button, List } from "@mantine/core";
+import { Container, Paper, Text, Stack, Box, Loader, Alert, Title, Group, Select, Button } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import usePropertyStore from "../stores/propertyStore";

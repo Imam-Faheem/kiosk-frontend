@@ -7,22 +7,16 @@ import {
   Title,
   Stack,
   Box,
-  Card,
-  Badge,
   Alert,
-  Divider,
   Button,
 } from '@mantine/core';
 import { 
-  IconCreditCard, 
   IconCheck, 
   IconX, 
   IconLoader2,
   IconShield,
-  IconCalendar,
   IconUser,
   IconBed,
-  IconCurrencyDollar,
   IconPhone,
 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -42,9 +36,6 @@ const PaymentCheckPage = () => {
     return status === 'Success' || status === 'completed' || status === 'paid';
   };
 
-  const isPaymentFailed = (status, failureReason) => {
-    return status === 'Failure' || !!failureReason;
-  };
 
   const extractPaymentAccountId = (reservation, checkInData, folios) => {
     const sources = [

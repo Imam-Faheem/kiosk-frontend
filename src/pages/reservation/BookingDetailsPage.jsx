@@ -11,10 +11,8 @@ import {
   Card,
   Checkbox,
   Image,
-  Badge,
   SimpleGrid,
   Alert,
-  Loader,
 } from '@mantine/core';
 import { IconCheck, IconEdit } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -35,6 +33,7 @@ const BookingDetailsPage = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [roomData, setRoomData] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [loading, setLoading] = useState(false);
   const [pricing, setPricing] = useState(null);
   const [validationError, setValidationError] = useState(null);

@@ -179,7 +179,7 @@ const NewResPaymentPage = () => {
     
     hasInitialized.current = true;
     processPayment();
-  }, [room, guestDetails, roomIds.unitGroupId, roomIds.ratePlanId, navigate]);
+  }, [room, guestDetails, roomIds.unitGroupId, roomIds.ratePlanId, navigate, processPayment]);
 
   const handleBack = () => {
     navigate('/reservation/room-details', {

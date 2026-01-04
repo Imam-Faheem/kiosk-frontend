@@ -4,7 +4,6 @@ import {
   Paper,
   Group,
   Button,
-  Title,
   Stack,
 } from '@mantine/core';
 import { IconKey, IconCalendar, IconCreditCardOff } from '@tabler/icons-react';

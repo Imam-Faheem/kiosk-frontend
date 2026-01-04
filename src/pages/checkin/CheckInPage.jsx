@@ -8,7 +8,6 @@ import {
   Stack,
   TextInput,
   Alert,
-  Box,
   Loader,
   Text,
 } from '@mantine/core';
@@ -107,7 +106,6 @@ const CheckInPage = () => {
 
       navigateToPaymentCheck(apiData, apiData);
     } catch (err) {
-      const errorMessage = err?.message ?? t('error.reservationNotFound');
       form.setFieldError('reservationId', t('error.reservationNotFound'));
       setError(t('error.reservationNotFound'));
     } finally {

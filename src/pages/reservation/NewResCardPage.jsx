@@ -4,17 +4,14 @@ import {
   Paper,
   Group,
   Text,
-  Title,
   Stack,
   Box,
   Stepper,
   Alert,
-  Badge,
 } from '@mantine/core';
 import { 
   IconCreditCard, 
   IconMail, 
-  IconLock, 
   IconCircleCheck,
   IconLoader2,
 } from '@tabler/icons-react';
@@ -22,7 +19,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCardMutation } from '../../hooks/useCardMutation';
 import { CARD_DISPENSING_STEPS, STEP_ICONS } from '../../config/constants';
-import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import '../../styles/animations.css';
 
@@ -30,6 +26,7 @@ const NewResCardPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
+  // eslint-disable-next-line no-unused-vars
   const issueCard = useCardMutation('issue', {
     onError: (err) => {
       setError(err.message ?? t('error.cardIssuanceFailed'));
@@ -115,8 +112,10 @@ const NewResCardPage = () => {
     };
 
     processCard();
-  }, [room, guestDetails, navigate, t]);
+  }, [room, guestDetails, navigate, t, searchCriteria]);
 
+  // handleBack is defined but not used in this component
+  // eslint-disable-next-line no-unused-vars
   const handleBack = () => {
     navigate('/reservation/room-details', {
       state: { room, searchCriteria, guestDetails },

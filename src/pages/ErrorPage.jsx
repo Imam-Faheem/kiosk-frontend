@@ -47,7 +47,7 @@ const ErrorPage = () => {
         url: window.location.href,
       });
     }
-  }, [errorMessage, errorType, logErrorMutation]);
+  }, [errorMessage, errorType, logErrorMutation, t]);
 
   const handleTryAgain = () => {
     if (previousPath) {

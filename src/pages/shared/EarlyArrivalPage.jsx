@@ -10,7 +10,7 @@ import {
   Box,
   Alert,
 } from '@mantine/core';
-import { IconAlertCircle, IconHome, IconClock, IconArrowLeft } from '@tabler/icons-react';
+import { IconAlertCircle, IconHome, IconClock } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { buttonStyles } from '../../constants/style.constants';
 import { EARLY_ARRIVAL_CONFIG, EARLY_ARRIVAL_STYLES } from '../../config/constants';
@@ -92,7 +92,7 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
     const currentHour = now.getHours();
     const targetHour = parseInt(EARLY_ARRIVAL_CONFIG.CHECKIN_TIME.split(':')[0], 10);
     return currentHour < targetHour;
-  }, [currentTime]);
+  }, []);
 
   const updateTime = useCallback(() => {
     setCurrentTime(formatTime());

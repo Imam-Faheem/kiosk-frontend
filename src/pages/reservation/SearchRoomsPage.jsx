@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Container,
   Paper,
   Group,
   Button,
   Text,
-  Title,
   Stack,
   Select,
   Grid,
@@ -14,7 +13,6 @@ import {
   Badge,
   Alert,
   Loader,
-  Box,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { IconSearch, IconUsers } from '@tabler/icons-react';
@@ -35,9 +33,6 @@ const SearchRoomsPage = () => {
   const [searchResults, setSearchResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-
-
-  const { selectedProperty } = usePropertyStore();
   
   const searchOffers = useRoomMutation('searchAvailability', {
     onSuccess: (result) => {
