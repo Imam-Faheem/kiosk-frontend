@@ -4,7 +4,6 @@ import usePropertyStore from '../stores/propertyStore';
 import { STORAGE_KEYS, API_CONFIG } from '../config/constants';
 
 const DEFAULT_ORGANIZATION_ID = '0ujsszwN8NRY24YaXiTIE2VWDTS';
-const isPresent = (value) => value != null && value !== '';
 const INVALID_BOOKING_PATTERNS = ['BOOKING-CREATED', 'MOCK', 'mock', 'test'];
 
 const createNullStorage = () => ({
@@ -245,8 +244,10 @@ const getNetworkErrorMessage = (error) => {
 };
 
 const getHttpErrorMessage = (error, defaultKey) => {
-  return error.response?.data?.message
+  return error.response?.data?.data?.message
+    ?? error.response?.data?.message
     ?? error.response?.data?.error
+    ?? error.response?.data?.data?.error
     ?? error.response?.statusText
     ?? error.message
     ?? translateError(defaultKey);
@@ -305,17 +306,7 @@ const createCardService = (contextService = propertyContextService) => {
     });
 
     try {
-      console.log('[issueCard] Making request:', {
-        endpoint,
-        fullUrl: `${apiClient.defaults?.baseURL ?? ''}${endpoint}`,
-        propertyId,
-        organizationId,
-        payload,
-        baseURL: apiClient.defaults?.baseURL,
-      });
-
       const response = await apiClient.post(endpoint, payload);
-      console.log('[issueCard] Success:', { status: response.status, data: response.data });
       return response.data;
     } catch (error) {
       console.error('[issueCard] Error:', {
@@ -482,8 +473,11 @@ const createCardService = (contextService = propertyContextService) => {
     
     try {
       const endpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/lost-card`;
-      const response = await apiClient.get(endpoint);
-      return response.data;
+      const response = await apiClient.post(endpoint);
+      const apiData = response.data?.success === true && response.data?.data 
+        ? response.data.data 
+        : response.data;
+      return apiData;
     } catch (error) {
       if (error?.response?.status === 404) {
         throw new Error(translateError('reservationNotFoundByNumber'));

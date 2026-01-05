@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   Container,
   Paper,
@@ -45,21 +45,30 @@ const ReservationCompletePage = () => {
     });
   };
 
-  const getReservationNumber = () => {
-    const reservationIdSources = [
-      reservation.bookingId,
-      reservation.reservationId,
-      reservation.id,
-      reservation.bookingData?.bookingId,
-      reservation.bookingData?.id,
-      reservation.bookingData?.reservationId,
-      reservation.bookingData?.reservation?.id,
-      reservation.bookingData?.reservation?.bookingId,
-      reservation.bookingData?.reservations?.[0]?.id,
-      reservation.bookingData?.reservations?.[0]?.bookingId,
-    ];
-    return reservationIdSources.find(id => id != null && id !== 'BOOKING-CREATED') ?? t('common.notAvailable');
-  };
+  const reservationNumber = useMemo(() => {
+    if (!reservation) return t('common.notAvailable');
+    
+    // Check direct property set in NewResPaymentPage
+    if (reservation.reservationId) return String(reservation.reservationId);
+    
+    // Check bookingData structure: { success: true, data: { reservations: [...] } }
+    const reservationId = reservation.bookingData?.data?.reservations?.[0]?.id;
+    if (reservationId) return String(reservationId);
+    
+    return t('common.notAvailable');
+  }, [reservation, t]);
+
+  const roomName = useMemo(() => {
+    if (!room) return null;
+    
+    // Try multiple possible locations for room name
+    return room.name 
+      ?? room.unitGroup?.name 
+      ?? room._offerData?.unitGroup?.name
+      ?? room.roomTypeName
+      ?? room.roomType?.name
+      ?? t('common.notAvailable');
+  }, [room, t]);
 
   const handleReturnHome = () => {
     navigate('/home');
@@ -181,7 +190,7 @@ const ReservationCompletePage = () => {
           </Title>
 
           <Text size="lg" fw={600} c="#C8653D">
-            {t('reservationComplete.reservationNumber')}: {getReservationNumber()}
+            {t('reservationComplete.reservationNumber')}: {reservationNumber}
           </Text>
 
           {/* Reservation Details Card */}
@@ -196,11 +205,11 @@ const ReservationCompletePage = () => {
                   </Group>
                 )}
                 
-                {room && (
+                {(room || reservation.roomTypeId) && roomName && (
                   <Group gap="sm">
                     <IconCreditCard size={20} color="#C8653D" />
                     <Text size="md" fw={600}>{t('reservationComplete.room')}:</Text>
-                    <Text size="md">{room.name}</Text>
+                    <Text size="md">{roomName}</Text>
                   </Group>
                 )}
                 

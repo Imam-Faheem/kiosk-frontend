@@ -1,11 +1,7 @@
 import { apiClient } from './api/apiClient';
 import { translateError } from '../utils/translations';
+import { getPropertyContext } from '../utils/storage';
 
-/**
- * Process payment for a reservation
- * @param {Object} data - Payment data
- * @returns {Promise<Object>} Payment response
- */
 export const processPayment = async (data) => {
   try {
     const response = await apiClient.post('/api/kiosk/v1/payment', data);
@@ -19,11 +15,6 @@ export const processPayment = async (data) => {
   }
 };
 
-/**
- * Get payment status for a reservation
- * @param {string} reservationId - Reservation ID
- * @returns {Promise<Object>} Payment status
- */
 export const getPaymentStatus = async (reservationId) => {
   try {
     const response = await apiClient.get(`/api/kiosk/v1/payment/status/${reservationId}`);
@@ -38,11 +29,6 @@ export const getPaymentStatus = async (reservationId) => {
   }
 };
 
-/**
- * Get payment history for a reservation
- * @param {Object} params - Query parameters
- * @returns {Promise<Object>} Payment history
- */
 export const getPaymentHistory = async (params = {}) => {
   try {
     const queryParams = {};
@@ -58,12 +44,6 @@ export const getPaymentHistory = async (params = {}) => {
   }
 };
 
-/**
- * Process refund for a payment
- * @param {string} transactionId - Transaction ID
- * @param {Object} data - Refund data
- * @returns {Promise<Object>} Refund response
- */
 export const processRefund = async (transactionId, data) => {
   try {
     const response = await apiClient.post(`/api/kiosk/v1/payment/${transactionId}/refund`, data);
@@ -77,11 +57,6 @@ export const processRefund = async (transactionId, data) => {
   }
 };
 
-/**
- * Get payment account details
- * @param {string} paymentAccountId - Payment account ID
- * @returns {Promise<Object>} Payment account response
- */
 export const getPaymentAccount = async (paymentAccountId) => {
   if (!paymentAccountId) {
     throw new Error('Payment account ID is required.');
@@ -94,6 +69,37 @@ export const getPaymentAccount = async (paymentAccountId) => {
                          err?.response?.data?.error ??
                          err?.message ??
                          'Failed to fetch payment account';
+    throw new Error(errorMessage);
+  }
+};
+
+
+export const processPaymentByTerminal = async (reservationId, paymentData = {}) => {
+  if (!reservationId) {
+    throw new Error('Reservation ID is required for terminal payment.');
+  }
+
+  const context = getPropertyContext();
+  const propertyId = paymentData.propertyId ?? context.propertyId;
+  const organizationId = paymentData.organizationId ?? context.organizationId;
+  
+  if (!propertyId || !organizationId) {
+    throw new Error('Property ID and Organization ID are required for terminal payment.');
+  }
+
+  const endpoint = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/reservations/${reservationId}/payments/by-terminal`;
+  const body = paymentData.amount !== undefined || paymentData.currency 
+    ? { ...(paymentData.amount !== undefined && { amount: paymentData.amount }), ...(paymentData.currency && { currency: paymentData.currency }) }
+    : {};
+
+  try {
+    const response = await apiClient.post(endpoint, body);
+    return response.data;
+  } catch (error) {
+    const errorMessage = error?.response?.data?.message 
+      ?? error?.response?.data?.error 
+      ?? error?.message 
+      ?? 'Failed to process payment by terminal';
     throw new Error(errorMessage);
   }
 };

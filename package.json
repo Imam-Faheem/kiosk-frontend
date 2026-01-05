@@ -1,7 +1,11 @@
 {
   "name": "hotel-frontend",
   "version": "0.1.0",
+  "description": "Hotel Kiosk Application - Self-service kiosk for hotel check-in, reservations, and card management",
+  "author": "Hotel Kiosk Team",
   "private": true,
+  "main": "electron/main.js",
+  "homepage": "./",
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@mantine/core": "^8.3.5",
@@ -37,7 +41,15 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "electron": "electron .",
+    "electron-dev": "concurrently \"cross-env BROWSER=none PORT=3002 npm start\" \"wait-on http://localhost:3002 && electron .\"",
+    "clean:dist": "rimraf dist",
+    "dist": "npm run build && electron-builder --config electron-builder.json5",
+    "dist:win": "npm run build && electron-builder --win --dir --config electron-builder.json5",
+    "dist:win:installer": "npm run build && electron-builder --win --config electron-builder.json5",
+    "dist:mac": "npm run build && electron-builder --mac --config electron-builder.json5",
+    "dist:linux": "npm run build && electron-builder --linux --config electron-builder.json5"
   },
   "eslintConfig": {
     "extends": [
@@ -56,5 +68,12 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "wait-on": "^9.0.3"
   }
 }

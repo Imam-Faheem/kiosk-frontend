@@ -12,7 +12,7 @@ import {
   Badge,
   Card,
 } from '@mantine/core';
-import { IconCheck, IconHome, IconMail, IconShield } from '@tabler/icons-react';
+import { IconHome, IconMail, IconShield } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import PropertyHeader from '../../components/PropertyHeader';

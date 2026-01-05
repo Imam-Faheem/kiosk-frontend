@@ -14,8 +14,8 @@ const generateIdempotencyKey = (prefix = 'req') => {
  */
 const getPropertyContext = () => {
   const defaultContext = {
-    propertyId: API_CONFIG.DEFAULT_PROPERTY_ID,
-    organizationId: API_CONFIG.ORGANIZATION_ID,
+    propertyId: null,
+    organizationId: null,
   };
 
   try {

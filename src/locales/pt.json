@@ -60,6 +60,23 @@
   "guestDetails": {
     "title": "Detalhes do Hóspede",
     "formTitle": "Informações de Contato do Hóspede",
+    "pleaseFillYourDetails": "Por favor, preencha seus detalhes",
+    "titleField": "Título",
+    "titlePlaceholder": "Selecione título",
+    "titleOptions": {
+      "mr": "Sr.",
+      "mrs": "Sra.",
+      "ms": "Srta.",
+      "miss": "Srta.",
+      "dr": "Dr."
+    },
+    "gender": "Gênero",
+    "genderPlaceholder": "Selecione gênero",
+    "genderOptions": {
+      "male": "Masculino",
+      "female": "Feminino",
+      "other": "Outro"
+    },
     "firstName": "Nome",
     "lastName": "Sobrenome",
     "email": "Email",
@@ -67,6 +84,29 @@
     "phonePlaceholder": "+351 912 345 678",
     "country": "País",
     "countryPlaceholder": "Selecione seu país",
+    "birthDate": "Data de Nascimento",
+    "birthPlace": "Local de Nascimento",
+    "birthPlacePlaceholder": "Digite seu local de nascimento",
+    "nationality": "Nacionalidade",
+    "nationalityPlaceholder": "Selecione sua nacionalidade",
+    "documentNumber": "Número do Documento",
+    "documentNumberPlaceholder": "Digite seu número de documento",
+    "documentType": "Tipo de Documento",
+    "documentTypePlaceholder": "Selecione tipo de documento",
+    "documentTypes": {
+      "passport": "Passaporte",
+      "id": "Cédula de Identidade",
+      "driverlicense": "Carta de Condução"
+    },
+    "travelPurpose": "Propósito da Viagem",
+    "travelPurposePlaceholder": "Selecione propósito da viagem",
+    "travelPurposes": {
+      "business": "Negócios",
+      "leisure": "Lazer",
+      "other": "Outro"
+    },
+    "guestComment": "Comentários",
+    "guestCommentPlaceholder": "Quaisquer comentários adicionais ou solicitações especiais",
     "address": "Endereço",
     "addressSection": "Endereço",
     "addressStreet": "Rua e número",

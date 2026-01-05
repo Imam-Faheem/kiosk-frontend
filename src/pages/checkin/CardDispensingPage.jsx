@@ -4,7 +4,6 @@ import {
   Paper,
   Group,
   Text,
-  Title,
   Stack,
   Box,
   Stepper,
@@ -14,7 +13,6 @@ import {
 import { 
   IconCreditCard, 
   IconMail, 
-  IconLock, 
   IconCircleCheck,
   IconLoader2,
 } from '@tabler/icons-react';
@@ -152,7 +150,7 @@ const CardDispensingPage = () => {
 
         setCardStatus('completed');
         setTimeout(() => {
-          navigate('/checkin/complete', {
+          navigate('/checkin/early-arrival', {
             state: { reservation, paymentStatus, cardData: result.data, checkInResult }
           });
         }, 5000);

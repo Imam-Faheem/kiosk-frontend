@@ -11,10 +11,8 @@ import {
   Card,
   Checkbox,
   Image,
-  Badge,
   SimpleGrid,
   Alert,
-  Loader,
 } from '@mantine/core';
 import { IconCheck, IconEdit } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -24,6 +22,7 @@ import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 import { getRoomDetails, calculateRoomPricing } from '../../services/roomService';
 import { createBooking } from '../../services/bookingService';
+import { buildBookingPayload, getBookingErrorMessage } from '../../utils/booking.utils';
 import { useMutation } from '@tanstack/react-query';
 
 const NO_IMAGE_PATH = '/no-image.png';
@@ -35,6 +34,7 @@ const BookingDetailsPage = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [roomData, setRoomData] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [loading, setLoading] = useState(false);
   const [pricing, setPricing] = useState(null);
   const [validationError, setValidationError] = useState(null);
@@ -217,28 +217,10 @@ const BookingDetailsPage = () => {
   const bookingMutation = useMutation({
     mutationFn: createBooking,
     onSuccess: (result) => {
-      // Extract reservation ID from various possible response structures
-      // The API might return: { data: { reservations: [{ id, bookingId }] } } or similar
-      const reservationIdSources = [
-        result?.data?.reservations?.[0]?.id,
-        result?.data?.reservations?.[0]?.bookingId,
-        result?.reservations?.[0]?.id,
-        result?.reservations?.[0]?.bookingId,
-        result?.data?.bookingId,
-        result?.data?.id,
-        result?.data?.reservationId,
-        result?.bookingId,
-        result?.id,
-        result?.reservationId,
-        result?.reservation?.id,
-        result?.reservation?.bookingId,
-      ];
-      const reservationId = reservationIdSources.find(id => id != null && id !== 'BOOKING-CREATED');
+      const reservationId = result?.data?.reservations?.[0]?.id;
 
       const reservation = {
-        bookingId: reservationId,
         reservationId,
-        id: reservationId,
         guestDetails,
         roomTypeId: displayRoom?.roomTypeId,
         checkIn: searchCriteria?.checkIn ?? '',
@@ -260,11 +242,7 @@ const BookingDetailsPage = () => {
     },
     onError: (error) => {
       console.error('Booking creation failed:', error);
-      const errorMessage = error?.response?.data?.message || 
-                          error?.response?.data?.error || 
-                          error?.message || 
-                          t('error.bookingFailed') || 
-                          'Failed to create booking. Please try again.';
+      const errorMessage = getBookingErrorMessage(error);
       setValidationError(errorMessage);
     },
   });
@@ -303,54 +281,8 @@ const BookingDetailsPage = () => {
       return date.toISOString().split('T')[0];
     };
 
-    // Build the booking payload according to the required API structure
-    const bookingPayload = {
-      reservations: [
-        {
-          arrival: formatDateForAPI(searchCriteria?.checkIn),
-          departure: formatDateForAPI(searchCriteria?.checkOut),
-          adults: Number(searchCriteria?.guests) || 1,
-          guestComment: guestDetails?.comment || '',
-          channelCode: 'Direct',
-          primaryGuest: {
-            title: guestDetails?.title || 'Mr',
-            gender: guestDetails?.gender || 'Male',
-            firstName: guestDetails?.firstName || '',
-            lastName: guestDetails?.lastName || '',
-            email: guestDetails?.email || '',
-            phone: guestDetails?.phone || '',
-            address: {
-              addressLine1: guestDetails?.addressStreet || '',
-              postalCode: guestDetails?.addressPostal || '',
-              city: guestDetails?.addressCity || '',
-              countryCode: guestDetails?.country || 'GB',
-            },
-            ...(guestDetails?.identificationType && guestDetails?.identificationNumber ? {
-              identificationDocument: {
-                type: guestDetails.identificationType,
-                number: guestDetails.identificationNumber,
-              },
-            } : {}),
-            ...(guestDetails?.nationalityCountryCode ? {
-              nationalityCountryCode: guestDetails.nationalityCountryCode,
-            } : {}),
-            ...(guestDetails?.birthDate ? {
-              birthDate: formatDateForAPI(guestDetails.birthDate),
-            } : {}),
-            ...(guestDetails?.birthPlace ? {
-              birthPlace: guestDetails.birthPlace,
-            } : {}),
-          },
-          guaranteeType: guestDetails?.guaranteeType || 'CreditCard',
-          travelPurpose: guestDetails?.travelPurpose || 'Business',
-          timeSlices: [
-            {
-              ratePlanId: ratePlanId,
-            },
-          ],
-        },
-      ],
-    };
+    // Build the booking payload using utility function
+    const bookingPayload = buildBookingPayload(searchCriteria, guestDetails, ratePlanId, formatDateForAPI);
 
     bookingMutation.mutate(bookingPayload);
   };
@@ -665,10 +597,7 @@ const BookingDetailsPage = () => {
               )}
               {bookingMutation.isError && (
                 <Alert color="red" variant="light" onClose={() => bookingMutation.reset()} withCloseButton>
-                  {bookingMutation.error?.response?.data?.message || 
-                   bookingMutation.error?.message || 
-                   t('error.failedToCreateBooking') || 
-                   'Failed to create booking. Please try again.'}
+                  {getBookingErrorMessage(bookingMutation.error)}
                 </Alert>
               )}
 

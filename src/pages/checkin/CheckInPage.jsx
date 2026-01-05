@@ -8,18 +8,16 @@ import {
   Stack,
   TextInput,
   Alert,
-  Box,
   Loader,
   Text,
 } from '@mantine/core';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
-import { useReservationMutation } from '../../hooks/useReservationMutation';
 import { checkinInitialValues } from '../../schemas/checkin.schema';
 import { BUTTON_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
-import { performCheckIn } from '../../services/checkinService';
+import { validateReservation } from '../../services/checkinService';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 
@@ -29,8 +27,6 @@ const CheckInPage = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const validateReservation = useReservationMutation('validate');
-
   const form = useForm({
     initialValues: checkinInitialValues,
     validate: {
@@ -38,32 +34,6 @@ const CheckInPage = () => {
       lastName: (value) => (!value ? t('error.lastNameRequired') : null),
     },
   });
-
-  const getFormValue = (values, ...keys) => {
-    return keys.map(key => values[key]).find(val => val != null);
-  };
-
-  const extractReservationId = (result, formValues) => {
-    const data = result?.data;
-    const sources = [
-      data?.bookingId,
-      data?.reservation_id,
-      data?.id,
-      data?.reservation?.id,
-      data?.reservation?.bookingId,
-      data?.folios?.[0]?.bookingId,
-      data?.folios?.[0]?.reservation?.bookingId,
-      data?.reservations?.[0]?.id,
-      formValues?.reservationId,
-      formValues?.reservation_id,
-    ];
-    return sources.find(id => id != null);
-  };
-
-  const getCheckInData = async (reservationData, reservationId) => {
-    const hasFolios = Array.isArray(reservationData.folios) && reservationData.folios.length > 0;
-    return hasFolios ? reservationData : (await performCheckIn(reservationId)).data;
-  };
 
   const navigateToPaymentCheck = (reservationData, checkInData) => {
     navigate('/checkin/payment-check', {
@@ -109,136 +79,37 @@ const CheckInPage = () => {
     return false;
   };
 
-  const extractLastNameFromResponse = (data) => {
-    if (!data) return null;
-    
-    const primaryGuest = data?.primaryGuest;
-    if (primaryGuest?.lastName) {
-      return primaryGuest.lastName.trim().toLowerCase();
-    }
-    
-    const folios = data?.folios;
-    if (Array.isArray(folios) && folios.length > 0) {
-      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
-      const debitor = mainFolio?.debitor;
-      if (debitor?.name) {
-        return debitor.name.trim().toLowerCase();
-      }
-    }
-    
-    const guestName = data?.guest_name;
-    if (guestName) {
-      const lastName = guestName.last_name ?? guestName.lastName;
-      if (lastName) {
-        return lastName.trim().toLowerCase();
-      }
-    }
-    
-    return null;
-  };
-
-  const validateLastNameMatch = (submittedLastName, apiData) => {
-    const submittedLastNameLower = submittedLastName?.trim().toLowerCase();
-    if (!submittedLastNameLower) {
-      return false;
-    }
-
-    const responseLastName = extractLastNameFromResponse(apiData);
-    if (!responseLastName) {
-      return false;
-    }
-
-    return submittedLastNameLower === responseLastName;
-  };
-
-  const extractReservationIdFromResponse = (data) => {
-    if (!data) return null;
-    
-    const sources = [
-      data?.bookingId,
-      data?.reservation_id,
-      data?.id,
-      data?.reservation?.id,
-      data?.reservation?.bookingId,
-      data?.folios?.[0]?.bookingId,
-      data?.folios?.[0]?.reservation?.bookingId,
-      data?.reservations?.[0]?.id,
-    ];
-    return sources.find(id => id != null);
-  };
-
-  const validateReservationIdMatch = (submittedReservationId, apiData) => {
-    const submittedId = submittedReservationId?.trim().toUpperCase();
-    if (!submittedId) {
-      return false;
-    }
-
-    const responseId = extractReservationIdFromResponse(apiData);
-    if (!responseId) {
-      return false;
-    }
-
-    return submittedId === responseId.toString().toUpperCase();
-  };
-
   const handleSubmit = async (values) => {
     setError(null);
     form.clearErrors();
     setIsLoading(true);
 
     try {
-      const submittedReservationId = getFormValue(values, 'reservationId', 'reservation_id');
-      const submittedLastName = getFormValue(values, 'lastName', 'last_name');
-      
-      const result = await validateReservation.mutateAsync({
-        reservationId: submittedReservationId,
-        lastName: submittedLastName,
+      const result = await validateReservation({
+        reservationId: values.reservationId,
+        lastName: values.lastName,
       });
+
+      if (!result.success) {
+        throw new Error(result.message ?? t('error.reservationNotFound'));
+      }
+
+      if (!result.data) {
+        throw new Error(t('error.reservationNotFound'));
+      }
 
       const apiData = result.data;
       
-      const apiDataChecks = [!apiData, !hasValidGuestData(apiData)];
-      if (apiDataChecks.some(check => check === true)) {
-        form.setFieldError('reservationId', t('error.reservationNotFound'));
+      if (!hasValidGuestData(apiData)) {
         throw new Error(t('error.reservationNotFound'));
       }
 
-      if (!validateLastNameMatch(submittedLastName, apiData)) {
-        form.setFieldError('lastName', t('error.lastNameMismatch'));
-        throw new Error(t('error.lastNameMismatch'));
-      }
-
-      const reservationId = extractReservationId(result, values);
-      const checkInData = await getCheckInData(apiData, reservationId);
-
-      const checkInDataChecks = [!checkInData, !hasValidGuestData(checkInData)];
-      if (checkInDataChecks.some(check => check === true)) {
-        form.setFieldError('reservationId', t('error.reservationNotFound'));
-        throw new Error(t('error.reservationNotFound'));
-      }
-
-      if (!validateLastNameMatch(submittedLastName, checkInData)) {
-        form.setFieldError('lastName', t('error.lastNameMismatch'));
-        throw new Error(t('error.lastNameMismatch'));
-      }
-
-      navigateToPaymentCheck(apiData, checkInData);
-    } catch (error) {
-      const errorStatus = error?.response?.status;
-      const errorMessage = (error?.message ?? '').toLowerCase();
-      
-      const lastNameChecks = [
-        errorStatus === 403,
-        errorMessage.includes('lastname'),
-        errorMessage.includes('last name'),
-        errorMessage.includes('last_name'),
-      ];
-      const isLastNameError = lastNameChecks.some(check => check === true);
-      
-      form.setFieldError(
-        isLastNameError ? 'lastName' : 'reservationId',
-        isLastNameError ? t('error.lastNameMismatch') : t('error.reservationNotFound')
-      );
+      navigateToPaymentCheck(apiData, apiData);
+    } catch (err) {
+      form.setFieldError('reservationId', t('error.reservationNotFound'));
+      setError(t('error.reservationNotFound'));
+      // Error is displayed via the error state variable
+    } finally {
       setIsLoading(false);
     }
   };
