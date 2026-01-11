@@ -15,7 +15,7 @@ import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import { useForm } from '@mantine/form';
-import { regenerateLostCard } from '../../services/lostCardService';
+import { issueCard } from '../../services/cardIssuanceService';
 import { BUTTON_STYLES } from '../../config/constants';
 
 const LostCardPage = () => {
@@ -55,7 +55,7 @@ const LostCardPage = () => {
 
       console.log('[LostCardPage] Directly calling regenerate lost card endpoint with:', regenerateData);
 
-      const regenerateResult = await regenerateLostCard(regenerateData);
+      const regenerateResult = await issueCard(regenerateData);
 
       // Navigate to regenerate page with the result
       navigate('/lost-card/regenerate', {

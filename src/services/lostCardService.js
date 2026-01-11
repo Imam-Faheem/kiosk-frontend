@@ -1,8 +1,6 @@
-import { apiClient } from './api/apiClient';
-import { translateError } from '../utils/translations';
-import { STORAGE_KEYS } from '../config/constants';
-import { API_CONFIG } from '../config/constants';
-import { issueCard as issueHardwareCard } from './hardware/hardwareService';
+// This file is deprecated - use cardIssuanceService.js instead
+// Kept for backward compatibility
+export * from './cardIssuanceService';
 
 const getPropertyContext = () => {
   try {
@@ -161,83 +159,100 @@ export const regenerateLostCard = async (data) => {
     throw new Error('Reservation ID is required to regenerate lost card.');
   }
 
-  // Use the correct endpoint: /organizations/:organization_id/properties/:property_id/reservations/:reservation_id/lost-card
-  const endpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/reservations/${reservationId}/lost-card`;
-
   try {
-    const baseURL = apiClient.defaults?.baseURL ?? API_CONFIG.BASE_URL ?? 'http://localhost:8000';
-    const fullUrl = `${baseURL}${endpoint}`;
+    // Step A: Validate lost card request
+    const validateEndpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/reservations/${reservationId}/validate-lost-card`;
     
-    console.log('[regenerateLostCard] Making request to Kong:', {
-      endpoint,
-      baseURL,
-      fullUrl,
-      propertyId: context.propertyId,
-      organizationId: context.organizationId,
-      reservationId,
-      method: 'GET',
+    console.log('[regenerateLostCard] Step A: Validating lost card request', {
+      endpoint: validateEndpoint,
+      reservationId
     });
 
-    // Use GET method for lost-card endpoint
-    const response = await apiClient.post(endpoint);
+    const validateResponse = await apiClient.post(validateEndpoint);
     
-    console.log('[regenerateLostCard] Success:', {
-      status: response.status,
-      data: response.data,
+    if (!validateResponse.data?.success) {
+      throw new Error(validateResponse.data?.error || validateResponse.data?.message || 'Validation failed');
+    }
+
+    console.log('[regenerateLostCard] Validation successful', {
+      booking_id: validateResponse.data?.data?.reservation?.bookingId
     });
 
-    const apiResult = response.data;
+    // Step B: Issue card (get card data from TTLock)
+    const issueEndpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/reservations/${reservationId}/issue-lost-card`;
+    
+    console.log('[regenerateLostCard] Step B: Issuing card data', {
+      endpoint: issueEndpoint
+    });
 
-    // If API call was successful and we have lock data, trigger hardware card issuance
-    if (apiResult?.success === true && apiResult?.data) {
-      const lockData = apiResult.data?.ekey?.encrypt_payload || apiResult.data?.encrypt_payload;
-      
-      if (lockData) {
-        console.log('[regenerateLostCard] Triggering hardware card issuance', {
-          has_lock_data: !!lockData,
-          lock_data_length: lockData.length
+    const issueResponse = await apiClient.post(issueEndpoint);
+    
+    if (!issueResponse.data?.success) {
+      throw new Error(issueResponse.data?.error || issueResponse.data?.message || 'Failed to issue card');
+    }
+
+    const cardData = issueResponse.data?.data;
+    
+    console.log('[regenerateLostCard] Card data retrieved successfully', {
+      card_no: cardData?.cardNo,
+      has_card_data: !!cardData?.cardData,
+      has_hotel_info: !!cardData?.hotelInfo
+    });
+
+    // Step C: Send cardData and hotelInfo to hardware service
+    if (cardData?.cardData) {
+      console.log('[regenerateLostCard] Step C: Triggering hardware card issuance', {
+        card_data_length: cardData.cardData.length,
+        has_hotel_info: !!cardData.hotelInfo
+      });
+
+      try {
+        // Issue card via hardware service with cardData and hotelInfo
+        const hardwareResult = await issueHardwareCard(cardData.cardData, cardData.hotelInfo);
+        
+        console.log('[regenerateLostCard] Hardware card issued successfully', {
+          card_id: hardwareResult?.data?.cardId,
+          card_type: hardwareResult?.data?.cardType
         });
 
-        try {
-          // Issue card via hardware service
-          const hardwareResult = await issueHardwareCard(lockData);
-          
-          console.log('[regenerateLostCard] Hardware card issued successfully', {
-            card_id: hardwareResult?.data?.cardId,
-            card_type: hardwareResult?.data?.cardType
-          });
-
-          // Merge hardware result with API result
-          return {
-            ...apiResult,
+        // Merge hardware result with API result
+        return {
+          success: true,
+          data: {
+            ...cardData,
             hardware: {
               success: true,
               cardId: hardwareResult?.data?.cardId,
               cardType: hardwareResult?.data?.cardType,
               encodedAt: hardwareResult?.data?.encodedAt
             }
-          };
-        } catch (hardwareError) {
-          console.error('[regenerateLostCard] Hardware card issuance failed', {
-            error: hardwareError.message
-          });
+          }
+        };
+      } catch (hardwareError) {
+        console.error('[regenerateLostCard] Hardware card issuance failed', {
+          error: hardwareError.message
+        });
 
-          // Return API result but include hardware error
-          return {
-            ...apiResult,
+        // Return API result but include hardware error
+        return {
+          success: true,
+          data: {
+            ...cardData,
             hardware: {
               success: false,
               error: hardwareError.message,
               message: 'Card data retrieved but physical card issuance failed'
             }
-          };
-        }
-      } else {
-        console.warn('[regenerateLostCard] No lock data in response, skipping hardware issuance');
+          }
+        };
       }
+    } else {
+      console.warn('[regenerateLostCard] No card data in response, skipping hardware issuance');
+      return {
+        success: true,
+        data: cardData
+      };
     }
-
-    return apiResult;
   } catch (error) {
     const baseURL = apiClient.defaults?.baseURL ?? API_CONFIG.BASE_URL ?? 'http://localhost:8000';
     const fullUrl = `${baseURL}${endpoint}`;

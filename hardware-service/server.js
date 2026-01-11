@@ -20,21 +20,26 @@ app.get('/health', (req, res) => {
 // Issue card endpoint
 app.post('/api/card/issue', async (req, res) => {
   try {
-    const { lockData } = req.body;
+    const { cardData, hotelInfo, lockData } = req.body;
 
-    if (!lockData) {
+    // Support both new format (cardData) and legacy format (lockData)
+    const finalCardData = cardData || lockData;
+
+    if (!finalCardData) {
       return res.status(400).json({
         success: false,
-        error: 'lockData is required',
-        message: 'Lock data (encrypt_payload) is required to issue card'
+        error: 'cardData or lockData is required',
+        message: 'Card data (from TTLock getCardData API) is required to issue card'
       });
     }
 
     console.log('[Hardware Service] Card issuance request received', {
-      lock_data_length: lockData.length
+      card_data_length: finalCardData.length,
+      has_hotel_info: !!hotelInfo,
+      using_legacy_format: !!lockData
     });
 
-    const result = await cardService.issueCard(lockData);
+    const result = await cardService.issueCard(finalCardData, hotelInfo);
 
     res.json(result);
   } catch (error) {

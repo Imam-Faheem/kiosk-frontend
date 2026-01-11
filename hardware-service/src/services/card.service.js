@@ -13,21 +13,33 @@ const cardEncoderService = require('./card-encoder.service');
  */
 
 /**
- * Issue card with lock data
- * @param {string} lockData - Hex string from TTLock (encrypt_payload)
+ * Issue card with card data from TTLock
+ * @param {string} cardData - Hex string from TTLock (cardData from getCardData API)
+ * @param {string} hotelInfo - Hotel info string from TTLock (required for encoder initialization)
  * @returns {Promise<Object>} Card issuance result
  */
-async function issueCard(lockData) {
+async function issueCard(cardData, hotelInfo = null) {
   const functionName = 'issueCard';
   
   try {
-    if (!lockData) {
-      throw new Error('Lock data (lockData) is required');
+    if (!cardData) {
+      throw new Error('Card data (cardData) is required');
     }
 
     console.log(`${functionName}: Starting card issuance`, {
-      lock_data_length: lockData.length
+      card_data_length: cardData.length,
+      has_hotel_info: !!hotelInfo
     });
+
+    // Note: hotelInfo is required by CardEncoder.dll to initialize the session
+    // If not provided, the encoder may still work but it's recommended to provide it
+    if (hotelInfo) {
+      console.log(`${functionName}: Hotel info provided for encoder initialization`, {
+        hotel_info_length: hotelInfo.length
+      });
+      // Store hotelInfo for encoder initialization (if needed by DLL)
+      // The encoder service should use this when initializing
+    }
 
     // Step 1: Initialize hardware (dispenser + encoder)
     await k720SDK.initialize();
@@ -62,16 +74,17 @@ async function issueCard(lockData) {
         card_id: cardId
       });
 
-      // Step 7: ENCODE card with TTLock hex payload
+      // Step 7: ENCODE card with TTLock card data
+      // Use cardData (from getCardData API) instead of lockData (from ekey)
       await cardEncoderService.encodeCardWithTTLockFormat(
         encoderHandle,
         macAddr,
-        lockData, // Hex string from TTLock
+        cardData, // Hex string from TTLock getCardData API
         cardType
       );
 
       console.log(`${functionName}: Card encoded successfully`, {
-        lock_data_length: lockData.length,
+        card_data_length: cardData.length,
         card_type: cardType
       });
 

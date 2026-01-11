@@ -28,22 +28,25 @@ export const checkHardwareService = async () => {
 };
 
 /**
- * Issue card with lock data
- * @param {string} lockData - Hex string from TTLock (encrypt_payload)
+ * Issue card with card data from TTLock
+ * @param {string} cardData - Hex string from TTLock (cardData from getCardData API)
+ * @param {string} hotelInfo - Hotel info string from TTLock (optional, but recommended)
  * @returns {Promise<Object>} Card issuance result
  */
-export const issueCard = async (lockData) => {
+export const issueCard = async (cardData, hotelInfo = null) => {
   try {
-    if (!lockData) {
-      throw new Error('Lock data (lockData) is required');
+    if (!cardData) {
+      throw new Error('Card data (cardData) is required');
     }
 
     console.log('[Hardware Service] Issuing card', {
-      lock_data_length: lockData.length
+      card_data_length: cardData.length,
+      has_hotel_info: !!hotelInfo
     });
 
     const response = await hardwareClient.post('/api/card/issue', {
-      lockData
+      cardData,
+      hotelInfo
     });
 
     return response.data;
