@@ -33,12 +33,14 @@ const RegenerateCardPage = () => {
   const validationData = location.state?.validationData;
   const cardData = location.state?.cardData; // Card data if already regenerated
 
+  const hasRequiredData = !!(guestData || validationData || cardData);
+
   const {
     data: cardMutationData,
     isLoading: isLoadingData,
     error: dataError,
     isError: isDataError,
-  } = useCardRegenerationData(guestData, validationData);
+  } = useCardRegenerationData(guestData, validationData, hasRequiredData);
 
   const regenerateCardMutation = useCardRegenerationMutation({
     onSuccess: (result) => {
@@ -101,21 +103,7 @@ const RegenerateCardPage = () => {
     { label: t('regenerateCard.steps.programming'), status: 'programming' },
   ], [t]);
 
-  const guestName = useMemo(() => {
-    if (guestData?.guestName) return guestData.guestName;
-    
-    if (guestData?.primaryGuest) {
-      const firstName = guestData.primaryGuest.firstName ?? '';
-      const lastName = guestData.primaryGuest.lastName ?? '';
-      const fullName = `${firstName} ${lastName}`.trim();
-      if (fullName) return fullName;
-    }
-    
-    const firstName = guestData?.firstName ?? '';
-    const lastName = guestData?.lastName ?? '';
-    const fullName = `${firstName} ${lastName}`.trim();
-    return fullName ? fullName : '';
-  }, [guestData]);
+  // Guest name computation removed as it's not used in this component
 
   const processStep = async (stepIndex, status) => {
     setCurrentStep(stepIndex);
@@ -124,11 +112,11 @@ const RegenerateCardPage = () => {
   };
 
   useEffect(() => {
-    if (!guestData || !validationData) {
-      navigate('/lost-card');
-      return;
+    if (!hasRequiredData) {
+      navigate('/lost-card', { replace: true });
     }
-  }, [guestData, validationData, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   useEffect(() => {
     // Skip if cardData is already provided (card was already regenerated in LostCardPage)
@@ -167,12 +155,46 @@ const RegenerateCardPage = () => {
     navigate('/home');
   };
 
-  if (!guestData || !validationData) {
-    return null;
+  if (!hasRequiredData) {
+    return (
+      <Container
+        size="lg"
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        p={20}
+        bg="#FFFFFF"
+      >
+        <Paper
+          withBorder
+          shadow="md"
+          p={40}
+          radius="xl"
+          w="100%"
+          maw={600}
+          bg="#ffffff"
+          style={{
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          }}
+        >
+          <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+            <PropertyHeader />
+          </Group>
+          <Stack align="center" gap="md">
+            <Loader size="lg" />
+            <Text size="md" c="dimmed">{t('regenerateCard.pleaseWaitMessage')}</Text>
+          </Stack>
+        </Paper>
+      </Container>
+    );
   }
 
-  const errorMessage = dataError?.message ?? 
-                      regenerateCardMutation.error?.message ?? 
+  const errorMessage = dataError?.message ??
+                      regenerateCardMutation.error?.message ??
                       null;
   const isReservationNotFound = errorMessage?.toLowerCase().includes('reservation not found') ||
                                errorMessage?.toLowerCase().includes('reservationnotfound') ||
@@ -180,11 +202,38 @@ const RegenerateCardPage = () => {
 
   if (isLoading) {
     return (
-      <Container size="lg" style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }} p={20}>
-        <Stack align="center" gap="md">
-          <Loader size="lg" />
-          <Text size="md" c="dimmed">{t('regenerateCard.pleaseWaitMessage')}</Text>
-        </Stack>
+      <Container
+        size="lg"
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+        p={20}
+        bg="#FFFFFF"
+      >
+        <Paper
+          withBorder
+          shadow="md"
+          p={40}
+          radius="xl"
+          w="100%"
+          maw={600}
+          bg="#ffffff"
+          style={{
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          }}
+        >
+          <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+            <PropertyHeader />
+          </Group>
+          <Stack align="center" gap="md">
+            <Loader size="lg" />
+            <Text size="md" c="dimmed">{t('regenerateCard.pleaseWaitMessage')}</Text>
+          </Stack>
+        </Paper>
       </Container>
     );
   }
@@ -211,31 +260,39 @@ const RegenerateCardPage = () => {
           w="100%"
           maw={600}
           bg="#ffffff"
+          style={{
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          }}
         >
-          <Alert
-            icon={<IconX size={18} />}
-            title={t('error.title')}
-            color="red"
-            variant="light"
-            radius="md"
-          >
-            <Text size="md" fw={500} ff="Inter, sans-serif">
-              {t('error.reservationNotFound')}
-            </Text>
-          </Alert>
-          <Group justify="center" mt="xl">
-            <Button
-              size="lg"
-              leftSection={<IconHome size={20} stroke={2} />}
-              onClick={() => navigate('/lost-card')}
-              bg="#C8653D"
-              c="white"
-              fw={600}
+          <Group justify="space-between" mb="xl" pb={12} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+            <PropertyHeader />
+          </Group>
+          <Stack gap="lg">
+            <Alert
+              icon={<IconX size={18} />}
+              title={t('error.title')}
+              color="red"
+              variant="light"
               radius="md"
             >
-              {t('common.returnToHome')}
-            </Button>
-          </Group>
+              <Text size="md" fw={500}>
+                {t('error.reservationNotFound')}
+              </Text>
+            </Alert>
+            <Group justify="center" mt="xl">
+              <Button
+                size="lg"
+                leftSection={<IconHome size={20} stroke={2} />}
+                onClick={() => navigate('/lost-card')}
+                bg="#C8653D"
+                c="white"
+                fw={600}
+                radius="md"
+              >
+                {t('common.returnToHome')}
+              </Button>
+            </Group>
+          </Stack>
         </Paper>
       </Container>
     );
@@ -323,7 +380,6 @@ const RegenerateCardPage = () => {
                     {steps.map((step, index) => {
                       const isCompleted = index < currentStep;
                       const isActive = index === currentStep;
-                      const isPending = index > currentStep;
                       
                       const getStepIcon = () => {
                         if (isCompleted) {

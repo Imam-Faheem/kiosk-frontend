@@ -45,7 +45,7 @@ const queryClient = new QueryClient({
       retry: 1,
       refetchOnWindowFocus: false,
       staleTime: 0,
-      cacheTime: 0,
+      gcTime: 0, // gcTime replaces cacheTime in TanStack Query v5
     },
   },
 });

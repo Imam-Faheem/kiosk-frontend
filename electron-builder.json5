@@ -1,0 +1,30 @@
+{
+  appId: "com.hotel.kiosk",
+  productName: "Hotel Kiosk",
+  copyright: "Copyright © 2024",
+  
+  // Don't extend react-cra preset
+  extends: null,
+  
+  directories: {
+    output: "dist"
+  },
+  
+  files: [
+    "build/**/*",
+    "electron/**/*", 
+    "package.json"
+  ],
+  
+  // Force the correct main entry point
+  extraMetadata: {
+    main: "electron/main.js"
+  },
+  
+  // Enable asar packaging (recommended)
+  asar: true,
+  
+  win: {
+    target: "dir"
+  }
+}

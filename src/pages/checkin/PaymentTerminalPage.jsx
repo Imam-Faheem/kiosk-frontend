@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Paper,
   Group,
   Button,
   Text,
-  Title,
   Stack,
   Box,
   Card,
@@ -17,8 +16,6 @@ import { IconCreditCard, IconX, IconCheck } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { usePaymentByTerminal } from '../../hooks/useCheckInFlow';
-import { EARLY_ARRIVAL_CONFIG } from '../../config/constants';
-import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 
@@ -26,16 +23,52 @@ const PaymentTerminalPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const [paymentStatus, setPaymentStatus] = useState('processing');
-  const [timeRemaining, setTimeRemaining] = useState(180); // 3 minutes
+  const countdownIntervalRef = useRef(null);
+  const TOTAL_SECONDS = 120;
+  const [paymentStatus, setPaymentStatus] = useState('initiating');
+  const [timeRemaining, setTimeRemaining] = useState(TOTAL_SECONDS);
   const [error, setError] = useState(null);
 
-  const { reservation, reservationId, payableAmount, currency } = location.state || {};
+  const {
+    reservation,
+    checkInData,
+    paymentStatus: existingPaymentStatus,
+    folios,
+    reservationId: reservationIdFromState,
+    payableAmount: payableAmountFromState,
+    currency: currencyFromState,
+  } = location.state || {};
+
+  const reservationId =
+    reservationIdFromState ??
+    checkInData?.bookingId ??
+    reservation?.id ??
+    reservation?.bookingId;
+
+  const payableAmount =
+    payableAmountFromState ??
+    existingPaymentStatus?.amount ??
+    reservation?.payableAmount?.guest?.amount ??
+    0;
+
+  const currency =
+    currencyFromState ??
+    existingPaymentStatus?.currency ??
+    reservation?.payableAmount?.guest?.currency ??
+    'EUR';
+
+  const clearCountdown = () => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+  };
 
   // Process payment by terminal
   // POST /api/kiosk/v1/organizations/:organization_id/properties/:property_id/reservations/:reservation_id/payments/by-terminal
   const processPayment = usePaymentByTerminal({
     onSuccess: (result) => {
+      clearCountdown();
       setPaymentStatus('completed');
       
       // After successful payment, navigate to process check-in
@@ -44,6 +77,8 @@ const PaymentTerminalPage = () => {
           state: {
             reservation,
             reservationId,
+            checkInData,
+            folios,
             paymentData: result,
           },
         });
@@ -51,6 +86,7 @@ const PaymentTerminalPage = () => {
     },
     onError: (err) => {
       console.error('[PaymentTerminalPage] Payment error:', err);
+      clearCountdown();
       setPaymentStatus('error');
       setError(err?.message ?? t('error.paymentFailed') ?? 'Payment failed');
     },
@@ -62,38 +98,33 @@ const PaymentTerminalPage = () => {
       return;
     }
 
+    setPaymentStatus('processing');
+    setTimeRemaining(TOTAL_SECONDS);
+    setError(null);
+
     // Start payment processing
     processPayment.mutate({
       reservationId,
-      paymentData: {},
+      paymentData: { amount: payableAmount, currency },
     });
 
     // Countdown timer
-    const countdownInterval = setInterval(() => {
+    countdownIntervalRef.current = setInterval(() => {
       setTimeRemaining(prev => {
         if (prev <= 1) {
-          clearInterval(countdownInterval);
+          clearCountdown();
+          setPaymentStatus(current => (current === 'processing' ? 'timeout' : current));
+          setError(t('paymentTerminal.timeout') ?? 'Payment timeout');
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-
-    // Timeout after 3 minutes
-    const timeout = setTimeout(() => {
-      if (paymentStatus === 'processing') {
-        setPaymentStatus('timeout');
-        setError(t('paymentTerminal.timeout') ?? 'Payment timeout');
-      }
-    }, 180000);
-
-    return () => {
-      clearInterval(countdownInterval);
-      clearTimeout(timeout);
-    };
-  }, [reservation, reservationId, navigate]);
+    return () => clearCountdown();
+  }, [reservation, reservationId, navigate, processPayment, payableAmount, currency, t]);
 
   const handleBack = () => {
+    clearCountdown();
     navigate('/checkin');
   };
 
@@ -188,7 +219,7 @@ const PaymentTerminalPage = () => {
               {/* Progress bar */}
               <Box style={{ width: '100%' }}>
                 <Progress
-                  value={(180 - timeRemaining) / 180 * 100}
+                  value={((TOTAL_SECONDS - timeRemaining) / TOTAL_SECONDS) * 100}
                   color="#C8653D"
                   size="lg"
                   radius="md"

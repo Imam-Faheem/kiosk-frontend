@@ -112,24 +112,7 @@ export const createBooking = async (bookingData, hotelId) => {
   const endpoint = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/bookings`;
   
   try {
-    console.log('[createBooking] Making request:', {
-      endpoint,
-      fullUrl: `${apiClient.defaults?.baseURL ?? ''}${endpoint}`,
-      propertyId,
-      organizationId,
-      payload,
-      payloadStringified: JSON.stringify(payload),
-      reservationsCount: payload.reservations?.length,
-      firstReservation: payload.reservations?.[0],
-      hasReservations: !!payload.reservations,
-    });
-    
     const response = await apiClient.post(endpoint, payload);
-    
-    console.log('[createBooking] Response:', {
-      status: response.status,
-      data: response.data,
-    });
     
     // Ensure response has success field for consistency
     const responseData = response.data ?? {};

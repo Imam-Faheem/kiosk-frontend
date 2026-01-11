@@ -90,13 +90,10 @@ export const validateLostCard = async (reservationId, propertyId = null, organiz
 
   try {
     const response = await apiClient.post(endpoint);
-    
-    console.log('[validateLostCard] Success:', {
-      status: response.status,
-      data: response.data,
-    });
-    
-    return response.data;
+    const apiData = response.data?.success === true && response.data?.data
+      ? response.data.data
+      : response.data;
+    return apiData;
   } catch (error) {
     console.error('[validateLostCard] Error:', {
       endpoint,

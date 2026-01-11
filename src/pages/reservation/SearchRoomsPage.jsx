@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Container,
   Paper,
@@ -13,7 +13,6 @@ import {
   Badge,
   Alert,
   Loader,
-  Box,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { IconSearch, IconUsers } from '@tabler/icons-react';
@@ -21,19 +20,12 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
 import { useRoomMutation } from '../../hooks/useRoomMutation';
 import { roomSearchValidationSchema, roomSearchInitialValues } from '../../schemas/reservation.schema';
-import { EARLY_ARRIVAL_CONFIG, BUTTON_STYLES, FORM_INPUT_STYLES } from '../../config/constants';
+import { BUTTON_STYLES, FORM_INPUT_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
 import usePropertyStore from '../../stores/propertyStore';
 import PropertyHeader from '../../components/PropertyHeader';
 import BackButton from '../../components/BackButton';
 import UnoLogo from '../../assets/uno.jpg';
-
-// Get today's date at midnight for date inputs
-const getTodayDate = () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return today;
-};
 
 const SearchRoomsPage = () => {
   const navigate = useNavigate();
@@ -41,33 +33,28 @@ const SearchRoomsPage = () => {
   const [searchResults, setSearchResults] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
-
-  useEffect(() => {
-    const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
-    const now = new Date();
-    const [time, period] = targetTime.split(' ');
-    const [hours, minutes] = time.split(':').map(Number);
-    const target = new Date();
-    target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
-    if (now < target) {
-      navigate('/reservation/early-arrival');
-    }
-  }, [navigate]);
-
-  const searchAvailability = useRoomMutation('searchAvailability', {
+  
+  const searchOffers = useRoomMutation('searchAvailability', {
     onSuccess: (result) => {
-      // The service returns the transformed data directly
-      setSearchResults(result || null);
+      setSearchResults(result ?? null);
       setErrorMessage(null);
     },
     onError: (err) => {
-      const details = err?.response?.data;
-      const msg = (details && (details.message || details.error)) || err?.message || t('error.requestFailed');
-      setErrorMessage(msg);
+      const errorMsg = err?.response?.data?.message 
+        ?? err?.response?.data?.error 
+        ?? err?.message 
+        ?? t('error.requestFailed');
+      setErrorMessage(errorMsg);
     }
   });
 
-  const isSearching = loading || searchAvailability.isPending;
+  const isSearching = loading || searchOffers.isPending;
+
+  const todayDate = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  }, []);
 
   const form = useForm({
     initialValues: roomSearchInitialValues,
@@ -76,24 +63,21 @@ const SearchRoomsPage = () => {
         roomSearchValidationSchema.validateSync(values, { abortEarly: false });
         return {};
       } catch (err) {
-        const errors = {};
-        err.inner.forEach((error) => {
-          errors[error.path] = error.message;
-        });
-        return errors;
+        return err.inner.reduce((acc, error) => ({ ...acc, [error.path]: error.message }), {});
       }
     },
   });
+
+  const formatDate = (date) => date instanceof Date ? date.toISOString().split('T')[0] : date;
 
   const handleSearch = async (values) => {
     setLoading(true);
     setErrorMessage(null);
     setSearchResults(null);
 
-    // Check if property is configured
     const propertyId = usePropertyStore.getState().propertyId;
     if (!propertyId) {
-      setErrorMessage(t('error.propertyNotSelected') || 'Please select a property first. Go to property selection page.');
+      setErrorMessage(t('error.propertyNotSelected') ?? 'Please select a property first. Go to property selection page.');
       setLoading(false);
       return;
     }
@@ -106,13 +90,12 @@ const SearchRoomsPage = () => {
       propertyId: propertyId,
       arrival: checkInDate,
       departure: checkOutDate,
-      adults: adults || 1,
+      adults: adults ?? 1,
     };
 
     try {
-      await searchAvailability.mutateAsync(searchData);
+      await searchOffers.mutateAsync(searchData);
     } catch (err) {
-      // Error is already handled by onError callback, but ensure loading is stopped
       console.error('Search error:', err);
     } finally {
       setLoading(false);
@@ -120,16 +103,14 @@ const SearchRoomsPage = () => {
   };
 
   const handleSelectRoom = (room) => {
-    const searchCriteria = {
-      ...form.values,
-      checkIn: form.values.checkIn ? (form.values.checkIn instanceof Date ? form.values.checkIn.toISOString().split('T')[0] : form.values.checkIn) : null,
-      checkOut: form.values.checkOut ? (form.values.checkOut instanceof Date ? form.values.checkOut.toISOString().split('T')[0] : form.values.checkOut) : null,
-    };
-
     navigate('/reservation/guest-details', {
       state: {
         room,
-        searchCriteria,
+        searchCriteria: {
+          ...form.values,
+          checkIn: form.values.checkIn ? formatDate(form.values.checkIn) : null,
+          checkOut: form.values.checkOut ? formatDate(form.values.checkOut) : null,
+        },
       },
     });
   };
@@ -147,16 +128,16 @@ const SearchRoomsPage = () => {
     <Container
       size="lg"
       style={{ 
-        height: '100vh',
-        maxHeight: '100vh',
+        minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'flex-start',
         alignItems: 'center',
-        padding: '20px',
-        overflow: 'hidden',
+        paddingTop: '20px',
+        paddingBottom: '20px',
       }}
       bg="white"
+      p="20px"
     >
       <Paper
         withBorder
@@ -165,12 +146,6 @@ const SearchRoomsPage = () => {
         radius="xl"
         w="100%"
         maw={1000}
-        h="100%"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-        }}
         bg="white"
         styles={{
           root: {
@@ -179,16 +154,13 @@ const SearchRoomsPage = () => {
           },
         }}
       >
-        <Box style={{ flexShrink: 0 }}>
-          <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-            <PropertyHeader />
-          </Group>
-        </Box>
+        <Group justify="space-between" mb="xl" style={{ paddingBottom: '12px', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <PropertyHeader />
+        </Group>
 
-        <Box style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-          {/* Search Form */}
-          <form onSubmit={form.onSubmit(handleSearch)}>
-            <Stack gap="lg" mb="xl">
+        {/* Search Form */}
+        <form onSubmit={form.onSubmit(handleSearch)}>
+          <Stack gap="lg" mb="xl">
             <Grid>
               <Grid.Col span={4}>
                 <DateInput
@@ -198,7 +170,7 @@ const SearchRoomsPage = () => {
                   size="lg"
                   valueFormat="YYYY-MM-DD"
                   {...form.getInputProps('checkIn')}
-                  minDate={getTodayDate()}
+                  minDate={todayDate}
                   popoverProps={{ withinPortal: true, position: 'bottom-start', shadow: 'md', zIndex: 300 }}
                   styles={FORM_INPUT_STYLES.dateInput}
                 />
@@ -211,7 +183,7 @@ const SearchRoomsPage = () => {
                   size="lg"
                   valueFormat="YYYY-MM-DD"
                   {...form.getInputProps('checkOut')}
-                  minDate={form.values.checkIn ? new Date(form.values.checkIn) : getTodayDate()}
+                  minDate={form.values.checkIn ? new Date(form.values.checkIn) : todayDate}
                   popoverProps={{ withinPortal: true, position: 'bottom-start', shadow: 'md', zIndex: 300 }}
                   styles={FORM_INPUT_STYLES.dateInput}
                 />
@@ -219,7 +191,6 @@ const SearchRoomsPage = () => {
               <Grid.Col span={4}>
                 <Select
                   label={t('searchRooms.guests')}
-                  placeholder={t('searchRooms.selectGuests') || 'Select number of guests'}
                   data={guestOptions}
                   required
                   size="lg"
@@ -233,49 +204,54 @@ const SearchRoomsPage = () => {
               type="submit"
               size="lg"
               leftSection={<IconSearch size={20} />}
-              disabled={isSearching}
-              loading={isSearching}
+              disabled={isSearching || (searchResults && Array.isArray(searchResults.offers) && searchResults.offers.length > 0)}
               styles={BUTTON_STYLES.primary}
               radius="md"
             >
               {t('searchRooms.search')}
             </Button>
-            </Stack>
-          </form>
+          </Stack>
+        </form>
 
-          {/* Search Results Loader */}
-          {isSearching && (
-            <Stack align="center" gap="md" mb="xl">
-              <Loader size="lg" color="#C8653D" />
-              <Text size="lg" c="#666666">
-                {t('searchRooms.loading')}
-              </Text>
-            </Stack>
-          )}
+        {/* Search Results Loader */}
+        {isSearching && (
+          <Stack align="center" gap="md">
+            <Loader size="lg" color="#C8653D" />
+            <Text size="lg" c="#666666">
+              {t('searchRooms.loading')}
+            </Text>
+          </Stack>
+        )}
 
-          {/* Error message from backend */}
-          {errorMessage && !isSearching && (
-            <Alert color="red" variant="light" mb="xl">
-              {errorMessage}
-            </Alert>
-          )}
+        {/* Error message from backend */}
+        {errorMessage && !isSearching && (
+          <Alert color="red" variant="light">
+            {errorMessage}
+          </Alert>
+        )}
 
-          {/* No rooms available message */}
-          {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length === 0 && !isSearching && (
-            <Alert color="yellow" variant="light" mb="xl">
-              {t('searchRooms.noRooms')}
-            </Alert>
-          )}
+        {/* No offers available message */}
+        {searchResults && Array.isArray(searchResults.offers) && searchResults.offers.length === 0 && !isSearching && (
+          <Alert color="yellow" variant="light">
+            {t('searchRooms.noRooms')}
+          </Alert>
+        )}
 
-          {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length > 0 && (
-            <Stack gap="lg" mb="xl">
-              <Text size="xl" fw={600} c="#0B152A">
-                {t('searchRooms.availableRooms')} ({typeof searchResults.totalAvailable === 'number' ? searchResults.totalAvailable : (Array.isArray(searchResults.availableRooms) ? searchResults.availableRooms.length : 0)})
-              </Text>
-              
-              <Grid>
-                {searchResults.availableRooms.map((room) => (
-                  <Grid.Col span={6} key={room.roomTypeId}>
+        {searchResults && Array.isArray(searchResults.offers) && searchResults.offers.length > 0 && (
+          <Stack gap="lg" mb="xl">
+            <Text size="xl" fw={600} c="#0B152A">
+              {t('searchRooms.availableRooms')} ({searchResults.offers.length})
+            </Text>
+            
+            <Grid>
+              {searchResults.offers.map((offer, index) => {
+                const unitGroup = offer.unitGroup ?? {};
+                const ratePlan = offer.ratePlan ?? {};
+                const totalAmount = offer.totalGrossAmount ?? {};
+                const availableUnits = offer.availableUnits ?? 0;
+                
+                return (
+                  <Grid.Col span={6} key={`${unitGroup.id}-${ratePlan.id}-${index}`}>
                     <Card
                       withBorder
                       p="lg"
@@ -284,85 +260,56 @@ const SearchRoomsPage = () => {
                       styles={{
                         root: {
                           transition: 'all 0.3s ease',
-                          '&:hover': {
-                            transform: 'scale(1.02)',
-                            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
-                          },
+                          '&:hover': { transform: 'scale(1.02)', boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)' },
                         },
                       }}
-                      onClick={() => handleSelectRoom(room)}
+                      onClick={() => handleSelectRoom(offer)}
                     >
                       <Stack gap="md">
-                        <Image
-                          src={(room.images && room.images[0]) || UnoLogo}
-                          alt={room.name}
-                          h={200}
-                          radius="md"
-                          fit="cover"
-                        />
-                        
+                        <Image src={UnoLogo} alt={unitGroup.name} h={200} radius="md" fit="cover" />
                         <Stack gap="sm">
                           <Group justify="space-between">
-                            <Text size="lg" fw={600} c="#0B152A">
-                              {room.name}
-                            </Text>
-                            <Badge color="green" size="lg">
-                              {t('searchRooms.available')}
-                            </Badge>
+                            <Text size="lg" fw={600} c="#0B152A">{unitGroup.name}</Text>
+                            <Badge color="green" size="lg">{t('searchRooms.available')}</Badge>
                           </Group>
-                          
-                          <Text size="sm" c="#666666">
-                            {room.description}
-                          </Text>
-                          
+                          <Text size="sm" c="#666666">{unitGroup.description ?? ratePlan.description}</Text>
                           <Group gap="xs">
                             <IconUsers size={16} color="#666666" />
                             <Text size="sm" c="#666666">
-                              {room.capacity} {t('common.guests')}
+                              {form.values.guests ?? '1'} {Number(form.values.guests ?? '1') === 1 ? t('common.guest') : t('common.guests')}
                             </Text>
                           </Group>
-                          
                           <Group gap="xs" wrap="wrap">
-                            {room.amenities.slice(0, 3).map((amenity, index) => (
-                              <Badge key={index} size="sm" variant="light">
-                                {amenity}
+                            <Badge size="sm" variant="light">{ratePlan.name}</Badge>
+                            {availableUnits > 0 && (
+                              <Badge size="sm" variant="light" color="blue">
+                                {availableUnits} {availableUnits === 1 ? 'unit' : 'units'}
                               </Badge>
-                            ))}
+                            )}
                           </Group>
-                          
                           <Group justify="space-between" align="center">
                             <Stack gap="xs">
-                              <Text size="sm" c="#666666">
-                                {room.currency} {room.pricePerNight} {t('searchRooms.perNight')}
-                              </Text>
+                              <Text size="sm" c="#666666">{ratePlan.name}</Text>
                               <Text size="xl" fw={700} c="#0B152A">
-                                {room.currency} {room.totalPrice} {t('searchRooms.total')}
+                                {totalAmount.currency ?? 'EUR'} {totalAmount.amount ?? 0} {t('searchRooms.total')}
                               </Text>
                             </Stack>
-                            
-                            <Button
-                              size="md"
-                              bg="#C8653D"
-                              c="white"
-                              radius="md"
-                            >
-                              {t('common.select')}
-                            </Button>
+                            <Button size="md" bg="#C8653D" c="white" radius="md">{t('common.select')}</Button>
                           </Group>
                         </Stack>
                       </Stack>
                     </Card>
                   </Grid.Col>
-                ))}
-              </Grid>
-            </Stack>
-          )}
+                );
+              })}
+            </Grid>
+          </Stack>
+        )}
 
-          {/* Back Button */}
-          <Group justify="flex-start" mb="md">
-            <BackButton onClick={handleBack} text={t('searchRooms.back')} />
-          </Group>
-        </Box>
+        {/* Back Button */}
+        <Group justify="flex-start">
+          <BackButton onClick={handleBack} text={t('searchRooms.back')} />
+        </Group>
       </Paper>
     </Container>
   );

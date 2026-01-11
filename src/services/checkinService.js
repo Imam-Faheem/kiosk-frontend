@@ -161,47 +161,54 @@ export const getReservationDetails = async (reservationId, lastName = null, prop
   }
   
   const endpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/details`;
-  
-  console.log('[getReservationDetails] Making API call:', {
-    endpoint,
-    method: 'GET',
-    params: lastName ? { lastName } : {},
-    propertyId: finalPropertyId,
-    organizationId: finalOrganizationId,
-    reservationId,
-  });
-  
+
   try {
     const response = await apiClient.get(endpoint, {
       params: lastName ? { lastName } : {},
     });
     
-    console.log('[getReservationDetails] API response received:', {
-      status: response.status,
-      hasData: !!response.data,
-      hasSuccess: response.data?.success,
-    });
-    
-    // Handle API response wrapper: { success: true, data: {...} }
     const apiData = response.data?.success === true && response.data?.data 
       ? response.data.data 
       : response.data;
-    
+
+    if (!apiData) {
+      throw new Error(translateError('reservationNotFound'));
+    }
+
+    // Validate lastName if provided
+    if (lastName) {
+      const lastNameLower = lastName.trim().toLowerCase();
+      const reservationLastName = apiData?.primaryGuest?.lastName?.trim().toLowerCase();
+
+      if (!reservationLastName || lastNameLower !== reservationLastName) {
+        throw new Error(translateError('lastNameMismatch'));
+      }
+    }
+
+    const hasPrimaryGuest = !!apiData.primaryGuest;
+    const hasFolios = Array.isArray(apiData.folios) && apiData.folios.length > 0;
+    const hasGuestName = !!apiData.guest_name;
+
+    if (!hasPrimaryGuest && !hasFolios && !hasGuestName) {
+      throw new Error(translateError('reservationNotFound'));
+    }
+
     return {
       success: true,
       data: apiData,
     };
   } catch (error) {
-    console.error('[getReservationDetails] Error:', {
-      message: error.message,
-      status: getErrorStatus(error),
-      data: error?.response?.data,
-    });
-    
-    handleStatusError(error, 404, translateError('reservationNotFound'));
-    handleStatusError(error, 403, translateError('invalidLastName'));
-    
-    const message = getErrorMessage(error) ?? translateError('reservationNotFound');
+    if (error?.response?.status === 404) {
+      throw new Error(translateError('reservationNotFound'));
+    }
+    if (error?.response?.status === 403) {
+      throw new Error(translateError('invalidLastName'));
+    }
+
+    const message = error?.response?.data?.message ??
+                   error?.response?.data?.error ??
+                   error?.message ??
+                   translateError('guestValidationFailed');
     throw new Error(message);
   }
 };

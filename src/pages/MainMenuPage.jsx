@@ -4,7 +4,6 @@ import {
   Paper,
   Group,
   Button,
-  Title,
   Stack,
 } from '@mantine/core';
 import { IconKey, IconCalendar, IconCreditCardOff } from '@tabler/icons-react';
@@ -32,12 +31,14 @@ const MainMenuPage = () => {
   };
 
   const handleCheckIn = () => {
-    const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
+    const targetHour = typeof EARLY_ARRIVAL_CONFIG.CHECKIN_TIME === 'number' 
+      ? EARLY_ARRIVAL_CONFIG.CHECKIN_TIME 
+      : parseInt(EARLY_ARRIVAL_CONFIG.CHECKIN_TIME.split(':')[0], 10);
     const now = new Date();
-    const [time, period] = targetTime.split(' ');
-    const [hours, minutes] = time.split(':').map(Number);
+    const hours = targetHour;
+    const minutes = 0;
     const target = new Date();
-    target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
+    target.setHours(hours, minutes, 0, 0);
     if (now < target) {
       navigate('/checkin/early-arrival');
     } else {

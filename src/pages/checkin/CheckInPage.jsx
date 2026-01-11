@@ -8,7 +8,6 @@ import {
   Stack,
   TextInput,
   Alert,
-  Box,
   Loader,
   Text,
 } from '@mantine/core';
@@ -41,29 +40,18 @@ const CheckInPage = () => {
     onSuccess: (result) => {
       const reservationData = result?.data ?? result;
       const reservationId = reservationData?.id ?? reservationData?.bookingId ?? form.values.reservationId;
-      
-      // Check if payment is required
-      const payableAmount = reservationData?.payableAmount?.guest?.amount ?? 0;
-      
-      if (payableAmount > 0) {
-        // Navigate to payment page
-        navigate('/checkin/payment', {
-          state: {
-            reservation: reservationData,
-            reservationId,
-            payableAmount,
-            currency: reservationData?.payableAmount?.guest?.currency ?? 'EUR',
-          },
-        });
-      } else {
-        // No payment required, proceed directly to check-in
-        navigate('/checkin/process', {
-          state: {
-            reservation: reservationData,
-            reservationId,
-          },
-        });
-      }
+
+      // Next step: check if payment is required (or already completed)
+      navigate('/checkin/payment-check', {
+        state: {
+          reservation: reservationData,
+          reservationId,
+          checkInData: reservationData,
+          folios: reservationData?.folios,
+        },
+      });
+
+      setIsLoading(false);
     },
     onError: (err) => {
       const errorStatus = err?.response?.status;
@@ -82,124 +70,13 @@ const CheckInPage = () => {
     },
   });
 
-  const getFormValue = (values, ...keys) => {
-    return keys.map(key => values[key]).find(val => val != null);
-  };
-
-
-  const hasValidGuestData = (data) => {
-    if (!data) return false;
-    
-    // Check for primaryGuest format
-    const primaryGuest = data?.primaryGuest;
-    if (primaryGuest) {
-      const firstName = primaryGuest.firstName ?? '';
-      const lastName = primaryGuest.lastName ?? '';
-      return firstName.trim().length > 0 && lastName.trim().length > 0;
-    }
-    
-    // Check for folios format with debitor
-    const folios = data?.folios;
-    if (Array.isArray(folios) && folios.length > 0) {
-      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
-      const debitor = mainFolio?.debitor;
-      if (debitor) {
-        const firstName = debitor.firstName ?? '';
-        const lastName = debitor.name ?? '';
-        return firstName.trim().length > 0 && lastName.trim().length > 0;
-      }
-    }
-    
-    // Legacy format: guest_name
-    const guestName = data?.guest_name;
-    if (guestName) {
-      const firstName = guestName.first_name ?? guestName.firstName ?? '';
-      const lastName = guestName.last_name ?? guestName.lastName ?? '';
-      return firstName.trim().length > 0 && lastName.trim().length > 0;
-    }
-    
-    return false;
-  };
-
-  const extractLastNameFromResponse = (data) => {
-    if (!data) return null;
-    
-    const primaryGuest = data?.primaryGuest;
-    if (primaryGuest?.lastName) {
-      return primaryGuest.lastName.trim().toLowerCase();
-    }
-    
-    const folios = data?.folios;
-    if (Array.isArray(folios) && folios.length > 0) {
-      const mainFolio = folios.find(f => f.isMainFolio) ?? folios[0];
-      const debitor = mainFolio?.debitor;
-      if (debitor?.name) {
-        return debitor.name.trim().toLowerCase();
-      }
-    }
-    
-    const guestName = data?.guest_name;
-    if (guestName) {
-      const lastName = guestName.last_name ?? guestName.lastName;
-      if (lastName) {
-        return lastName.trim().toLowerCase();
-      }
-    }
-    
-    return null;
-  };
-
-  const validateLastNameMatch = (submittedLastName, apiData) => {
-    const submittedLastNameLower = submittedLastName?.trim().toLowerCase();
-    if (!submittedLastNameLower) {
-      return false;
-    }
-
-    const responseLastName = extractLastNameFromResponse(apiData);
-    if (!responseLastName) {
-      return false;
-    }
-
-    return submittedLastNameLower === responseLastName;
-  };
-
-  const extractReservationIdFromResponse = (data) => {
-    if (!data) return null;
-    
-    const sources = [
-      data?.bookingId,
-      data?.reservation_id,
-      data?.id,
-      data?.reservation?.id,
-      data?.reservation?.bookingId,
-      data?.folios?.[0]?.bookingId,
-      data?.folios?.[0]?.reservation?.bookingId,
-      data?.reservations?.[0]?.id,
-    ];
-    return sources.find(id => id != null);
-  };
-
-  const validateReservationIdMatch = (submittedReservationId, apiData) => {
-    const submittedId = submittedReservationId?.trim().toUpperCase();
-    if (!submittedId) {
-      return false;
-    }
-
-    const responseId = extractReservationIdFromResponse(apiData);
-    if (!responseId) {
-      return false;
-    }
-
-    return submittedId === responseId.toString().toUpperCase();
-  };
-
   const handleSubmit = async (values) => {
     setError(null);
     form.clearErrors();
     setIsLoading(true);
 
-    const reservationId = getFormValue(values, 'reservationId', 'reservation_id');
-    const lastName = getFormValue(values, 'lastName', 'last_name'); // Optional for UI only
+    const reservationId = values.reservationId?.trim();
+    const lastName = values.lastName?.trim() || null; // Optional for UI only
 
     if (!reservationId) {
       form.setFieldError('reservationId', t('error.reservationIdRequired'));

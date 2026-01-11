@@ -5,7 +5,6 @@ import {
   Group,
   Button,
   Text,
-  Title,
   Stack,
   Box,
   Card,
@@ -109,7 +108,7 @@ const RoomDetailPage = () => {
   // Calculate pricing information
   const pricing = React.useMemo(() => {
     if (!searchCriteria?.checkIn || !searchCriteria?.checkOut || !displayRoom) {
-      return { nights: 0, pricePerNight: 0, taxes: 0, total: 0, currency: 'EUR' };
+      return { nights: 0, pricePerNight: 0, subtotal: 0, taxes: 0, total: 0, currency: 'EUR' };
     }
 
     const checkIn = new Date(searchCriteria.checkIn);
@@ -158,12 +157,19 @@ const RoomDetailPage = () => {
       taxes = totalGrossAmount * 0.1;
     }
     
-    const pricePerNight = nights > 0 ? totalGrossAmount / nights : 0;
+    // Calculate subtotal (net amount or gross - taxes)
+    const subtotal = totalNetAmount > 0 ? totalNetAmount : (totalGrossAmount - taxes);
+    
+    // Calculate price per night from subtotal (before taxes)
+    const pricePerNight = nights > 0 ? subtotal / nights : 0;
+    
+    // Total should always be the gross amount (subtotal + taxes)
     const total = totalGrossAmount;
 
     return {
       nights,
       pricePerNight: Math.round(pricePerNight * 100) / 100, // Round to 2 decimal places
+      subtotal: Math.round(subtotal * 100) / 100, // Round to 2 decimal places
       taxes: Math.round(taxes * 100) / 100, // Round to 2 decimal places
       total: Math.round(total * 100) / 100, // Round to 2 decimal places
       currency,
@@ -171,16 +177,28 @@ const RoomDetailPage = () => {
   }, [searchCriteria, displayRoom]);
 
   const handleConfirm = () => {
-    // Skip card dispenser for new reservations since cards can only be issued
-    // after reservation is created (during payment/booking)
-    // Cards will be issued during check-in process
-    navigate('/reservation/payment', {
-      state: {
-        room: displayRoom,
-        searchCriteria,
-        guestDetails,
-      },
-    });
+    const now = new Date();
+    const currentHour = now.getHours();
+    const targetHour = 14;
+    const isBeforeTargetTime = currentHour < targetHour;
+    
+    if (isBeforeTargetTime) {
+      navigate('/reservation/early-arrival', {
+        state: {
+          room: displayRoom,
+          searchCriteria,
+          guestDetails,
+        },
+      });
+    } else {
+      navigate('/reservation/card', {
+        state: {
+          room: displayRoom,
+          searchCriteria,
+          guestDetails,
+        },
+      });
+    }
   };
 
   const handleBack = () => {
@@ -382,7 +400,9 @@ const RoomDetailPage = () => {
                     <Stack gap="xs">
                       <Group justify="space-between">
                         <Text size="sm" c="#666666">{t('roomDetail.pricePerNight')}:</Text>
-                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>{displayRoom.currency || 'EUR'} {displayRoom.pricePerNight || 0}</Text>
+                        <Text size="sm" fw={600} style={{ textAlign: 'right', minWidth: '180px' }}>
+                          {pricing.currency} {pricing.pricePerNight > 0 ? pricing.pricePerNight.toFixed(2) : '0.00'}
+                        </Text>
                       </Group>
                       <Group justify="space-between">
                         <Text size="sm" c="#666666">{t('roomDetail.tax')}:</Text>
@@ -393,7 +413,7 @@ const RoomDetailPage = () => {
                       <Group justify="space-between" style={{ borderTop: '2px solid #C8653D', paddingTop: '10px' }}>
                         <Text size="lg" fw={700} c="#C8653D">{t('roomDetail.total')}:</Text>
                         <Text size="xl" fw={700} c="#C8653D" style={{ textAlign: 'right', minWidth: '180px' }}>
-                          {displayRoom.currency || 'EUR'} {displayRoom.totalPrice || 0}
+                          {pricing.currency} {pricing.total > 0 ? pricing.total.toFixed(2) : '0.00'}
                         </Text>
                       </Group>
                     </Stack>

@@ -9,11 +9,9 @@ import {
   Grid,
   Image,
   Card,
-  Group,
 } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 import useLanguageStore from "../stores/languageStore";
 import useLanguage from "../hooks/useLanguage";
 import usePropertyStore from "../stores/propertyStore";
@@ -25,7 +23,7 @@ const WelcomePage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { language, setLanguage, initializeLanguage } = useLanguageStore();
-  const { isConfigured, propertyId } = usePropertyStore();
+  const { isConfigured } = usePropertyStore();
 
   // Ensure language is properly initialized
   useEffect(() => {
