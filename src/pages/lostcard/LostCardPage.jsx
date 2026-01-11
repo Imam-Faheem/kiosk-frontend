@@ -15,14 +15,13 @@ import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import { useForm } from '@mantine/form';
-import { issueCard } from '../../services/cardIssuanceService';
+import { useValidateLostCard, useIssueCardForLostCard } from '../../hooks/useLostCardFlow';
 import { BUTTON_STYLES } from '../../config/constants';
 
 const LostCardPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
     initialValues: {
@@ -33,50 +32,53 @@ const LostCardPage = () => {
     },
   });
 
-  const handleSubmit = async (values) => {
-    setError(null);
-    form.clearErrors();
-    setIsLoading(true);
-    
-    try {
-      const reservationNumber = values.reservationNumber?.trim();
-      
-      if (!reservationNumber) {
-        throw new Error(t('error.reservationNumberRequired'));
-      }
-
-      // Directly call the POST endpoint to regenerate the lost card
-      // This hits: /organizations/:organization_id/properties/:property_id/reservations/:reservation_id/lost-card
-      const regenerateData = {
-        reservation_id: reservationNumber,
-        reservationId: reservationNumber,
-        id: reservationNumber,
-      };
-
-      console.log('[LostCardPage] Directly calling regenerate lost card endpoint with:', regenerateData);
-
-      const regenerateResult = await issueCard(regenerateData);
-
+  // Step 2: Issue card
+  const issueCard = useIssueCardForLostCard({
+    onSuccess: (result) => {
       // Navigate to regenerate page with the result
       navigate('/lost-card/regenerate', {
         state: {
           guestData: null,
-          validationData: values,
-          cardData: regenerateResult?.data ?? regenerateResult,
+          validationData: form.values,
+          cardData: result?.data ?? result,
         },
       });
-    } catch (err) {
-      console.error('[LostCardPage] Error:', err);
-      
-      const errorStatus = err?.response?.status;
-      const errorMessage = err?.message ?? t('error.cardRegenerationFailed') ?? 'Failed to regenerate card';
-      
-      // Display the actual error message from the API
+    },
+    onError: (err) => {
+      const errorMessage = err?.message ?? t('error.cardRegenerationFailed') ?? 'Failed to issue card';
       form.setFieldError('reservationNumber', errorMessage);
       setError(errorMessage);
-    } finally {
-      setIsLoading(false);
+    },
+  });
+
+  // Step 1: Validate lost card
+  const validateLostCard = useValidateLostCard({
+    onSuccess: (result) => {
+      // Step 2: Issue card after validation
+      issueCard.mutate({ reservationId: form.values.reservationNumber });
+    },
+    onError: (err) => {
+      const errorMessage = err?.message ?? t('error.validationFailed') ?? 'Failed to validate lost card request';
+      form.setFieldError('reservationNumber', errorMessage);
+      setError(errorMessage);
+    },
+  });
+
+  const isLoading = validateLostCard.isPending || issueCard.isPending;
+
+  const handleSubmit = async (values) => {
+    setError(null);
+    form.clearErrors();
+    
+    const reservationNumber = values.reservationNumber?.trim();
+    
+    if (!reservationNumber) {
+      form.setFieldError('reservationNumber', t('error.reservationNumberRequired'));
+      return;
     }
+
+    // Step 1: Validate lost card first
+    validateLostCard.mutate({ reservationId: reservationNumber });
   };
 
   const handleBack = () => {

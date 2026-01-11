@@ -70,12 +70,43 @@ const getPropertyContext = () => {
  * @returns {Promise<Object>} Booking response
  */
 export const createBooking = async (bookingData, hotelId) => {
+  console.log('[createBooking] Received bookingData:', {
+    bookingData,
+    hasReservations: !!bookingData?.reservations,
+    reservationsType: Array.isArray(bookingData?.reservations) ? 'array' : typeof bookingData?.reservations,
+    reservationsLength: bookingData?.reservations?.length,
+    bookingDataKeys: bookingData ? Object.keys(bookingData) : 'no data',
+  });
+
   const context = getPropertyContext();
-  const propertyId = bookingData.propertyId ?? context.propertyId;
+  const propertyId = bookingData?.propertyId ?? context.propertyId;
   const organizationId = context.organizationId;
   
   if (!propertyId || !organizationId) {
     throw new Error('Property ID and Organization ID are required to create a booking.');
+  }
+  
+  // Validate that reservations array exists
+  if (!bookingData?.reservations || !Array.isArray(bookingData.reservations) || bookingData.reservations.length === 0) {
+    console.error('[createBooking] Validation failed:', {
+      hasReservations: !!bookingData?.reservations,
+      isArray: Array.isArray(bookingData?.reservations),
+      length: bookingData?.reservations?.length,
+      bookingData,
+    });
+    throw new Error('Booking data must include a non-empty "reservations" array.');
+  }
+  
+  // Prepare the payload - ensure reservations array is present
+  // Remove propertyId from payload as it's in the URL path, not the body
+  // The API expects only { reservations: [...] } in the request body
+  const payload = {
+    reservations: bookingData.reservations,
+  };
+  
+  // Validate payload structure
+  if (!Array.isArray(payload.reservations) || payload.reservations.length === 0) {
+    throw new Error('Payload must contain a non-empty reservations array. Received: ' + JSON.stringify(payload));
   }
   
   const endpoint = `/api/kiosk/v1/organizations/${organizationId}/properties/${propertyId}/bookings`;
@@ -86,10 +117,14 @@ export const createBooking = async (bookingData, hotelId) => {
       fullUrl: `${apiClient.defaults?.baseURL ?? ''}${endpoint}`,
       propertyId,
       organizationId,
-      bookingData,
+      payload,
+      payloadStringified: JSON.stringify(payload),
+      reservationsCount: payload.reservations?.length,
+      firstReservation: payload.reservations?.[0],
+      hasReservations: !!payload.reservations,
     });
     
-    const response = await apiClient.post(endpoint, bookingData);
+    const response = await apiClient.post(endpoint, payload);
     
     console.log('[createBooking] Response:', {
       status: response.status,

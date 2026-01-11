@@ -62,10 +62,17 @@ const getPropertyContext = () => {
   }
 };
 
-export const processCheckIn = async (data, propertyId = null, organizationId = null) => {
-  const reservationId = data.reservation_id ?? data.reservationId ?? data.id;
-  
-  if (!reservationId) {
+/**
+ * Process check-in for a reservation
+ * PUT /api/kiosk/v1/organizations/:organization_id/properties/:property_id/reservations/:reservation_id/check-in
+ * @param {string} reservationId - Reservation ID
+ * @param {Object} data - Optional check-in data
+ * @param {string} propertyId - Property ID (optional)
+ * @param {string} organizationId - Organization ID (optional)
+ * @returns {Promise<Object>} Check-in response
+ */
+export const processCheckIn = async (reservationId, data = {}, propertyId = null, organizationId = null) => {
+  if (!isPresent(reservationId)) {
     throw new Error('Reservation ID is required to process check-in.');
   }
   
@@ -77,11 +84,33 @@ export const processCheckIn = async (data, propertyId = null, organizationId = n
     throw new Error('Property ID and Organization ID are required to process check-in.');
   }
   
+  const endpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/check-in`;
+  
+  console.log('[processCheckIn] Making API call:', {
+    endpoint,
+    method: 'PUT',
+    propertyId: finalPropertyId,
+    organizationId: finalOrganizationId,
+    reservationId,
+    data,
+  });
+  
   try {
-    const endpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/check-in`;
     const response = await apiClient.put(endpoint, data);
+    
+    console.log('[processCheckIn] Success:', {
+      status: response.status,
+      data: response.data,
+    });
+    
     return response.data;
   } catch (error) {
+    console.error('[processCheckIn] Error:', {
+      message: error.message,
+      status: getErrorStatus(error),
+      data: error?.response?.data,
+    });
+    
     const message = getErrorMessage(error) ?? 'Failed to process check-in';
     throw new Error(message);
   }
@@ -109,14 +138,18 @@ export const getCheckInStatus = async (reservationId) => {
 
 const isPresent = (value) => value != null && value !== '';
 
-export const validateReservation = async (data, propertyId = null, organizationId = null) => {
-  const { reservationId, lastName } = data;
-  
+/**
+ * Get reservation details for check-in
+ * GET /api/kiosk/v1/organizations/:organization_id/properties/:property_id/reservations/:reservation_id/details
+ * @param {string} reservationId - Reservation ID
+ * @param {string} lastName - Last name (optional, for UI validation only)
+ * @param {string} propertyId - Property ID (optional)
+ * @param {string} organizationId - Organization ID (optional)
+ * @returns {Promise<Object>} Reservation details
+ */
+export const getReservationDetails = async (reservationId, lastName = null, propertyId = null, organizationId = null) => {
   if (!isPresent(reservationId)) {
     throw new Error(translateError('reservationIdRequired'));
-  }
-  if (!isPresent(lastName)) {
-    throw new Error(translateError('lastNameRequired'));
   }
   
   const context = getPropertyContext();
@@ -124,29 +157,29 @@ export const validateReservation = async (data, propertyId = null, organizationI
   const finalOrganizationId = organizationId ?? context.organizationId;
   
   if (!finalPropertyId || !finalOrganizationId) {
-    throw new Error('Property ID and Organization ID are required to validate reservation.');
+    throw new Error('Property ID and Organization ID are required to get reservation details.');
   }
   
-  const url = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/check-in`;
+  const endpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/details`;
   
-  console.log('[validateReservation] Making API call:', {
-    url,
+  console.log('[getReservationDetails] Making API call:', {
+    endpoint,
     method: 'GET',
-    params: { lastName },
+    params: lastName ? { lastName } : {},
     propertyId: finalPropertyId,
     organizationId: finalOrganizationId,
     reservationId,
   });
   
   try {
-    const response = await apiClient.get(url, { params: { lastName } });
+    const response = await apiClient.get(endpoint, {
+      params: lastName ? { lastName } : {},
+    });
     
-    console.log('[validateReservation] API response received:', {
+    console.log('[getReservationDetails] API response received:', {
       status: response.status,
       hasData: !!response.data,
-      dataKeys: response.data ? Object.keys(response.data) : [],
       hasSuccess: response.data?.success,
-      hasDataWrapper: !!response.data?.data,
     });
     
     // Handle API response wrapper: { success: true, data: {...} }
@@ -159,7 +192,7 @@ export const validateReservation = async (data, propertyId = null, organizationI
       data: apiData,
     };
   } catch (error) {
-    console.error('[validateReservation] Validation failed:', {
+    console.error('[getReservationDetails] Error:', {
       message: error.message,
       status: getErrorStatus(error),
       data: error?.response?.data,
@@ -168,8 +201,18 @@ export const validateReservation = async (data, propertyId = null, organizationI
     handleStatusError(error, 404, translateError('reservationNotFound'));
     handleStatusError(error, 403, translateError('invalidLastName'));
     
-    throw error;
+    const message = getErrorMessage(error) ?? translateError('reservationNotFound');
+    throw new Error(message);
   }
+};
+
+/**
+ * Legacy function for backward compatibility
+ * @deprecated Use getReservationDetails instead
+ */
+export const validateReservation = async (data, propertyId = null, organizationId = null) => {
+  const { reservationId, lastName } = data;
+  return getReservationDetails(reservationId, lastName, propertyId, organizationId);
 };
 
 export const performCheckIn = async (reservationId, propertyId = null, organizationId = null) => {

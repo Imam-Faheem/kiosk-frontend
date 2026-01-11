@@ -49,6 +49,8 @@ const CardDispensingPage = () => {
 
   const reservation = location.state?.reservation;
   const paymentStatus = location.state?.paymentStatus;
+  const cardData = location.state?.cardData; // Card data from ProcessCheckInPage
+  const reservationId = location.state?.reservationId;
 
   const steps = useMemo(() => 
     CARD_DISPENSING_STEPS.map(step => ({
@@ -82,10 +84,76 @@ const CardDispensingPage = () => {
   }, [cardStatus, t]);
 
   useEffect(() => {
-    if (!reservation) {
+    if (!reservation && !cardData) {
       navigate('/checkin');
       return;
     }
+
+    // If cardData is already provided (from ProcessCheckInPage), just show the dispensing flow
+    if (cardData) {
+      if (hasProcessedRef.current) return;
+      hasProcessedRef.current = true;
+
+      const showCardDispensing = async () => {
+        try {
+          // Step 1: Preparing
+          setCurrentStep(0);
+          setCardStatus('preparing');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          // Step 2: Encoding
+          setCurrentStep(1);
+          setCardStatus('encoding');
+          
+          // Check for hardware errors
+          if (cardData.hardware && !cardData.hardware.success) {
+            const errorMessage = cardData.hardware.userFriendlyMessage ?? cardData.hardware.error ?? t('error.cardDispenserError');
+            setError(errorMessage);
+            setCardStatus('error');
+            
+            // Still navigate to complete page but with error
+            setTimeout(() => {
+              navigate('/checkin/complete', {
+                state: { 
+                  reservation, 
+                  reservationId,
+                  paymentStatus, 
+                  cardData,
+                  error: errorMessage,
+                }
+              });
+            }, 3000);
+            return;
+          }
+
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Step 3: Sending
+          setCurrentStep(2);
+          setCardStatus('sending');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          setCardStatus('completed');
+          setTimeout(() => {
+            navigate('/checkin/complete', {
+              state: { 
+                reservation, 
+                reservationId,
+                paymentStatus, 
+                cardData,
+              }
+            });
+          }, 2000);
+        } catch (err) {
+          setError(err.message ?? t('error.cardDispenserError'));
+        }
+      };
+
+      showCardDispensing();
+      return;
+    }
+
+    // Legacy flow: if no cardData, process check-in and issue card
     if (hasProcessedRef.current) return;
     hasProcessedRef.current = true;
 
@@ -162,13 +230,13 @@ const CardDispensingPage = () => {
     };
 
     processCard();
-  }, [reservation, paymentStatus, navigate, t, processCheckIn, issueCard]);
+  }, [reservation, paymentStatus, cardData, reservationId, navigate, t, processCheckIn, issueCard]);
 
   const handleBack = () => {
     navigate('/checkin');
   };
 
-  if (!reservation) {
+  if (!reservation && !cardData) {
     return null;
   }
 

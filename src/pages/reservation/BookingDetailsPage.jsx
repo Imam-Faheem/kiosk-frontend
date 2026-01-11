@@ -296,6 +296,17 @@ const BookingDetailsPage = () => {
       return;
     }
 
+    // Validate required fields before building payload
+    if (!searchCriteria?.checkIn || !searchCriteria?.checkOut) {
+      setValidationError(t('error.missingDates') || 'Check-in and check-out dates are required.');
+      return;
+    }
+
+    if (!guestDetails?.firstName || !guestDetails?.lastName) {
+      setValidationError(t('error.missingGuestInfo') || 'Guest first name and last name are required.');
+      return;
+    }
+
     // Format dates to YYYY-MM-DD
     const formatDateForAPI = (dateStr) => {
       if (!dateStr) return '';
@@ -304,6 +315,7 @@ const BookingDetailsPage = () => {
     };
 
     // Build the booking payload according to the required API structure
+    // The API expects only { reservations: [...] } - propertyId is in the URL path
     const bookingPayload = {
       reservations: [
         {
@@ -351,6 +363,30 @@ const BookingDetailsPage = () => {
         },
       ],
     };
+
+    console.log('[BookingDetailsPage] Booking payload before mutation:', {
+      bookingPayload,
+      hasReservations: !!bookingPayload.reservations,
+      reservationsLength: bookingPayload.reservations?.length,
+      firstReservation: bookingPayload.reservations?.[0],
+      payloadStringified: JSON.stringify(bookingPayload, null, 2),
+    });
+
+    // Validate payload before mutation
+    if (!bookingPayload.reservations || !Array.isArray(bookingPayload.reservations) || bookingPayload.reservations.length === 0) {
+      const errorMsg = 'Invalid booking payload: reservations array is missing or empty';
+      console.error('[BookingDetailsPage]', errorMsg, bookingPayload);
+      setValidationError(errorMsg);
+      return;
+    }
+
+    // Ensure the payload is exactly what we expect
+    if (!bookingPayload.reservations[0]?.arrival || !bookingPayload.reservations[0]?.departure) {
+      const errorMsg = 'Invalid booking payload: arrival and departure dates are required';
+      console.error('[BookingDetailsPage]', errorMsg, bookingPayload);
+      setValidationError(errorMsg);
+      return;
+    }
 
     bookingMutation.mutate(bookingPayload);
   };

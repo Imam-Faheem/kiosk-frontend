@@ -143,20 +143,32 @@ export const issueCard = async (reservationIdOrData, propertyId = null, organiza
     }
 
     // Step B: Issue card (get card data from TTLock)
+    // POST /api/kiosk/v1/organizations/:organization_id/properties/:property_id/reservations/:reservation_id/issue-card
     const issueEndpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/issue-card`;
     
     console.log('[issueCard] Issuing card data', {
       endpoint: issueEndpoint,
-      reservationId
+      fullUrl: `${apiClient.defaults?.baseURL ?? API_CONFIG.BASE_URL ?? 'http://localhost:8000'}${issueEndpoint}`,
+      reservationId,
+      method: 'POST',
     });
 
     const issueResponse = await apiClient.post(issueEndpoint);
     
-    if (!issueResponse.data?.success) {
-      throw new Error(issueResponse.data?.error || issueResponse.data?.message || 'Failed to issue card');
+    console.log('[issueCard] API response:', {
+      status: issueResponse.status,
+      hasSuccess: issueResponse.data?.success,
+      hasData: !!issueResponse.data?.data,
+    });
+    
+    // Handle both wrapped and unwrapped responses
+    const cardData = issueResponse.data?.success === true && issueResponse.data?.data
+      ? issueResponse.data.data
+      : issueResponse.data?.data ?? issueResponse.data;
+    
+    if (!cardData) {
+      throw new Error(issueResponse.data?.error || issueResponse.data?.message || 'Failed to issue card - no card data returned');
     }
-
-    const cardData = issueResponse.data?.data;
     
     console.log('[issueCard] Card data retrieved successfully', {
       card_no: cardData?.cardNo,
@@ -196,21 +208,40 @@ export const issueCard = async (reservationIdOrData, propertyId = null, organiza
         };
       } catch (hardwareError) {
         console.error('[issueCard] Hardware card issuance failed', {
-          error: hardwareError.message
+          error: hardwareError.message,
+          errorType: hardwareError.name,
+          stack: hardwareError.stack,
         });
 
-        // Return API result but include hardware error
+        // Determine error type for user-friendly messages
+        const errorMessage = hardwareError.message || 'Unknown hardware error';
+        let userFriendlyMessage = 'Card data retrieved but physical card issuance failed';
+        
+        if (errorMessage.toLowerCase().includes('dispenser') || errorMessage.toLowerCase().includes('dispense')) {
+          userFriendlyMessage = 'Card dispenser error: Unable to dispense the card. Please contact staff for assistance.';
+        } else if (errorMessage.toLowerCase().includes('encoder') || errorMessage.toLowerCase().includes('encode')) {
+          userFriendlyMessage = 'Card encoder error: Unable to encode the card. Please contact staff for assistance.';
+        } else if (errorMessage.toLowerCase().includes('timeout')) {
+          userFriendlyMessage = 'Card processing timeout: The card dispenser did not respond in time. Please try again or contact staff.';
+        } else if (errorMessage.toLowerCase().includes('connection') || errorMessage.toLowerCase().includes('network')) {
+          userFriendlyMessage = 'Hardware connection error: Unable to connect to card dispenser. Please contact staff.';
+        }
+
+        // Return API result but include hardware error with user-friendly message
         return {
-          success: true,
+          success: false, // Mark as failed since hardware failed
           data: {
             ...cardData,
             validation: validationResult,
             hardware: {
               success: false,
               error: hardwareError.message,
-              message: 'Card data retrieved but physical card issuance failed'
+              userFriendlyMessage: userFriendlyMessage,
+              errorType: errorMessage.toLowerCase().includes('dispenser') ? 'dispenser' : 
+                        errorMessage.toLowerCase().includes('encoder') ? 'encoder' : 'unknown',
             }
-          }
+          },
+          error: userFriendlyMessage,
         };
       }
     } else {

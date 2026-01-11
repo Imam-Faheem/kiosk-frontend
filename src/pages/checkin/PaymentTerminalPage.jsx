@@ -16,7 +16,7 @@ import {
 import { IconCreditCard, IconX, IconCheck } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
-import { usePaymentMutation } from '../../hooks/usePaymentMutation';
+import { usePaymentByTerminal } from '../../hooks/useCheckInFlow';
 import { EARLY_ARRIVAL_CONFIG } from '../../config/constants';
 import UnoLogo from '../../assets/uno.jpg';
 import BackButton from '../../components/BackButton';
@@ -26,112 +26,50 @@ const PaymentTerminalPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const initiatePayment = usePaymentMutation('initiate', {
-    onSuccess: (result) => {
-      if (result.success) {
-        setTransactionId(result.data.transactionId);
-        setPaymentStatus('processing');
-        // Start polling for payment status
-        const interval = setInterval(() => {
-          pollPaymentStatus.mutate(result.data.transactionId);
-        }, 2000);
-        setPollInterval(interval);
-        
-        // Set timeout for payment
-        const timeout = setTimeout(() => {
-          setPaymentStatus('timeout');
-          clearInterval(interval);
-        }, 30000);
-        setTimeoutId(timeout);
-      }
-    },
-    onError: (err) => {
-      console.error('Payment initiation error:', err);
-      setPaymentStatus('error');
-    }
-  });
-  
-  const pollPaymentStatus = usePaymentMutation('poll', {
-    onSuccess: (result) => {
-      if (result.success && result.data.status === 'completed') {
-        setPaymentStatus('completed');
-        clearInterval(pollInterval);
-        clearTimeout(timeoutId);
-        
-        const targetTime = EARLY_ARRIVAL_CONFIG.TARGET_TIME;
-        const now = new Date();
-        const [time, period] = targetTime.split(' ');
-        const [hours, minutes] = time.split(':').map(Number);
-        const target = new Date();
-        target.setHours(period === 'PM' && hours !== 12 ? hours + 12 : hours === 12 && period === 'AM' ? 0 : hours, minutes, 0, 0);
-        
-        if (now < target) {
-          navigate('/checkin/early-arrival', {
-            state: { reservation, paymentData: result.data }
-          });
-        } else {
-          navigate('/checkin/card-dispensing', {
-            state: { reservation, paymentData: result.data }
-          });
-        }
-      }
-    },
-    onError: (err) => {
-      console.error('Payment polling error:', err);
-      setPaymentStatus('error');
-      clearInterval(pollInterval);
-      clearTimeout(timeoutId);
-    }
-  });
-  const [paymentStatus, setPaymentStatus] = useState('idle');
-  const [transactionId, setTransactionId] = useState(null);
-  const [timeoutId, setTimeoutId] = useState(null);
-  const [pollInterval, setPollInterval] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState('processing');
   const [timeRemaining, setTimeRemaining] = useState(180); // 3 minutes
   const [error, setError] = useState(null);
 
-  const reservation = location.state?.reservation;
-  const existingPaymentStatus = location.state?.paymentStatus;
+  const { reservation, reservationId, payableAmount, currency } = location.state || {};
+
+  // Process payment by terminal
+  // POST /api/kiosk/v1/organizations/:organization_id/properties/:property_id/reservations/:reservation_id/payments/by-terminal
+  const processPayment = usePaymentByTerminal({
+    onSuccess: (result) => {
+      setPaymentStatus('completed');
+      
+      // After successful payment, navigate to process check-in
+      setTimeout(() => {
+        navigate('/checkin/process', {
+          state: {
+            reservation,
+            reservationId,
+            paymentData: result,
+          },
+        });
+      }, 1500);
+    },
+    onError: (err) => {
+      console.error('[PaymentTerminalPage] Payment error:', err);
+      setPaymentStatus('error');
+      setError(err?.message ?? t('error.paymentFailed') ?? 'Payment failed');
+    },
+  });
 
   useEffect(() => {
-    if (!reservation) {
+    if (!reservation || !reservationId) {
       navigate('/checkin');
       return;
     }
 
-    if (!existingPaymentStatus || !existingPaymentStatus.transactionId) {
-      setError(t('error.paymentDataMissing'));
-      setPaymentStatus('error');
-      return;
-    }
+    // Start payment processing
+    processPayment.mutate({
+      reservationId,
+      paymentData: {},
+    });
 
-    const transactionId = existingPaymentStatus.transactionId;
-    setTransactionId(transactionId);
-    setPaymentStatus('processing');
-
-    let interval = null;
-    let timeout = null;
-    let countdownInterval = null;
-
-    const startPaymentPolling = () => {
-      interval = setInterval(() => {
-        pollPaymentStatus.mutate(transactionId);
-      }, 2000);
-      setPollInterval(interval);
-    };
-
-    startPaymentPolling();
-
-    timeout = setTimeout(() => {
-      setPaymentStatus('timeout');
-      if (interval) {
-        clearInterval(interval);
-      }
-    }, 180000);
-
-    setTimeoutId(timeout);
-
-    countdownInterval = setInterval(() => {
+    // Countdown timer
+    const countdownInterval = setInterval(() => {
       setTimeRemaining(prev => {
         if (prev <= 1) {
           clearInterval(countdownInterval);
@@ -141,38 +79,21 @@ const PaymentTerminalPage = () => {
       });
     }, 1000);
 
-    return () => {
-      if (timeout) {
-        clearTimeout(timeout);
+    // Timeout after 3 minutes
+    const timeout = setTimeout(() => {
+      if (paymentStatus === 'processing') {
+        setPaymentStatus('timeout');
+        setError(t('paymentTerminal.timeout') ?? 'Payment timeout');
       }
-      if (interval) {
-        clearInterval(interval);
-      }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-      }
-    };
-  }, [reservation, existingPaymentStatus, navigate, pollPaymentStatus, t]);
+    }, 180000);
 
-  const handleCancel = () => {
-    if (pollInterval) {
-      clearInterval(pollInterval);
-      setPollInterval(null);
-    }
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    navigate('/checkin');
-  };
+    return () => {
+      clearInterval(countdownInterval);
+      clearTimeout(timeout);
+    };
+  }, [reservation, reservationId, navigate]);
 
   const handleBack = () => {
-    if (pollInterval) {
-      clearInterval(pollInterval);
-      setPollInterval(null);
-    }
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
     navigate('/checkin');
   };
 
@@ -226,7 +147,7 @@ const PaymentTerminalPage = () => {
                 {t('paymentTerminal.amount')}
               </Text>
               <Text size="3xl" fw={700} c="#0B152A">
-                ${reservation.totalAmount || 320.00} {reservation.currency || 'USD'}
+                {currency || 'EUR'} {payableAmount || reservation?.payableAmount?.guest?.amount || 0}
               </Text>
             </Stack>
           </Card>
@@ -344,7 +265,7 @@ const PaymentTerminalPage = () => {
             <Button
               size="lg"
               leftSection={<IconX size={16} />}
-              onClick={handleCancel}
+              onClick={handleBack}
               style={{
                 backgroundColor: '#C8653D',
                 color: '#FFFFFF',

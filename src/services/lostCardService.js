@@ -1,5 +1,10 @@
 // This file is deprecated - use cardIssuanceService.js instead
 // Kept for backward compatibility
+import { apiClient } from './api/apiClient';
+import { translateError } from '../utils/translations';
+import { STORAGE_KEYS, API_CONFIG } from '../config/constants';
+import { issueCard as issueHardwareCard } from './hardware/hardwareService';
+
 export * from './cardIssuanceService';
 
 const getPropertyContext = () => {
@@ -52,7 +57,15 @@ const getPropertyContext = () => {
   }
 };
 
-export const getLostCardRequest = async (reservationId, propertyId = null, organizationId = null) => {
+/**
+ * Validate lost card request
+ * POST /api/kiosk/v1/organizations/:organization_id/properties/:property_id/reservations/:reservation_id/validate-lost-card
+ * @param {string} reservationId - Reservation ID
+ * @param {string} propertyId - Property ID (optional)
+ * @param {string} organizationId - Organization ID (optional)
+ * @returns {Promise<Object>} Validation result
+ */
+export const validateLostCard = async (reservationId, propertyId = null, organizationId = null) => {
   if (!reservationId) {
     throw new Error('Reservation ID is required.');
   }
@@ -62,24 +75,58 @@ export const getLostCardRequest = async (reservationId, propertyId = null, organ
   const finalOrganizationId = organizationId ?? context.organizationId;
   
   if (!finalPropertyId || !finalOrganizationId) {
-    throw new Error('Property ID and Organization ID are required to get lost card request.');
+    throw new Error('Property ID and Organization ID are required to validate lost card request.');
   }
   
+  const endpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/validate-lost-card`;
+  
+  console.log('[validateLostCard] Making request:', {
+    endpoint,
+    method: 'POST',
+    propertyId: finalPropertyId,
+    organizationId: finalOrganizationId,
+    reservationId,
+  });
+
   try {
-    const endpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/lost-card`;
-    const response = await apiClient.get(endpoint);
+    const response = await apiClient.post(endpoint);
+    
+    console.log('[validateLostCard] Success:', {
+      status: response.status,
+      data: response.data,
+    });
+    
     return response.data;
   } catch (error) {
+    console.error('[validateLostCard] Error:', {
+      endpoint,
+      propertyId: finalPropertyId,
+      organizationId: finalOrganizationId,
+      reservationId,
+      error: error.message,
+      status: error?.response?.status,
+      data: error?.response?.data,
+    });
+
     if (error?.response?.status === 404) {
       throw new Error(translateError('reservationNotFoundByNumber'));
     }
     
     const message = error?.response?.data?.message ??
                    error?.response?.data?.error ??
+                   error?.response?.statusText ??
                    error?.message ??
-                   'Failed to get lost card request';
+                   'Failed to validate lost card request';
     throw new Error(message);
   }
+};
+
+/**
+ * Legacy function for backward compatibility
+ * @deprecated Use validateLostCard instead
+ */
+export const getLostCardRequest = async (reservationId, propertyId = null, organizationId = null) => {
+  return validateLostCard(reservationId, propertyId, organizationId);
 };
 
 export const validateLostCardGuest = async (data) => {
@@ -255,7 +302,8 @@ export const regenerateLostCard = async (data) => {
     }
   } catch (error) {
     const baseURL = apiClient.defaults?.baseURL ?? API_CONFIG.BASE_URL ?? 'http://localhost:8000';
-    const fullUrl = `${baseURL}${endpoint}`;
+    const issueEndpoint = `/api/kiosk/v1/organizations/${context.organizationId}/properties/${context.propertyId}/reservations/${reservationId}/issue-lost-card`;
+    const fullUrl = `${baseURL}${issueEndpoint}`;
     
     // Check if this is a CORS error
     const isCorsError = !error.response && (
@@ -266,7 +314,7 @@ export const regenerateLostCard = async (data) => {
     );
     
     console.error('[regenerateLostCard] Error calling Kong:', {
-      endpoint,
+      endpoint: issueEndpoint,
       baseURL,
       fullUrl,
       propertyId: context.propertyId,
@@ -279,7 +327,7 @@ export const regenerateLostCard = async (data) => {
       data: error?.response?.data,
       isCorsError,
       requestConfig: {
-        url: endpoint,
+        url: issueEndpoint,
         method: 'POST',
         baseURL: baseURL,
       },

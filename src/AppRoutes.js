@@ -16,6 +16,7 @@ import PropertySelectionPage from "./pages/PropertySelectionPage";
 import CheckInPage from "./pages/checkin/CheckInPage";
 import PaymentCheckPage from "./pages/checkin/PaymentCheckPage";
 import PaymentTerminalPage from "./pages/checkin/PaymentTerminalPage";
+import ProcessCheckInPage from "./pages/checkin/ProcessCheckInPage";
 import CardDispensingPage from "./pages/checkin/CardDispensingPage";
 import CheckInCompletePage from "./pages/checkin/CheckInCompletePage";
 
@@ -80,6 +81,7 @@ const AppRoutes = () => {
           <Route path="/checkin" element={<CheckInPage />} />
           <Route path="/checkin/payment-check" element={<PaymentCheckPage />} />
           <Route path="/checkin/payment" element={<PaymentTerminalPage />} />
+          <Route path="/checkin/process" element={<ProcessCheckInPage />} />
           <Route path="/checkin/card-dispensing" element={<CardDispensingPage />} />
           <Route path="/checkin/complete" element={<CheckInCompletePage />} />
           <Route path="/checkin/early-arrival" element={<EarlyArrivalPage />} />
