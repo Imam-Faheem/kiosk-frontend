@@ -32,6 +32,7 @@ import ReservationCompletePage from "./pages/reservation/ReservationCompletePage
 
 // Lost card flow pages
 import LostCardPage from "./pages/lostcard/LostCardPage";
+import LostCardProcessingPage from "./pages/lostcard/LostCardProcessingPage";
 import RegenerateCardPage from "./pages/lostcard/RegenerateCardPage";
 import CardIssuedPage from "./pages/lostcard/CardIssuedPage";
 
@@ -99,6 +100,7 @@ const AppRoutes = () => {
           
           {/* Lost card flow */}
           <Route path="/lost-card" element={<LostCardPage />} />
+          <Route path="/lost-card/process" element={<LostCardProcessingPage />} />
           <Route path="/lost-card/regenerate" element={<RegenerateCardPage />} />
           <Route path="/lost-card/issued" element={<CardIssuedPage />} />
           <Route path="/lost-card/early-arrival" element={<EarlyArrivalPage />} />

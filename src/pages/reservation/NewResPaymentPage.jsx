@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Container,
   Paper,
@@ -8,184 +8,166 @@ import {
   Title,
   Stack,
   Box,
-  Loader,
   Card,
   Alert,
+  Loader,
+  Progress,
 } from '@mantine/core';
-import { IconArrowLeft, IconCreditCard } from '@tabler/icons-react';
+import { IconArrowLeft, IconCreditCard, IconCheck, IconX } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
-import { useBookingMutation } from '../../hooks/useBookingMutation';
-import { buildBookingPayload, getBookingErrorMessage } from '../../utils/booking.utils';
-import usePropertyStore from '../../stores/propertyStore';
+import { usePaymentByTerminal, useCheckIn } from '../../hooks/useCheckInFlow';
+import { EARLY_ARRIVAL_CONFIG } from '../../config/constants';
 
 const NewResPaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLanguage();
-  const [hasProcessed, setHasProcessed] = useState(false);
-  const bookingMutation = useBookingMutation();
-  const hasInitialized = useRef(false);
+  const countdownIntervalRef = useRef(null);
+  const hasStartedPaymentRef = useRef(false); // Track if payment already started
+  const TOTAL_SECONDS = 120;
 
-  const { room, searchCriteria, guestDetails } = location.state ?? {};
+  const {
+    reservationId,
+    amount,
+    currency: currencyFromState,
+    reservation,
+    reservationDetails,
+    room,
+    guestDetails,
+  } = location.state ?? {};
 
-  // Show loading state while checking for required data
-  const [isCheckingData, setIsCheckingData] = useState(true);
+  const [paymentStatus, setPaymentStatus] = useState('idle'); // idle | processing | completed | timeout | error
+  const [timeRemaining, setTimeRemaining] = useState(TOTAL_SECONDS);
+  const [error, setError] = useState(null);
+  const [checkInError, setCheckInError] = useState(null);
 
-  const totalAmount = useMemo(() => {
-    if (!searchCriteria?.checkIn || !searchCriteria?.checkOut || !room) {
-      return { amount: 0, currency: 'EUR' };
+  const payableAmount = useMemo(() => {
+    const numeric = Number(amount ?? 0);
+    if (Number.isNaN(numeric)) return 0;
+    return Math.max(0, Math.round(numeric * 100) / 100);
+  }, [amount]);
+
+  const currency = useMemo(() => {
+    return currencyFromState ?? reservationDetails?.balance?.currency ?? reservation?.currency ?? 'EUR';
+  }, [currencyFromState, reservationDetails, reservation]);
+
+  const clearCountdown = () => {
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
     }
+  };
 
-    const offerData = room?._offerData ?? room;
-    const totalGrossAmount = offerData?.totalGrossAmount?.amount 
-      ?? room?.totalGrossAmount?.amount 
-      ?? room?.totalPrice 
-      ?? 0;
-    const currency = offerData?.totalGrossAmount?.currency 
-      ?? room?.totalGrossAmount?.currency 
-      ?? room?.currency 
-      ?? 'EUR';
+  const paymentMutation = usePaymentByTerminal({
+    onSuccess: () => {
+      clearCountdown();
+      setPaymentStatus('completed');
     
-    return {
-      amount: Math.round(totalGrossAmount * 100) / 100,
-      currency,
-    };
-  }, [searchCriteria, room]);
+      // After successful payment, process check-in
+      checkInMutation.mutate({ reservationId, checkInData: {} });
+    },
+    onError: (err) => {
+      clearCountdown();
+      setPaymentStatus('error');
+      setError(err?.message ?? t('error.paymentFailed') ?? 'Payment failed');
+    },
+  });
 
-  const roomIds = useMemo(() => {
-    if (!room) return { unitGroupId: null, ratePlanId: null };
-    
-    // Room structure from search: { unitGroup: { id: ... }, ratePlan: { id: ... } }
-    const unitGroupId = room.unitGroup?.id ?? room.unitGroupId ?? null;
-    const ratePlanId = room.ratePlan?.id ?? room.ratePlanId ?? null;
-    
-    return {
-      unitGroupId,
-      ratePlanId,
-    };
-  }, [room]);
+  const checkInMutation = useCheckIn({
+    onSuccess: () => {
+      const targetHour = typeof EARLY_ARRIVAL_CONFIG.CHECKIN_TIME === 'number'
+        ? EARLY_ARRIVAL_CONFIG.CHECKIN_TIME
+        : parseInt(EARLY_ARRIVAL_CONFIG.CHECKIN_TIME.split(':')[0], 10);
+      const now = new Date();
+      const isBeforeTargetTime = now.getHours() < targetHour;
 
-  const formatDateForAPI = useCallback((dateStr) => {
-    if (!dateStr) return '';
-    return new Date(dateStr).toISOString().split('T')[0];
-  }, []);
-
-  const navigateToCompletion = useCallback((reservation) => {
-    navigate('/reservation/complete', {
-      state: { reservation, room, guestDetails },
-    });
-  }, [navigate, room, guestDetails]);
-
-  const processPayment = useCallback(() => {
-    if (hasProcessed) return;
-    
-    setHasProcessed(true);
-    
-    const propertyId = usePropertyStore.getState().propertyId;
-    if (!propertyId) {
-      setHasProcessed(false);
-      return;
-    }
-
-    const { unitGroupId, ratePlanId } = roomIds;
-    
-    if (!unitGroupId || !ratePlanId) {
-      setHasProcessed(false);
-      return;
-    }
-
-    const bookingPayload = buildBookingPayload(searchCriteria, guestDetails, ratePlanId, formatDateForAPI);
-
-    bookingMutation.mutate(
-      { bookingPayload, propertyId },
-      {
-        onSuccess: (bookingResult) => {
-          // Extract reservation ID from API response structure: { success: true, data: { reservations: [...] } }
-          const reservationId = bookingResult?.data?.reservations?.[0]?.id ?? null;
-
-          const reservation = {
+      if (isBeforeTargetTime) {
+        navigate('/reservation/early-arrival', {
+          state: {
             reservationId,
-            id: reservationId,
-            bookingId: reservationId,
+            reservation: reservationDetails ?? reservation,
+            room,
             guestDetails,
-            roomTypeId: room?.unitGroupId || room?.unitGroup?.id || room?._offerData?.unitGroup?.id,
-            checkIn: searchCriteria?.checkIn,
-            checkOut: searchCriteria?.checkOut,
-            guests: searchCriteria?.guests,
-            totalAmount: totalAmount.amount,
-            currency: totalAmount.currency,
-            status: 'confirmed',
-            bookingData: bookingResult,
-          };
+            payment: { status: 'paid', amount: payableAmount, currency },
+          },
+          replace: true,
+        });
+      return;
+    }
 
-          setTimeout(() => navigateToCompletion(reservation), 1500);
+      navigate('/reservation/complete', {
+              state: {
+          reservation: {
+            ...(reservation ?? {}),
+            reservationId,
+          },
+                  room,
+                  guestDetails,
+                },
+        replace: true,
+            });
         },
         onError: (err) => {
-          setHasProcessed(false);
+      setCheckInError(err?.message ?? 'Failed to process check-in');
         },
-      }
-    );
-  }, [hasProcessed, roomIds, formatDateForAPI, navigateToCompletion, totalAmount, guestDetails, searchCriteria, room, bookingMutation]);
+  });
 
   useEffect(() => {
-    if (hasInitialized.current) {
-      setIsCheckingData(false);
+    if (!reservationId) {
+      navigate('/reservation/search', { replace: true });
       return;
     }
+
+    // Prevent re-triggering payment on re-renders (fixes infinite loop)
+    if (hasStartedPaymentRef.current) {
+      return;
+    }
+    hasStartedPaymentRef.current = true;
     
-    // Small delay to allow state to be set
-    const checkData = setTimeout(() => {
-      setIsCheckingData(false);
-      
-      if (!room || !guestDetails) {
-        navigate('/reservation/search', { replace: true });
-        return;
-      }
+    // Auto-start payment (this is the "payment component" after user clicks proceed)
+    setPaymentStatus('processing');
+    setTimeRemaining(TOTAL_SECONDS);
+    setError(null);
+    setCheckInError(null);
 
-      const { unitGroupId, ratePlanId } = roomIds;
-      if (!unitGroupId || !ratePlanId) {
-        setTimeout(() => {
-          navigate('/reservation/search', { replace: true });
-        }, 2000);
-        return;
-      }
-      
-      hasInitialized.current = true;
-      processPayment();
-    }, 200);
+    paymentMutation.mutate({
+      reservationId,
+      paymentData: { amount: payableAmount, currency },
+    });
 
-    return () => clearTimeout(checkData);
-  }, [room, guestDetails, roomIds, navigate, processPayment, searchCriteria]);
+    countdownIntervalRef.current = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          clearCountdown();
+          setPaymentStatus(current => (current === 'processing' ? 'timeout' : current));
+          setError('Payment timeout');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearCountdown();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reservationId]);
 
   const handleBack = () => {
-    navigate('/reservation/room-details', {
-      state: { room, searchCriteria, guestDetails },
+    clearCountdown();
+    navigate('/reservation/complete', {
+      state: {
+        reservation: { ...(reservation ?? {}), reservationId },
+        room,
+        guestDetails,
+      },
     });
   };
 
-  // Show loading while checking data
-  if (isCheckingData) {
-    return (
-      <Container
-        size="lg"
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '20px',
-          backgroundColor: '#FFFFFF',
-        }}
-      >
-        <Loader size="lg" color="#C8653D" />
-        <Text size="md" c="dimmed" mt="md">
-          {t('common.loading')}
-        </Text>
-      </Container>
-    );
-  }
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <Container
@@ -250,12 +232,8 @@ const NewResPaymentPage = () => {
               <Text size="md" fw={600}>{guestDetails?.firstName ?? ''} {guestDetails?.lastName ?? ''}</Text>
             </Group>
             <Group justify="space-between">
-              <Text size="md" c="#666666">{t('newResPayment.checkIn')}:</Text>
-              <Text size="md" fw={600}>{searchCriteria?.checkIn ? new Date(searchCriteria.checkIn).toLocaleDateString() : ''}</Text>
-            </Group>
-            <Group justify="space-between">
-              <Text size="md" c="#666666">{t('newResPayment.checkOut')}:</Text>
-              <Text size="md" fw={600}>{searchCriteria?.checkOut ? new Date(searchCriteria.checkOut).toLocaleDateString() : ''}</Text>
+              <Text size="md" c="#666666">{t('reservationComplete.reservationNumber') ?? 'Reservation'}:</Text>
+              <Text size="md" fw={700} c="#C8653D">{reservationId}</Text>
             </Group>
           </Stack>
         </Card>
@@ -264,34 +242,58 @@ const NewResPaymentPage = () => {
           <Stack gap="sm" align="center">
             <Text size="md" fw={500}>{t('newResPayment.totalAmount')}</Text>
             <Text size="3xl" fw={700} style={{ fontSize: '48px' }}>
-              {totalAmount.currency} {totalAmount.amount > 0 ? totalAmount.amount.toFixed(2) : '0.00'}
+              {currency} {payableAmount > 0 ? payableAmount.toFixed(2) : '0.00'}
             </Text>
           </Stack>
         </Card>
 
         <Stack gap="lg" mb="xl" align="center">
           <IconCreditCard size={64} color="#C8653D" />
-          {bookingMutation.isPending && <Loader size="lg" color="#C8653D" />}
+          {(paymentStatus === 'processing' || checkInMutation.isPending) && <Loader size="lg" color="#C8653D" />}
           <Text size="xl" fw={600} ta="center">
-            {!bookingMutation.isPending && !bookingMutation.isSuccess && !bookingMutation.isError && t('newResPayment.readyToProcessPayment')}
-            {bookingMutation.isPending && t('newResPayment.swipeCard')}
-            {bookingMutation.isSuccess && t('newResPayment.bookingSuccessful')}
-            {bookingMutation.isError && t('newResPayment.bookingFailed')}
+            {paymentStatus === 'processing' && (t('paymentTerminal.swipeCard') ?? 'Please insert or swipe your card')}
+            {paymentStatus === 'completed' && (t('paymentTerminal.paymentSuccessful') ?? 'Payment successful')}
+            {paymentStatus === 'timeout' && (t('paymentTerminal.paymentTimeout') ?? 'Payment timeout')}
+            {paymentStatus === 'error' && (t('paymentTerminal.paymentError') ?? 'Payment error')}
+            {checkInMutation.isPending && (t('checkIn.processingCheckIn') ?? 'Processing check-in...')}
           </Text>
-          {bookingMutation.isPending && (
+          {paymentStatus === 'processing' && (
             <Text size="md" c="#666666" ta="center">
-              {t('newResPayment.processing')}
+              {t('paymentTerminal.timeRemaining') ?? 'Time remaining'}: {formatTime(timeRemaining)}
             </Text>
           )}
-          {bookingMutation.isSuccess && (
-            <Text size="md" c="green" ta="center" fw={600}>
-              {t('newResPayment.redirectingToConfirmation')}
-            </Text>
+          {paymentStatus === 'processing' && (
+            <Box style={{ width: '100%' }}>
+              <Progress
+                value={((TOTAL_SECONDS - timeRemaining) / TOTAL_SECONDS) * 100}
+                color="#C8653D"
+                size="lg"
+                radius="md"
+              />
+            </Box>
           )}
-          {bookingMutation.isError && (
+
+          {paymentStatus === 'completed' && checkInError && (
             <Alert color="red" variant="light" style={{ width: '100%' }}>
               <Text size="md" c="red" ta="center">
-                {getBookingErrorMessage(bookingMutation.error)}
+                {checkInError}
+              </Text>
+            </Alert>
+          )}
+
+          {(paymentStatus === 'error' || paymentStatus === 'timeout') && error && (
+            <Alert
+              color={paymentStatus === 'timeout' ? 'orange' : 'red'}
+              variant="light"
+              style={{ width: '100%' }}
+              icon={paymentStatus === 'timeout' ? <IconX size={18} /> : <IconX size={18} />}
+              title={t('error.title') ?? 'Payment issue'}
+            >
+              <Text size="md" ta="center">
+                {error}
+              </Text>
+              <Text size="sm" c="dimmed" ta="center" mt={6}>
+                {t('paymentCheck.pleaseTryAgainOrContact') ?? 'Please try again. If it keeps failing, ask reception for help.'}
               </Text>
             </Alert>
           )}
@@ -322,12 +324,31 @@ const NewResPaymentPage = () => {
             {t('common.back')}
           </Button>
           
-          {bookingMutation.isError && (
+          {(paymentStatus === 'error' || paymentStatus === 'timeout') && (
             <Button
               variant="outline"
               onClick={() => {
-                setHasProcessed(false);
-                processPayment();
+                // retry payment
+                clearCountdown();
+                setPaymentStatus('processing');
+                setTimeRemaining(TOTAL_SECONDS);
+                setError(null);
+                setCheckInError(null);
+                paymentMutation.mutate({
+                  reservationId,
+                  paymentData: { amount: payableAmount, currency },
+                });
+                countdownIntervalRef.current = setInterval(() => {
+                  setTimeRemaining(prev => {
+                    if (prev <= 1) {
+                      clearCountdown();
+                      setPaymentStatus(current => (current === 'processing' ? 'timeout' : current));
+                      setError('Payment timeout');
+                      return 0;
+                    }
+                    return prev - 1;
+                  });
+                }, 1000);
               }}
               style={{
                 borderColor: '#C8653D',
@@ -336,14 +357,15 @@ const NewResPaymentPage = () => {
                 fontWeight: 'bold',
                 fontSize: '16px',
               }}
+              leftSection={<IconCheck size={16} />}
             >
-              Retry Booking
+              {t('common.retry') ?? 'Retry'}
             </Button>
           )}
           <Button
             variant="outline"
             onClick={() => navigate('/reservation/search')}
-            disabled={bookingMutation.isPending}
+            disabled={paymentStatus === 'processing' || checkInMutation.isPending}
             style={{
               borderColor: '#dc3545',
               color: '#dc3545',

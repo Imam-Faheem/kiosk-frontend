@@ -14,7 +14,6 @@ import useLanguage from '../../hooks/useLanguage';
 import BackButton from '../../components/BackButton';
 import PropertyHeader from '../../components/PropertyHeader';
 import { useForm } from '@mantine/form';
-import { useValidateLostCard, useIssueCardForLostCard } from '../../hooks/useLostCardFlow';
 import { BUTTON_STYLES } from '../../config/constants';
 
 const LostCardPage = () => {
@@ -31,40 +30,6 @@ const LostCardPage = () => {
     },
   });
 
-  // Step 2: Issue card
-  const issueCard = useIssueCardForLostCard({
-    onSuccess: (result) => {
-      // Navigate to regenerate page with the result
-      navigate('/lost-card/regenerate', {
-        state: {
-          guestData: null,
-          validationData: form.values,
-          cardData: result?.data ?? result,
-        },
-      });
-    },
-    onError: (err) => {
-      const errorMessage = err?.message ?? t('error.cardRegenerationFailed') ?? 'Failed to issue card';
-      form.setFieldError('reservationNumber', errorMessage);
-      setError(errorMessage);
-    },
-  });
-
-  // Step 1: Validate lost card
-  const validateLostCard = useValidateLostCard({
-    onSuccess: (result) => {
-      // Step 2: Issue card after validation
-      issueCard.mutate({ reservationId: form.values.reservationNumber });
-    },
-    onError: (err) => {
-      const errorMessage = err?.message ?? t('error.validationFailed') ?? 'Failed to validate lost card request';
-      form.setFieldError('reservationNumber', errorMessage);
-      setError(errorMessage);
-    },
-  });
-
-  const isLoading = validateLostCard.isPending || issueCard.isPending;
-
   const handleSubmit = async (values) => {
     setError(null);
     form.clearErrors();
@@ -76,8 +41,10 @@ const LostCardPage = () => {
       return;
     }
 
-    // Step 1: Validate lost card first
-    validateLostCard.mutate({ reservationId: reservationNumber });
+    // Navigate to processing page which performs the real API calls + shows animations
+    navigate('/lost-card/process', {
+      state: { reservationNumber },
+    });
   };
 
   const handleBack = () => {
@@ -165,11 +132,11 @@ const LostCardPage = () => {
               type="submit"
               size="lg"
               leftSection={<IconCheck size={20} />}
-              loading={isLoading}
+              loading={false}
               styles={BUTTON_STYLES.primarySmall}
               radius="md"
             >
-              {isLoading ? t('lostCard.validating') : t('lostCard.submit')}
+              {t('lostCard.submit')}
             </Button>
           </Group>
         </form>

@@ -13,6 +13,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useLanguage from '../../hooks/useLanguage';
 import { useCheckIn, useIssueCard } from '../../hooks/useCheckInFlow';
 import PropertyHeader from '../../components/PropertyHeader';
+import { EARLY_ARRIVAL_CONFIG } from '../../config/constants';
 
 /**
  * Process check-in and issue card after payment (or if no payment required)
@@ -23,7 +24,7 @@ const ProcessCheckInPage = () => {
   const location = useLocation();
   const { t } = useLanguage();
 
-  const { reservation, reservationId } = location.state || {};
+  const { reservation, reservationId, completionPath, completionState } = location.state || {};
 
   // Step 1: Process check-in
   const checkIn = useCheckIn({
@@ -48,6 +49,8 @@ const ProcessCheckInPage = () => {
           reservation,
           reservationId,
           cardData: result?.data ?? result,
+          completionPath,
+          completionState,
         },
       });
     },
@@ -62,8 +65,9 @@ const ProcessCheckInPage = () => {
       
       if (isHardwareError) {
         // Show hardware error but still navigate to complete page
-        navigate('/checkin/complete', {
+        navigate(completionPath ?? '/checkin/complete', {
           state: {
+            ...(completionState ?? { reservation, reservationId }),
             reservation,
             reservationId,
             error: err?.message ?? 'Card issued but hardware error occurred',
@@ -84,9 +88,31 @@ const ProcessCheckInPage = () => {
       return;
     }
 
+    // If this is a reservation flow completion and we are before check-in time,
+    // show the early-arrival page BEFORE calling the check-in API.
+    const targetHour = typeof EARLY_ARRIVAL_CONFIG.CHECKIN_TIME === 'number'
+      ? EARLY_ARRIVAL_CONFIG.CHECKIN_TIME
+      : parseInt(EARLY_ARRIVAL_CONFIG.CHECKIN_TIME.split(':')[0], 10);
+    const now = new Date();
+    const isBeforeTargetTime = now.getHours() < targetHour;
+
+    if (completionPath === '/reservation/complete' && isBeforeTargetTime) {
+      navigate('/reservation/early-arrival', {
+        state: {
+          ...(completionState ?? {}),
+          reservation,
+          reservationId,
+          completionPath,
+          completionState,
+        },
+        replace: true,
+      });
+      return;
+    }
+
     // Start check-in process
     checkIn.mutate({ reservationId, checkInData: {} });
-  }, [reservation, reservationId, navigate]);
+  }, [reservation, reservationId, navigate, checkIn, completionPath, completionState]);
 
   const isLoading = checkIn.isPending || issueCard.isPending;
   const error = checkIn.error || issueCard.error;

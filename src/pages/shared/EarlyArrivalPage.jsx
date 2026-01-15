@@ -9,6 +9,7 @@ import {
   Stack,
   Box,
   Alert,
+  Card,
 } from '@mantine/core';
 import { IconAlertCircle, IconHome, IconClock } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -99,6 +100,27 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
       : parseInt(EARLY_ARRIVAL_CONFIG.CHECKIN_TIME.split(':')[0], 10);
     return currentHour < targetHour;
   }, []);
+
+  const reservationSummary = useMemo(() => {
+    if (detectedFlowType !== 'reservation') return null;
+    const reservation = location.state?.reservation;
+    const reservationId = location.state?.reservationId ?? reservation?.id ?? reservation?.bookingId ?? reservation?.reservationId;
+    const room = location.state?.room;
+    const guestDetails = location.state?.guestDetails;
+    const payment = location.state?.payment ?? location.state?.paymentStatus ?? null;
+    const unitName = reservation?.unit?.name ?? reservation?.unit?.id ?? reservation?.roomNumber ?? room?.unit?.name ?? room?.name ?? null;
+
+    if (!reservationId && !unitName && !guestDetails && !payment) return null;
+
+    return {
+      reservationId: reservationId ? String(reservationId) : null,
+      unitName: unitName ? String(unitName) : null,
+      guestName: guestDetails ? `${guestDetails.firstName ?? ''} ${guestDetails.lastName ?? ''}`.trim() : null,
+      checkIn: reservation?.arrival ?? reservation?.checkIn ?? location.state?.searchCriteria?.checkIn ?? null,
+      checkOut: reservation?.departure ?? reservation?.checkOut ?? location.state?.searchCriteria?.checkOut ?? null,
+      payment,
+    };
+  }, [detectedFlowType, location.state]);
 
   const updateTime = useCallback(() => {
     setCurrentTime(formatTime());
@@ -272,7 +294,8 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
                 
                 const state = location.state ?? {};
                 if (detectedFlowType === 'reservation') {
-                  navigate('/reservation/card', { state });
+                  // Booking + payment already happened. Now proceed to check-in when allowed.
+                  navigate('/checkin/process', { state });
                 } else if (detectedFlowType === 'checkin') {
                   navigate('/checkin/card-dispensing', { state });
                 } else {
@@ -302,6 +325,43 @@ const EarlyArrivalPage = ({ flowType: propFlowType, title, message, backPath, re
                     ? t('common.continue') 
                     : t('earlyArrival.returnToMainMenu')}
             </Button>
+
+            {/* Reservation summary (only for reservation flow) */}
+            {reservationSummary && (
+              <Card withBorder p="lg" radius="md" w="100%" bg="#f8f9fa" style={{ marginTop: 12 }}>
+                <Stack gap={8}>
+                  {reservationSummary.reservationId && (
+                    <Group justify="space-between">
+                      <Text fw={600}>{t('reservationComplete.reservationNumber') ?? 'Reservation Number'}:</Text>
+                      <Text fw={700} c="#C8653D">{reservationSummary.reservationId}</Text>
+                    </Group>
+                  )}
+                  {reservationSummary.unitName && (
+                    <Group justify="space-between">
+                      <Text fw={600}>{t('reservationComplete.roomNumber') ?? 'Room'}:</Text>
+                      <Text fw={700}>{reservationSummary.unitName}</Text>
+                    </Group>
+                  )}
+                  {reservationSummary.guestName && (
+                    <Group justify="space-between">
+                      <Text fw={600}>{t('reservationComplete.guest') ?? 'Guest'}:</Text>
+                      <Text fw={600}>{reservationSummary.guestName}</Text>
+                    </Group>
+                  )}
+                  {reservationSummary.payment && (
+                    <Group justify="space-between">
+                      <Text fw={600}>{t('paymentCheck.amountPaid') ?? 'Payment'}:</Text>
+                      <Text fw={700} c="green">
+                        {(reservationSummary.payment.currency ?? 'EUR')} {(reservationSummary.payment.amount ?? 0).toFixed ? reservationSummary.payment.amount.toFixed(2) : reservationSummary.payment.amount ?? 0}
+                      </Text>
+                    </Group>
+                  )}
+                  <Text size="sm" c="dimmed" mt={8}>
+                    {t('earlyArrival.earlyCheckInMessage') ?? 'Please come back after 2:00 PM to complete check-in.'}
+                  </Text>
+                </Stack>
+              </Card>
+            )}
           </Stack>
         </Paper>
       </Container>

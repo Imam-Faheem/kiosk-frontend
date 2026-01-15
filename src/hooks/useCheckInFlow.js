@@ -1,7 +1,19 @@
 import { useMutation } from '@tanstack/react-query';
-import { getReservationDetails, processCheckIn } from '../services/checkinService';
+import { getReservationDetails, processCheckIn, canCheckIn } from '../services/checkinService';
 import { processPaymentByTerminal } from '../services/paymentService';
 import { issueCard } from '../services/cardIssuanceService';
+
+/**
+ * Hook to check if a reservation can be checked in
+ */
+export const useCanCheckIn = (options = {}) => {
+  return useMutation({
+    mutationFn: async ({ reservationId, lastName = null }) => {
+      return await canCheckIn(reservationId, lastName);
+    },
+    ...options,
+  });
+};
 
 /**
  * Hook to get reservation details for check-in

@@ -14,7 +14,7 @@ import {
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from '@mantine/form';
-import { useReservationDetails } from '../../hooks/useCheckInFlow';
+import { useCanCheckIn } from '../../hooks/useCheckInFlow';
 import { checkinInitialValues } from '../../schemas/checkin.schema';
 import { BUTTON_STYLES } from '../../config/constants';
 import useLanguage from '../../hooks/useLanguage';
@@ -35,11 +35,15 @@ const CheckInPage = () => {
     },
   });
 
-  // Get reservation details
-  const getReservationDetails = useReservationDetails({
+  // Check if reservation can check in
+  const checkCanCheckIn = useCanCheckIn({
     onSuccess: (result) => {
-      const reservationData = result?.data ?? result;
+      const apiData = result?.data ?? result;
+      // The can-check-in API might return the reservation inside a 'reservation' property
+      const reservationData = apiData?.reservation ?? apiData;
       const reservationId = reservationData?.id ?? reservationData?.bookingId ?? form.values.reservationId;
+
+      console.log('[CheckInPage] Can Check-In Result:', { apiData, reservationData });
 
       // Next step: check if payment is required (or already completed)
       navigate('/checkin/payment-check', {
@@ -47,7 +51,8 @@ const CheckInPage = () => {
           reservation: reservationData,
           reservationId,
           checkInData: reservationData,
-          folios: reservationData?.folios,
+          folios: reservationData?.folios ?? reservationData?.reservation?.folios,
+          canCheckInData: apiData, // Pass the full can-check-in result just in case
         },
       });
 
@@ -56,11 +61,11 @@ const CheckInPage = () => {
     onError: (err) => {
       const errorStatus = err?.response?.status;
       const errorMessage = err?.message ?? t('error.reservationNotFound');
-      
-      const isLastNameError = errorStatus === 403 || 
-                             errorMessage.toLowerCase().includes('lastname') ||
-                             errorMessage.toLowerCase().includes('last name');
-      
+
+      const isLastNameError = errorStatus === 403 ||
+        errorMessage.toLowerCase().includes('lastname') ||
+        errorMessage.toLowerCase().includes('last name');
+
       form.setFieldError(
         isLastNameError ? 'lastName' : 'reservationId',
         isLastNameError ? t('error.lastNameMismatch') : errorMessage
@@ -84,11 +89,11 @@ const CheckInPage = () => {
       return;
     }
 
-    // GET reservation details
-    // GET /api/kiosk/v1/organizations/:organization_id/properties/:property_id/reservations/:reservation_id/details
-    getReservationDetails.mutate({
+    // Check if reservation can check in
+    // GET /api/kiosk/v1/organizations/:organization_id/properties/:property_id/reservations/:reservation_id/can-check-in
+    checkCanCheckIn.mutate({
       reservationId,
-      lastName, // Optional, for UI validation only
+      lastName, // Optional, for validation
     });
   };
 
@@ -126,7 +131,7 @@ const CheckInPage = () => {
         </Group>
 
         {/* Context Title */}
-        <Title 
+        <Title
           order={3}
           fz={26}
           fw={800}
@@ -208,7 +213,7 @@ const CheckInPage = () => {
         </form>
 
         {/* Loader */}
-        {(isLoading || getReservationDetails.isPending) && (
+        {(isLoading || checkCanCheckIn.isPending) && (
           <Stack align="center" gap="md" mt="xl">
             <Loader size="lg" color="#C8653D" />
             <Text size="lg" c="#666666">

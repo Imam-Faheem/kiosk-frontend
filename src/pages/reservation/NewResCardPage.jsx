@@ -70,46 +70,16 @@ const NewResCardPage = () => {
     }
     if (hasProcessedRef.current) return;
     hasProcessedRef.current = true;
-
-    const processCard = async () => {
-      try {
-        // Step 1: Preparing
-        setCurrentStep(0);
-        setCardStatus('preparing');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Step 2: Encoding
-        setCurrentStep(1);
-        setCardStatus('encoding');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Step 3: Sending
-        setCurrentStep(2);
-        setCardStatus('sending');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        setCardStatus('completed');
-        setTimeout(() => {
-          console.log('[NewResCardPage] Navigating to payment with state:', {
-            hasRoom: !!room,
-            hasGuestDetails: !!guestDetails,
-            hasSearchCriteria: !!searchCriteria,
-            roomKeys: room ? Object.keys(room) : null,
-          });
-          navigate('/reservation/payment', {
-            state: {
-              room,
-              searchCriteria,
-              guestDetails,
-            },
-          });
-        }, 2000);
-      } catch (err) {
-        setError(err.message ?? t('error.cardDispenserError'));
-      }
-    };
-
-    processCard();
+    // This page previously simulated card steps with dummy timers.
+    // The real flow is: create booking -> terminal payment -> check-in -> issue card -> dispense.
+    navigate('/reservation/payment', {
+      state: {
+        room,
+        searchCriteria,
+        guestDetails,
+      },
+      replace: true,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room, guestDetails, navigate, t]);
 

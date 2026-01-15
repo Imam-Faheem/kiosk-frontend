@@ -1,12 +1,13 @@
 import { useMutation } from './useMutation';
-import { 
-  processCheckIn, 
-  getCheckInStatus 
+import {
+  processCheckIn,
+  getCheckInStatus,
+  canCheckIn
 } from '../services/checkinService';
 
 /**
  * Unified check-in mutation hook
- * @param {string} action - The action to perform: 'process', 'getStatus'
+ * @param {string} action - The action to perform: 'process', 'getStatus', 'canCheckIn'
  * @param {Object} callbacks - Optional onSuccess and onError callbacks
  * @returns {Object} - React Query mutation object
  */
@@ -14,6 +15,7 @@ export const useCheckInMutation = (action, { onSuccess, onError } = {}) => {
   const actionMap = {
     process: processCheckIn,
     getStatus: getCheckInStatus,
+    canCheckIn: canCheckIn,
   };
 
   const mutationFn = actionMap[action];

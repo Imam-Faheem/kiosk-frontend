@@ -204,7 +204,7 @@ const SearchRoomsPage = () => {
               type="submit"
               size="lg"
               leftSection={<IconSearch size={20} />}
-              disabled={isSearching || (searchResults && Array.isArray(searchResults.offers) && searchResults.offers.length > 0)}
+              disabled={isSearching || (searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length > 0)}
               styles={BUTTON_STYLES.primary}
               radius="md"
             >
@@ -231,27 +231,28 @@ const SearchRoomsPage = () => {
         )}
 
         {/* No offers available message */}
-        {searchResults && Array.isArray(searchResults.offers) && searchResults.offers.length === 0 && !isSearching && (
+        {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length === 0 && !isSearching && (
           <Alert color="yellow" variant="light">
             {t('searchRooms.noRooms')}
           </Alert>
         )}
 
-        {searchResults && Array.isArray(searchResults.offers) && searchResults.offers.length > 0 && (
+        {searchResults && Array.isArray(searchResults.availableRooms) && searchResults.availableRooms.length > 0 && (
           <Stack gap="lg" mb="xl">
             <Text size="xl" fw={600} c="#0B152A">
-              {t('searchRooms.availableRooms')} ({searchResults.offers.length})
+              {t('searchRooms.availableRooms')} ({searchResults.availableRooms.length})
             </Text>
             
             <Grid>
-              {searchResults.offers.map((offer, index) => {
+              {searchResults.availableRooms.map((room, index) => {
+                const offer = room?._offerData ?? {};
                 const unitGroup = offer.unitGroup ?? {};
                 const ratePlan = offer.ratePlan ?? {};
                 const totalAmount = offer.totalGrossAmount ?? {};
-                const availableUnits = offer.availableUnits ?? 0;
+                const availableUnits = room?.availableUnits ?? offer.availableUnits ?? 0;
                 
                 return (
-                  <Grid.Col span={6} key={`${unitGroup.id}-${ratePlan.id}-${index}`}>
+                  <Grid.Col span={6} key={`${room?.roomTypeId ?? unitGroup.id}-${room?.ratePlanId ?? ratePlan.id}-${index}`}>
                     <Card
                       withBorder
                       p="lg"
@@ -263,16 +264,16 @@ const SearchRoomsPage = () => {
                           '&:hover': { transform: 'scale(1.02)', boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)' },
                         },
                       }}
-                      onClick={() => handleSelectRoom(offer)}
+                      onClick={() => handleSelectRoom(room)}
                     >
                       <Stack gap="md">
                         <Image src={UnoLogo} alt={unitGroup.name} h={200} radius="md" fit="cover" />
                         <Stack gap="sm">
                           <Group justify="space-between">
-                            <Text size="lg" fw={600} c="#0B152A">{unitGroup.name}</Text>
+                            <Text size="lg" fw={600} c="#0B152A">{room?.name ?? unitGroup.name}</Text>
                             <Badge color="green" size="lg">{t('searchRooms.available')}</Badge>
                           </Group>
-                          <Text size="sm" c="#666666">{unitGroup.description ?? ratePlan.description}</Text>
+                          <Text size="sm" c="#666666">{room?.description ?? unitGroup.description ?? ratePlan.description}</Text>
                           <Group gap="xs">
                             <IconUsers size={16} color="#666666" />
                             <Text size="sm" c="#666666">
@@ -280,7 +281,7 @@ const SearchRoomsPage = () => {
                             </Text>
                           </Group>
                           <Group gap="xs" wrap="wrap">
-                            <Badge size="sm" variant="light">{ratePlan.name}</Badge>
+                            <Badge size="sm" variant="light">{ratePlan.name ?? t('common.notAvailable')}</Badge>
                             {availableUnits > 0 && (
                               <Badge size="sm" variant="light" color="blue">
                                 {availableUnits} {availableUnits === 1 ? 'unit' : 'units'}
@@ -289,9 +290,9 @@ const SearchRoomsPage = () => {
                           </Group>
                           <Group justify="space-between" align="center">
                             <Stack gap="xs">
-                              <Text size="sm" c="#666666">{ratePlan.name}</Text>
+                              <Text size="sm" c="#666666">{ratePlan.name ?? t('common.notAvailable')}</Text>
                               <Text size="xl" fw={700} c="#0B152A">
-                                {totalAmount.currency ?? 'EUR'} {totalAmount.amount ?? 0} {t('searchRooms.total')}
+                                {room?.currency ?? totalAmount.currency ?? 'EUR'} {room?.totalPrice ?? totalAmount.amount ?? 0} {t('searchRooms.total')}
                               </Text>
                             </Stack>
                             <Button size="md" bg="#C8653D" c="white" radius="md">{t('common.select')}</Button>

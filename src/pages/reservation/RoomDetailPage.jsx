@@ -177,28 +177,15 @@ const RoomDetailPage = () => {
   }, [searchCriteria, displayRoom]);
 
   const handleConfirm = () => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const targetHour = 14;
-    const isBeforeTargetTime = currentHour < targetHour;
-    
-    if (isBeforeTargetTime) {
-      navigate('/reservation/early-arrival', {
-        state: {
-          room: displayRoom,
-          searchCriteria,
-          guestDetails,
-        },
-      });
-    } else {
-      navigate('/reservation/card', {
-        state: {
-          room: displayRoom,
-          searchCriteria,
-          guestDetails,
-        },
-      });
-    }
+    // Reservation flow must always create the booking first, then payment,
+    // and only then (if early) show early-arrival before check-in.
+    navigate('/reservation/payment', {
+      state: {
+        room: displayRoom,
+        searchCriteria,
+        guestDetails,
+      },
+    });
   };
 
   const handleBack = () => {

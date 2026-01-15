@@ -9,7 +9,7 @@ const getPropertyContext = () => {
     if (typeof window === 'undefined' || !window.localStorage) {
       return { propertyId: null, organizationId: API_CONFIG.ORGANIZATION_ID ?? null };
     }
-    
+
     const propertyData = localStorage.getItem(STORAGE_KEYS.KIOSK_PROPERTY);
     if (propertyData) {
       const parsed = JSON.parse(propertyData);
@@ -27,7 +27,7 @@ const getPropertyContext = () => {
         const storeParsed = JSON.parse(propertyStoreData);
         const selectedProperty = storeParsed?.state?.selectedProperty;
         const propertyId = storeParsed?.state?.propertyId;
-        
+
         if (selectedProperty && propertyId) {
           const organizationId = selectedProperty.organization_id ?? selectedProperty.organizationId;
           if (organizationId) {
@@ -47,8 +47,8 @@ const getPropertyContext = () => {
       organizationId: API_CONFIG.ORGANIZATION_ID ?? null,
     };
   } catch {
-    return { 
-      propertyId: null, 
+    return {
+      propertyId: null,
       organizationId: API_CONFIG.ORGANIZATION_ID ?? null,
     };
   }
@@ -65,33 +65,33 @@ export const validateLostCard = async (reservationId, propertyId = null, organiz
   if (!reservationId) {
     throw new Error('Reservation ID is required.');
   }
-  
+
   const context = getPropertyContext();
   const finalPropertyId = propertyId ?? context.propertyId;
   const finalOrganizationId = organizationId ?? context.organizationId;
-  
+
   if (!finalPropertyId || !finalOrganizationId) {
     throw new Error('Property ID and Organization ID are required to validate lost card request.');
   }
-  
+
   try {
     const endpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/validate-lost-card`;
     const response = await apiClient.post(endpoint);
-    
+
     if (!response.data?.success) {
       throw new Error(response.data?.error || response.data?.message || 'Validation failed');
     }
-    
+
     return response.data;
   } catch (error) {
     if (error?.response?.status === 404) {
       throw new Error(translateError('reservationNotFoundByNumber'));
     }
-    
+
     const message = error?.response?.data?.message ??
-                   error?.response?.data?.error ??
-                   error?.message ??
-                   'Failed to validate lost card request';
+      error?.response?.data?.error ??
+      error?.message ??
+      'Failed to validate lost card request';
     throw new Error(message);
   }
 };
@@ -107,45 +107,25 @@ export const issueCard = async (reservationIdOrData, propertyId = null, organiza
   const context = getPropertyContext();
   const finalPropertyId = propertyId ?? context.propertyId;
   const finalOrganizationId = organizationId ?? context.organizationId;
-  
+
   if (!finalPropertyId || !finalOrganizationId) {
     throw new Error('Property ID and Organization ID are required to issue card.');
   }
-  
+
   // Extract reservation_id from data (can be reservation_id, reservationId, id, or direct string)
-  const reservationId = typeof reservationIdOrData === 'string' 
-    ? reservationIdOrData 
+  const reservationId = typeof reservationIdOrData === 'string'
+    ? reservationIdOrData
     : reservationIdOrData?.reservation_id ?? reservationIdOrData?.reservationId ?? reservationIdOrData?.id;
-  
+
   if (!reservationId) {
     throw new Error('Reservation ID is required to issue card.');
   }
 
   try {
-    // Step A: Validate reservation (optional - can be skipped for new reservations/check-ins)
-    // For lost cards, we validate first. For new reservations/check-ins, we can skip this.
-    let validationResult = null;
-    try {
-      const validateEndpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/validate-lost-card`;
-      const validateResponse = await apiClient.post(validateEndpoint);
-      
-      if (validateResponse.data?.success) {
-        validationResult = validateResponse.data.data;
-        console.log('[issueCard] Validation successful', {
-          booking_id: validationResult?.reservation?.bookingId
-        });
-      }
-    } catch (validationError) {
-      // Validation is optional - if it fails, we can still proceed for new reservations/check-ins
-      console.warn('[issueCard] Validation skipped or failed, proceeding with card issuance', {
-        error: validationError.message
-      });
-    }
-
     // Step B: Issue card (get card data from TTLock)
     // POST /api/kiosk/v1/organizations/:organization_id/properties/:property_id/reservations/:reservation_id/issue-card
     const issueEndpoint = `/api/kiosk/v1/organizations/${finalOrganizationId}/properties/${finalPropertyId}/reservations/${reservationId}/issue-card`;
-    
+
     console.log('[issueCard] Issuing card data', {
       endpoint: issueEndpoint,
       fullUrl: `${apiClient.defaults?.baseURL ?? API_CONFIG.BASE_URL ?? 'http://localhost:8000'}${issueEndpoint}`,
@@ -154,22 +134,22 @@ export const issueCard = async (reservationIdOrData, propertyId = null, organiza
     });
 
     const issueResponse = await apiClient.post(issueEndpoint);
-    
+
     console.log('[issueCard] API response:', {
       status: issueResponse.status,
       hasSuccess: issueResponse.data?.success,
       hasData: !!issueResponse.data?.data,
     });
-    
+
     // Handle both wrapped and unwrapped responses
     const cardData = issueResponse.data?.success === true && issueResponse.data?.data
       ? issueResponse.data.data
       : issueResponse.data?.data ?? issueResponse.data;
-    
+
     if (!cardData) {
       throw new Error(issueResponse.data?.error || issueResponse.data?.message || 'Failed to issue card - no card data returned');
     }
-    
+
     console.log('[issueCard] Card data retrieved successfully', {
       card_no: cardData?.cardNo,
       has_card_data: !!cardData?.cardData,
@@ -186,7 +166,7 @@ export const issueCard = async (reservationIdOrData, propertyId = null, organiza
       try {
         // Issue card via hardware service with cardData and hotelInfo
         const hardwareResult = await issueHardwareCard(cardData.cardData, cardData.hotelInfo);
-        
+
         console.log('[issueCard] Hardware card issued successfully', {
           card_id: hardwareResult?.data?.cardId,
           card_type: hardwareResult?.data?.cardType
@@ -197,7 +177,6 @@ export const issueCard = async (reservationIdOrData, propertyId = null, organiza
           success: true,
           data: {
             ...cardData,
-            validation: validationResult,
             hardware: {
               success: true,
               cardId: hardwareResult?.data?.cardId,
@@ -216,7 +195,7 @@ export const issueCard = async (reservationIdOrData, propertyId = null, organiza
         // Determine error type for user-friendly messages
         const errorMessage = hardwareError.message || 'Unknown hardware error';
         let userFriendlyMessage = 'Card data retrieved but physical card issuance failed';
-        
+
         if (errorMessage.toLowerCase().includes('dispenser') || errorMessage.toLowerCase().includes('dispense')) {
           userFriendlyMessage = 'Card dispenser error: Unable to dispense the card. Please contact staff for assistance.';
         } else if (errorMessage.toLowerCase().includes('encoder') || errorMessage.toLowerCase().includes('encode')) {
@@ -232,13 +211,12 @@ export const issueCard = async (reservationIdOrData, propertyId = null, organiza
           success: false, // Mark as failed since hardware failed
           data: {
             ...cardData,
-            validation: validationResult,
             hardware: {
               success: false,
               error: hardwareError.message,
               userFriendlyMessage: userFriendlyMessage,
-              errorType: errorMessage.toLowerCase().includes('dispenser') ? 'dispenser' : 
-                        errorMessage.toLowerCase().includes('encoder') ? 'encoder' : 'unknown',
+              errorType: errorMessage.toLowerCase().includes('dispenser') ? 'dispenser' :
+                errorMessage.toLowerCase().includes('encoder') ? 'encoder' : 'unknown',
             }
           },
           error: userFriendlyMessage,
@@ -249,14 +227,13 @@ export const issueCard = async (reservationIdOrData, propertyId = null, organiza
       return {
         success: true,
         data: {
-          ...cardData,
-          validation: validationResult
+          ...cardData
         }
       };
     }
   } catch (error) {
     const baseURL = apiClient.defaults?.baseURL ?? API_CONFIG.BASE_URL ?? 'http://localhost:8000';
-    
+
     // Check if this is a CORS error
     const isCorsError = !error.response && (
       error.message?.includes('CORS') ||
@@ -264,7 +241,7 @@ export const issueCard = async (reservationIdOrData, propertyId = null, organiza
       error.code === 'ERR_NETWORK' ||
       error.message?.includes('blocked by CORS policy')
     );
-    
+
     console.error('[issueCard] Error calling API:', {
       propertyId: finalPropertyId,
       organizationId: finalOrganizationId,
@@ -284,10 +261,10 @@ export const issueCard = async (reservationIdOrData, propertyId = null, organiza
 
     // Display the error message from the API response
     const message = error?.response?.data?.message ??
-                   error?.response?.data?.error ??
-                   error?.response?.statusText ??
-                   error?.message ??
-                   'Failed to issue card';
+      error?.response?.data?.error ??
+      error?.response?.statusText ??
+      error?.message ??
+      'Failed to issue card';
     throw new Error(message);
   }
 };
@@ -304,7 +281,7 @@ export const validateLostCardGuest = async (data) => {
   }
 
   const context = getPropertyContext();
-  
+
   if (!context.propertyId || !context.organizationId) {
     throw new Error('Property ID and Organization ID are required to validate lost card guest.');
   }
@@ -315,9 +292,9 @@ export const validateLostCardGuest = async (data) => {
     const response = await apiClient.get(endpoint, {
       params: lastName ? { lastName } : {},
     });
-    
-    const apiData = response.data?.success === true && response.data?.data 
-      ? response.data.data 
+
+    const apiData = response.data?.success === true && response.data?.data
+      ? response.data.data
       : response.data;
 
     if (!apiData) {
@@ -352,9 +329,9 @@ export const validateLostCardGuest = async (data) => {
     }
 
     const message = error?.response?.data?.message ??
-                   error?.response?.data?.error ??
-                   error?.message ??
-                   translateError('guestValidationFailed');
+      error?.response?.data?.error ??
+      error?.message ??
+      translateError('guestValidationFailed');
     throw new Error(message);
   }
 };

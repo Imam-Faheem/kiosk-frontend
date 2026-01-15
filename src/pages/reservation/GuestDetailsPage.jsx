@@ -68,7 +68,7 @@ const GuestDetailsPage = () => {
     saveGuestMutation.mutate(guestData, {
       onSuccess: (result) => {
         const savedGuest = result?.data ?? result;
-        navigate('/reservation/room-details', {
+        navigate('/reservation/booking-details', {
           state: {
             room,
             searchCriteria,
@@ -78,7 +78,7 @@ const GuestDetailsPage = () => {
         });
       },
       onError: () => {
-        navigate('/reservation/room-details', {
+        navigate('/reservation/booking-details', {
           state: {
             room,
             searchCriteria,

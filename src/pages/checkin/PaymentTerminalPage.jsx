@@ -37,6 +37,8 @@ const PaymentTerminalPage = () => {
     reservationId: reservationIdFromState,
     payableAmount: payableAmountFromState,
     currency: currencyFromState,
+    completionPath,
+    completionState,
   } = location.state || {};
 
   const reservationId =
@@ -80,6 +82,8 @@ const PaymentTerminalPage = () => {
             checkInData,
             folios,
             paymentData: result,
+            completionPath,
+            completionState,
           },
         });
       }, 1500);

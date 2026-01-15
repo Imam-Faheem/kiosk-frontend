@@ -49,6 +49,8 @@ const CardDispensingPage = () => {
   const paymentStatus = location.state?.paymentStatus;
   const cardData = location.state?.cardData; // Card data from ProcessCheckInPage
   const reservationId = location.state?.reservationId;
+  const completionPath = location.state?.completionPath;
+  const completionState = location.state?.completionState;
 
   const steps = useMemo(() => 
     CARD_DISPENSING_STEPS.map(step => ({
@@ -111,11 +113,12 @@ const CardDispensingPage = () => {
             
             // Still navigate to complete page but with error
             setTimeout(() => {
-              navigate('/checkin/complete', {
+              navigate(completionPath ?? '/checkin/complete', {
                 state: { 
-                  reservation, 
+                  ...(completionState ?? { reservation, reservationId }),
+                  reservation,
                   reservationId,
-                  paymentStatus, 
+                  paymentStatus,
                   cardData,
                   error: errorMessage,
                 }
@@ -133,11 +136,12 @@ const CardDispensingPage = () => {
 
           setCardStatus('completed');
           setTimeout(() => {
-            navigate('/checkin/complete', {
+            navigate(completionPath ?? '/checkin/complete', {
               state: { 
-                reservation, 
+                ...(completionState ?? { reservation, reservationId }),
+                reservation,
                 reservationId,
-                paymentStatus, 
+                paymentStatus,
                 cardData,
               }
             });
